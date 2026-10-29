@@ -29,7 +29,12 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def get_session() -> AsyncIterator[AsyncSession]:
-    """FastAPI dependency: yield a transactional session, roll back on error."""
+    """FastAPI dependency: yield a transactional session, roll back on error.
+
+    Inject it as ``Depends(get_session, scope="function")`` so the commit runs
+    before the response is sent; the default request scope commits afterwards,
+    letting a client's next request read pre-commit state.
+    """
     async with AsyncSessionLocal() as session:
         try:
             yield session

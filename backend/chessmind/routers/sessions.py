@@ -42,7 +42,7 @@ async def _owned(session: AsyncSession, ts_id, player: Player) -> TrainingSessio
 async def post_session(
     payload: SessionCreate,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> TrainingSession:
     try:
         ts, _opener = await create_session(
@@ -66,7 +66,7 @@ async def post_session(
 async def get_session_state(
     session_id,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> TrainingSession:
     return await _owned(session, session_id, player)
 
@@ -75,7 +75,7 @@ async def get_session_state(
 async def get_legal_moves(
     session_id,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> LegalMovesResponse:
     ts = await _owned(session, session_id, player)
     board = chess.Board(ts.state_json["current_fen"])
@@ -101,7 +101,7 @@ async def post_move(
     session_id,
     payload: MoveRequest,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> MoveResponse:
     ts = await _owned(session, session_id, player)
     try:
@@ -159,7 +159,7 @@ async def post_reveal(
     session_id,
     payload: RevealRequest,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> RevealResponse:
     ts = await _owned(session, session_id, player)
     out = await consume_reveal(session, ts=ts)
@@ -170,7 +170,7 @@ async def post_reveal(
 async def post_finish(
     session_id,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> FinishResponse:
     ts = await _owned(session, session_id, player)
     await finish_session(session, ts=ts)

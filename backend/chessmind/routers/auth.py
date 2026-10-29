@@ -36,7 +36,7 @@ def _tokens_for(player_id) -> TokenPair:
 
 
 @router.post("/register", response_model=PlayerRead, status_code=status.HTTP_201_CREATED)
-async def register(payload: PlayerCreate, session: AsyncSession = Depends(get_session)) -> Player:
+async def register(payload: PlayerCreate, session: AsyncSession = Depends(get_session, scope="function")) -> Player:
     player = Player(
         email=payload.email,
         password_hash=hash_password(payload.password),
@@ -54,7 +54,7 @@ async def register(payload: PlayerCreate, session: AsyncSession = Depends(get_se
 
 
 @router.post("/login", response_model=TokenPair)
-async def login(payload: PlayerLogin, session: AsyncSession = Depends(get_session)) -> TokenPair:
+async def login(payload: PlayerLogin, session: AsyncSession = Depends(get_session, scope="function")) -> TokenPair:
     result = await session.execute(select(Player).where(Player.email == payload.email))
     player = result.scalar_one_or_none()
     if player is None or not verify_password(payload.password, player.password_hash):
@@ -63,7 +63,7 @@ async def login(payload: PlayerLogin, session: AsyncSession = Depends(get_sessio
 
 
 @router.post("/refresh", response_model=TokenPair)
-async def refresh(payload: RefreshRequest, session: AsyncSession = Depends(get_session)) -> TokenPair:
+async def refresh(payload: RefreshRequest, session: AsyncSession = Depends(get_session, scope="function")) -> TokenPair:
     try:
         player_id = decode_token(payload.refresh_token, expected_kind="refresh")
     except TokenError as exc:

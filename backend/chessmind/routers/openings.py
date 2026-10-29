@@ -54,7 +54,7 @@ async def opening_tree(
     fen: str | None = Query(default=None, description="Full FEN; normalized to canonical_key"),
     limit: int = Query(default=20, ge=1, le=100, description="Max edges returned from the root."),
     min_games: int = Query(default=0, ge=0, description="Only return edges with at least this many games."),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> OpeningTreeResponse:
     """Return the root position and its outgoing edges, ordered by games_count desc.
 

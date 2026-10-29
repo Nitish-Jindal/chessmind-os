@@ -19,7 +19,7 @@ router = APIRouter(prefix="/analysis", tags=["analysis"])
 async def analyze_position(
     payload: AnalysisRequest,
     _player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> AnalysisResponse:
     try:
         board = chess.Board(payload.fen)
