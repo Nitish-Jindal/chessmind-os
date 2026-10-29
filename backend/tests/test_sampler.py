@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+import random
+
 import chess
 import pytest
 from sqlalchemy import select
@@ -20,8 +22,10 @@ from chessmind.security import hash_password
 from chessmind.services.canonical_fen import canonical_key
 from chessmind.services.opening_graph import upsert_move_edge, upsert_position
 from chessmind.services.sampler import (
+    Candidate,
     SamplerConfig,
     SamplerMode,
+    _choose,
     sample_opponent_move,
 )
 
@@ -251,3 +255,15 @@ async def test_sampler_never_returns_illegal_in_mix(db, player):
                                 engine_depth=4, engine_multipv=2)
             r = await sample_opponent_move(db, board=board, config=cfg)
             assert r.uci in legal, (seed, mode, r)
+
+
+@pytest.mark.parametrize("mode", [SamplerMode.MIX, SamplerMode.SURPRISE, SamplerMode.MAINLINE])
+def test_choose_is_order_independent(mode):
+    ucis = ["e2e4", "d2d4", "g1f3", "c2c4", "b1c3"]
+    cands = [Candidate(uci=u, weight=float(i + 1), source_tier="t", games=i + 1)
+             for i, u in enumerate(ucis)]
+    legal = set(ucis)
+    for seed in range(25):
+        a = _choose(cands, mode=mode, rng=random.Random(seed), legal=legal)
+        b = _choose(list(reversed(cands)), mode=mode, rng=random.Random(seed), legal=legal)
+        assert a == b

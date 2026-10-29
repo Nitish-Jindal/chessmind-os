@@ -180,7 +180,8 @@ def _choose(
     legal: set[str],
 ) -> Candidate | None:
     """Pick a candidate under ``mode``. Illegal rows are dropped silently."""
-    legal_cands = [c for c in candidates if c.uci in legal]
+    # Sort first so the draw is independent of the order the DB returned rows in.
+    legal_cands = sorted((c for c in candidates if c.uci in legal), key=lambda c: c.uci)
     if not legal_cands:
         return None
 
