@@ -164,6 +164,41 @@ export interface MoveResult {
   status: "active" | "finished";
 }
 
+export type QuestionKind = "piece_location" | "square_content" | "hanging_pieces" | "side_to_move" | "evaluation";
+
+export interface AskResult {
+  understood: boolean;
+  question_id: string | null;
+  kind: QuestionKind | null;
+  answer_text: string;
+  facts: Record<string, unknown>;
+  questions_asked: number;
+}
+
+export interface QuizQuestion {
+  question_id: string;
+  kind: QuestionKind;
+  prompt: string;
+}
+
+export interface QuestionTally {
+  asked: number;
+  quizzed: number;
+  answered: number;
+  correct: number;
+  mean_score: number | null;
+}
+
+export interface QuizAnswer {
+  question_id: string;
+  understood: boolean;
+  correct: boolean;
+  score: number | null;
+  expected_text: string | null;
+  feedback: string;
+  tally: QuestionTally;
+}
+
 export interface RevealResult {
   reveals_used: number;
   reveals_budget: number;
@@ -182,6 +217,33 @@ export interface OpeningEdge {
   draws: number;
 }
 
+export interface MasterMove {
+  uci: string;
+  san: string;
+  games: number;
+  white: number;
+  draws: number;
+  black: number;
+  average_rating: number | null;
+}
+
+/** Real master-game stats from the Lichess explorer; kept apart from local (imported/seed) counts. */
+export interface MastersStats {
+  source: string;
+  attribution: string;
+  explorer_url: string;
+  status: "live" | "cached" | "stale" | "unavailable" | "disabled";
+  fetched_at: string | null;
+  error: string | null;
+  total_games: number;
+  white: number;
+  draws: number;
+  black: number;
+  opening_eco: string | null;
+  opening_name: string | null;
+  moves: MasterMove[];
+}
+
 export interface OpeningTree {
   root: {
     position_id: string;
@@ -194,6 +256,8 @@ export interface OpeningTree {
   };
   total_positions: number;
   total_edges: number;
+  local_stats_note: string;
+  masters: MastersStats | null;
 }
 
 export interface MasteryRow {
@@ -293,6 +357,12 @@ export const api = {
     request<MoveResult>("POST", `/sessions/${id}/move`, body),
   reveal: (id: string, reason?: string) => request<RevealResult>("POST", `/sessions/${id}/reveal`, { reason }),
   finish: (id: string) => request<unknown>("POST", `/sessions/${id}/finish`),
+  ask: (id: string, alts: string[]) =>
+    request<AskResult>("POST", `/sessions/${id}/ask`, { text: alts[0], alternatives: alts.slice(1) }),
+  quiz: (id: string, kind?: QuestionKind) => request<QuizQuestion>("POST", `/sessions/${id}/quiz`, { kind }),
+  answerQuiz: (id: string, questionId: string, alts: string[]) =>
+    request<QuizAnswer>("POST", `/sessions/${id}/quiz/${questionId}/answer`, { text: alts[0], alternatives: alts.slice(1) }),
+  masters: (fen: string) => request<MastersStats>("GET", `/openings/masters?fen=${encodeURIComponent(fen)}`),
 
   openingTree: (fen?: string) =>
     request<OpeningTree>("GET", `/openings/tree?limit=20${fen ? `&fen=${encodeURIComponent(fen)}` : ""}`),

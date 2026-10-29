@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Chess } from "chess.js";
-import { buildLegalMoves, parseCommand, resolveConfirmation, resolveMove, speakMove } from "./resolver";
+import { buildLegalMoves, isBoardQuestion, parseCommand, resolveConfirmation, resolveMove, speakMove } from "./resolver";
 
 // Legal lists built from chess.js stand in for the backend's python-chess output;
 // the resolver only ever consumes the {san, uci} arrays, same as GET /legal.
@@ -105,5 +105,24 @@ describe("misc", () => {
     expect(speakMove("Nbd2")).toBe("knight from b, d2");
     expect(speakMove("O-O")).toBe("castles kingside");
     expect(speakMove("Qh5+")).toBe("queen h5, check");
+  });
+});
+
+describe("board questions vs moves", () => {
+  it("routes questions to the ask endpoint", () => {
+    for (const q of ["where is my knight", "What's on e5?", "anything hanging", "whose move is it", "what's the eval",
+      "who is better", "is my bishop hanging", "Are your rooks connected?"]) {
+      expect(isBoardQuestion(q)).toBe(true);
+    }
+  });
+  it("leaves moves and commands alone", () => {
+    for (const m of ["e4", "knight f3", "castle kingside", "bishop takes c4", "e takes d5", "queen to h5", "first", "reveal"]) {
+      expect(isBoardQuestion(m)).toBe(false);
+    }
+  });
+  it("recognizes quiz commands", () => {
+    expect(parseCommand("quiz me")).toBe("quiz");
+    expect(parseCommand("test me on this position")).toBe("quiz");
+    expect(parseCommand("knight f3")).toBe(null);
   });
 });

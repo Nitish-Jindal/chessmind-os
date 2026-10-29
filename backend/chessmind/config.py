@@ -81,6 +81,18 @@ class Settings(BaseSettings):
         description="Optional regex of extra allowed origins (e.g. the Render static-site host).",
     )
 
+    lichess_explorer_enabled: bool = True
+    lichess_explorer_url: str = "https://explorer.lichess.ovh"
+    lichess_explorer_ttl_hours: float = Field(
+        default=168.0, description="How long a cached /masters snapshot is served without refetching."
+    )
+    lichess_explorer_timeout_s: float = 4.0
+    lichess_explorer_backoff_s: float = Field(
+        default=60.0, description="After an upstream failure, serve cache/fallback without retrying for this long."
+    )
+    lichess_explorer_moves: int = 12
+    lichess_api_token: str = Field(default="", description="Optional Lichess token, sent as Bearer if set.")
+
     @model_validator(mode="after")
     def _normalize(self) -> "Settings":
         raw = self.database_url

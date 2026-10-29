@@ -1,0 +1,15 @@
+{
+  "_fixture_note": "HAND-WRITTEN in the documented /masters response shape; NOT recorded from Lichess (explorer.lichess.ovh is blocked by this build sandbox's network policy). Counts are test values, not real statistics, and are never served by the app. Replace with `python scripts/record_explorer_fixture.py` output from a host that can reach Lichess.",
+  "white": 1000,
+  "draws": 1300,
+  "black": 700,
+  "moves": [
+    {"uci": "d2d4", "san": "d4", "averageRating": 2414, "white": 410, "draws": 560, "black": 280, "game": null},
+    {"uci": "e2e4", "san": "e4", "averageRating": 2410, "white": 420, "draws": 510, "black": 300, "game": null},
+    {"uci": "g1f3", "san": "Nf3", "averageRating": 2420, "white": 110, "draws": 160, "black": 80, "game": null},
+    {"uci": "c2c4", "san": "c4", "averageRating": 2418, "white": 60, "draws": 70, "black": 40, "game": null},
+    {"uci": "d1h5", "san": "Qh5", "averageRating": 2200, "white": 1, "draws": 0, "black": 0, "game": null}
+  ],
+  "topGames": [],
+  "opening": null
+}

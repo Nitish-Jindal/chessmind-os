@@ -1,7 +1,7 @@
 import { Chess } from "chess.js";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { api, type LegalMoves, type MasteryRow, type MoveResult, type SessionState } from "../api";
+import { api, type LegalMoves, type MasteryRow, type MoveResult, type QuestionTally, type QuizQuestion, type SessionState } from "../api";
 import { useAuth } from "../auth";
 import { Board } from "../components/Board";
 import { Captions } from "../components/Captions";
@@ -9,6 +9,7 @@ import { MasteryDelta } from "../components/MasteryDelta";
 import { VoicePicker } from "../components/VoicePicker";
 import {
   buildLegalMoves,
+  isBoardQuestion,
   parseCommand,
   resolveAlternatives,
   resolveConfirmation,
@@ -50,6 +51,10 @@ function SessionView({ id }: { id: string }) {
   const [interim, setInterim] = useState("");
   const [listening, setListening] = useState(false);
   const [text, setText] = useState("");
+  // Position questions (handoff §3.3): the player asks about the board, or answers a quiz about it.
+  const [quiz, setQuiz] = useState<QuizQuestion | null>(null);
+  const [tally, setTally] = useState<QuestionTally | null>(null);
+  const [lastAnswer, setLastAnswer] = useState<string | null>(null);
   const turnStart = useRef(Date.now());
 
   const legalMoves = useMemo(() => (legal ? buildLegalMoves(legal.legal_moves_san, legal.legal_moves_uci) : []), [legal]);
@@ -139,9 +144,51 @@ function SessionView({ id }: { id: string }) {
     [busy, id, say, caption, refresh, drillPos, player],
   );
 
+  /** Board question → server answers from python-chess / cached Stockfish; spoken and captioned. */
+  const askBoard = useCallback(
+    async (alts: string[]) => {
+      try {
+        const r = await api.ask(id, alts);
+        say(r.understood ? "coach" : "system", r.answer_text);
+        setLastAnswer(r.answer_text);
+      } catch (e) {
+        setErr((e as Error).message);
+      }
+    },
+    [id, say],
+  );
+
+  const startQuiz = useCallback(async () => {
+    try {
+      const q = await api.quiz(id);
+      setQuiz(q);
+      setLastAnswer(null);
+      say("coach", q.prompt);
+    } catch (e) {
+      setErr((e as Error).message);
+    }
+  }, [id, say]);
+
+  /** Quiz answer → scored server-side against the board captured when the question was asked. */
+  const answerQuiz = useCallback(
+    async (q: QuizQuestion, alts: string[]) => {
+      try {
+        const r = await api.answerQuiz(id, q.question_id, alts);
+        if (!r.understood) return say("system", r.feedback);
+        setQuiz(null);
+        setTally(r.tally);
+        setLastAnswer(r.feedback);
+        say("coach", r.feedback);
+      } catch (e) {
+        setErr((e as Error).message);
+      }
+    },
+    [id, say],
+  );
+
   // Mutable view of state for callbacks owned by the recognizer.
-  const live = useRef({ legalMoves, pending, myTurn, busy, submit, last });
-  live.current = { legalMoves, pending, myTurn, busy, submit, last };
+  const live = useRef({ legalMoves, pending, myTurn, busy, submit, last, quiz });
+  live.current = { legalMoves, pending, myTurn, busy, submit, last, quiz };
 
   const doReveal = useCallback(async () => {
     try {
@@ -170,9 +217,18 @@ function SessionView({ id }: { id: string }) {
       const cmd = parseCommand(heard);
       if (cmd === "reveal" && blindfold) return void doReveal();
       if (cmd === "repeat") {
-        const t = L.last?.opponent_move ? `Opponent played ${speakMove(L.last.opponent_move.san)}.` : "Nothing to repeat yet.";
+        const t = L.quiz ? L.quiz.prompt : L.last?.opponent_move ? `Opponent played ${speakMove(L.last.opponent_move.san)}.` : "Nothing to repeat yet.";
         return say("system", t);
       }
+      if (cmd === "quiz") return void startQuiz();
+      if (L.quiz) {
+        if (/\b(skip|cancel|never ?mind)\b/i.test(heard)) {
+          setQuiz(null);
+          return say("system", "Question skipped.");
+        }
+        return void answerQuiz(L.quiz, alts);
+      }
+      if (isBoardQuestion(heard)) return void askBoard(alts);
       if (!L.myTurn || L.busy) return say("system", "It is not your turn.");
 
       if (L.pending) {
@@ -198,7 +254,7 @@ function SessionView({ id }: { id: string }) {
       }
       say("system", `I didn't find a legal move for "${heard}". Try again.`);
     },
-    [blindfold, caption, say, doReveal],
+    [blindfold, caption, say, doReveal, startQuiz, answerQuiz, askBoard],
   );
   const onUtterance = useRef(handleUtterance);
   onUtterance.current = handleUtterance;
@@ -307,7 +363,7 @@ function SessionView({ id }: { id: string }) {
             <div className="row">
               <button
                 className={`ptt ${listening ? "on" : ""}`}
-                disabled={!sttSupported || !myTurn}
+                disabled={!sttSupported || busy}
                 onPointerDown={startTalking}
                 onPointerUp={stopTalking}
                 onPointerLeave={() => listening && stopTalking()}
@@ -322,13 +378,13 @@ function SessionView({ id }: { id: string }) {
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder={pending ? "first / second / the move" : "Type a move: Nf3, castle kingside…"}
+                placeholder={pending ? "first / second / the move" : quiz ? "Your answer: f3 and c3 · white knight · none" : "Type a move (Nf3) or ask: where is my knight?"}
                 aria-label="Type a move"
-                disabled={!myTurn || busy}
+                disabled={busy}
                 style={{ flex: 1 }}
                 autoComplete="off"
               />
-              <button type="submit" disabled={!myTurn || busy || !text.trim()}>Send</button>
+              <button type="submit" disabled={busy || !text.trim()}>Send</button>
             </form>
             {pending && (
               <div className="row" role="group" aria-label="Confirm move" style={{ marginTop: ".5rem" }}>
@@ -340,6 +396,25 @@ function SessionView({ id }: { id: string }) {
               </div>
             )}
             <VoicePicker />
+          </section>
+
+          <section className="card" aria-label="Position questions">
+            <div className="row">
+              <button onClick={() => (quiz ? (setQuiz(null), say("system", "Question skipped.")) : void startQuiz())}>
+                {quiz ? "Skip question" : "Quiz me on this position"}
+              </button>
+              {tally && (
+                <span className="muted" aria-live="polite">
+                  Quiz: {tally.correct}/{tally.answered} correct
+                  {tally.mean_score != null && <> · mean {Math.round(tally.mean_score * 100)}%</>}
+                </span>
+              )}
+            </div>
+            {quiz && <p><strong>Question:</strong> {quiz.prompt}</p>}
+            {lastAnswer && <p className="muted">{lastAnswer}</p>}
+            {!quiz && !lastAnswer && (
+              <p className="muted">Ask by voice or text: “where is my knight”, “what's on e5”, “anything hanging”, “whose move”, “what's the eval”.</p>
+            )}
           </section>
 
           <h2>Live captions</h2>

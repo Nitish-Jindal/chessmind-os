@@ -2,25 +2,34 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import chess
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chessmind.db import get_session
 from chessmind.deps import get_current_player
-from chessmind.models import Player, TrainingSession
+from chessmind.models import Player, PositionQuestion, TrainingSession
 from chessmind.schemas.sessions import (
+    AskResponse,
     CoachingPayload,
     EngineLine,
     FinishResponse,
     LegalMovesResponse,
     MoveRequest,
     MoveResponse,
+    QuestionTally,
+    QuizAnswerResponse,
+    QuizQuestion,
+    QuizRequest,
     RevealRequest,
     RevealResponse,
     SessionCreate,
     SessionState,
+    UtteranceRequest,
 )
+from chessmind.services import position_questions as pq
 from chessmind.services.session import (
     apply_player_move,
     consume_reveal,
@@ -175,3 +184,65 @@ async def post_finish(
     ts = await _owned(session, session_id, player)
     await finish_session(session, ts=ts)
     return FinishResponse(session_id=ts.id, status="finished", ended_at=ts.ended_at)
+
+
+@router.post("/{session_id}/ask", response_model=AskResponse)
+async def post_ask(
+    session_id,
+    payload: UtteranceRequest,
+    player: Player = Depends(get_current_player),
+    session: AsyncSession = Depends(get_session, scope="function"),
+) -> AskResponse:
+    """Answer a question about the current board from python-chess (+ cached Stockfish for eval)."""
+    ts = await _owned(session, session_id, player)
+    out = await pq.ask(session, ts=ts, alternatives=payload.all_texts())
+    return AskResponse(session_id=ts.id, understood=out.understood, question_id=out.question_id,
+                       kind=out.kind, answer_text=out.answer_text, facts=out.facts,
+                       questions_asked=out.questions_asked)
+
+
+@router.post("/{session_id}/quiz", response_model=QuizQuestion, status_code=status.HTTP_201_CREATED)
+async def post_quiz(
+    session_id,
+    payload: QuizRequest,
+    player: Player = Depends(get_current_player),
+    session: AsyncSession = Depends(get_session, scope="function"),
+) -> QuizQuestion:
+    """Ask the player a visualization question about the current board (seeded)."""
+    ts = await _owned(session, session_id, player)
+    row = await pq.new_quiz(session, ts=ts, kind=payload.kind)
+    return QuizQuestion(session_id=ts.id, question_id=row.id, kind=row.kind, prompt=row.prompt)
+
+
+@router.post("/{session_id}/quiz/{question_id}/answer", response_model=QuizAnswerResponse)
+async def post_quiz_answer(
+    session_id,
+    question_id: UUID,
+    payload: UtteranceRequest,
+    player: Player = Depends(get_current_player),
+    session: AsyncSession = Depends(get_session, scope="function"),
+) -> QuizAnswerResponse:
+    """Score a spoken/typed answer against the board facts captured when the question was asked."""
+    ts = await _owned(session, session_id, player)
+    row = await session.get(PositionQuestion, question_id)
+    if row is None or row.session_id != ts.id or row.mode != "quiz":
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "question not found")
+    try:
+        out = await pq.answer_quiz(session, ts=ts, row=row, alternatives=payload.all_texts())
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    return QuizAnswerResponse(
+        session_id=ts.id, question_id=row.id, understood=out.understood, correct=out.correct,
+        score=out.score, expected_text=out.expected_text, feedback=out.feedback,
+        tally=QuestionTally(**await pq.tally(session, ts)),
+    )
+
+
+@router.get("/{session_id}/questions", response_model=QuestionTally)
+async def get_question_tally(
+    session_id,
+    player: Player = Depends(get_current_player),
+    session: AsyncSession = Depends(get_session, scope="function"),
+) -> QuestionTally:
+    ts = await _owned(session, session_id, player)
+    return QuestionTally(**await pq.tally(session, ts))
