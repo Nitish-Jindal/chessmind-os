@@ -381,6 +381,20 @@ sane default; **we do not use cursor pagination in the MVP** (see §11.4).
 | `GET  /opponents/{id}/tree?position=&color=&limit=20` | top-N moves per position; **limit default 20, no cursor** |
 | `GET  /players/{id}/mastery` | mastery scores, due drills, weak branches, analytics |
 
+**Added 2026-10-29 (as built):**
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET  /openings/tree` → `masters` block | real Lichess Masters stats for the root (source, status, fetched_at, sample size, per-move W/D/B), kept apart from local counts (`local_stats_note`) |
+| `GET  /openings/masters?fen=` | the same block for any legal position, in the local graph or not |
+| `POST /sessions/{id}/ask` | answer a board question (piece location, square contents, hanging pieces, side to move, evaluation) from the session FEN via python-chess; eval from the cache-first Stockfish row |
+| `POST /sessions/{id}/quiz` · `POST /sessions/{id}/quiz/{qid}/answer` · `GET /sessions/{id}/questions` | seeded visualization quiz about the current board; spoken/typed answers scored against facts captured at question time; persisted in `position_question` |
+
+Lichess explorer data is cached in `master_explorer_cache` (canonical FEN,
+TTL) and mirrored into `master_move_stat`, so the §8.3 master tier is fed
+by real data once positions have been viewed. Network calls never sit in
+the move hot path: the sampler only reads the table.
+
 Error shape is uniform: `{ "error": { "code": "...", "message": "...",
 "details": {} } }` with HTTP status reflecting the class.
 

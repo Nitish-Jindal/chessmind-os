@@ -3,7 +3,7 @@
 A single-pane view of where the five-day MVP is. Update as items land; do
 not mark a phase complete until its proof condition is demonstrated.
 
-Last updated: 2026-10-29 — Render Blueprint + deploy rehearsal, measured latency, ACCEPTANCE.md walk of the 13 scenarios.
+Last updated: 2026-10-29 — Render Blueprint + deploy rehearsal; position questions/quiz; Lichess Masters adapter; ACCEPTANCE.md walk of the 13 scenarios.
 
 ## Phase 0 — Scaffold & plan
 
@@ -131,8 +131,11 @@ receive a corrective explanation.
 - [x] Spaced-repetition scheduler (retry today / next day / interval).
       (SM-2; `POST /players/{id}/mastery/next` picks the due item.)
 - [ ] Progress dashboard: weak branches, due drills, opening readiness.
-- [ ] Visualization questions (hanging pieces, pawn structure, candidate
-      moves) scored against the live board.
+- [x] Visualization questions scored against the live board: piece
+      location, square contents, hanging pieces, side to move, rough eval
+      (ask by voice/text, or "quiz me"; `position_question` table;
+      `scripts/proof_position_questions.mjs`). Pawn structure, candidate
+      moves, threatened squares and tactical motifs are not built.
 
 **Proof:** a mistake is tracked, retrained, and the mastery score moves.
 Demonstrated at the API (`scripts/proof_mastery.py`) and now in the UI
@@ -149,6 +152,12 @@ and recall move on screen, dashboard drops to 0 due).
       time control, rating.
 - [x] `GET /opponents/{id}/tree?limit=N` with `limit=20` default per
       position; no cursor pagination. Browsable in the Opponents page.
+- [x] Lichess Masters explorer adapter: real master move stats per
+      position, TTL-cached by canonical FEN, mirrored into
+      `master_move_stat`, shown with source/sample size/attribution on the
+      Openings page, local-count fallback when unreachable. Live fetch is
+      unverified until the Render deploy (sandbox blocks lichess); proven
+      with hand-written fixtures + a local replay server.
 - [x] Digital twin sampler: historical conditional move frequencies with
       smoothing / fallback to broader data; confidence and sample size on
       every row. (Seeded; `opponent_profile` tier verified from the UI.)
@@ -193,8 +202,8 @@ voice. Artifacts: `scripts/data/proof_ui_flows.json`, `ui_*.png`; fixtures
 ## Phase 5 — Day 5: Integration & deploy
 
 - [ ] End-to-end test suite exercising all 13 acceptance scenarios from the
-      handoff. (Walked scenario by scenario in `ACCEPTANCE.md`: 7 pass,
-      6 thin, with direct MetaDb out of scope. Existing proof scripts
+      handoff. (Walked scenario by scenario in `ACCEPTANCE.md`: 8 pass,
+      5 thin, with direct MetaDb out of scope. Existing proof scripts
       re-run against the deploy-shaped stack; logs in
       `scripts/data/deploy_rehearsal/`.)
 - [ ] GitHub Actions: lint, type-check, backend tests, frontend tests,

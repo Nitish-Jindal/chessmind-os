@@ -37,6 +37,9 @@ phase tracking is in [`PROGRESS.md`](PROGRESS.md).
  ├─ sessions FSM (guided / blindfold / tournament / opponent twin)
  ├─ sampler: opponent_profile → master_move_stat → opening_graph → engine
  ├─ labeler + deterministic coaching template (no LLM in the loop)
+ ├─ position questions + quizzes: answered/scored from the session FEN
+ │  (python-chess) and the cached Stockfish row
+ ├─ Lichess Masters explorer adapter (TTL cache → master_move_stat)
  ├─ SM-2 mastery scheduler
  └─ Stockfish: one long-lived UCI process, lock-guarded; engine_analysis
     cache is the primary path
@@ -86,17 +89,20 @@ npm run dev                    # http://localhost:5173
 Tests (real Postgres and real Stockfish; SQLite is not supported anywhere):
 
 ```bash
-cd backend && pytest -q        # 86 tests; needs the chessmind_test DB and engines/stockfish-bin
-cd frontend && npm test        # voice resolver + API base URL
+cd backend && pytest -q        # 147 tests; needs the chessmind_test DB and engines/stockfish-bin
+cd frontend && npm test        # 29 tests: voice resolver, question routing, API base URL
 ```
 
-Known wart: pytest prints `86 passed` and then the interpreter can hang on
+Known wart: pytest prints `147 passed` and then the interpreter can hang on
 exit (pre-existing; the engine/DB background threads are not torn down).
 Run it under `timeout` in scripts.
 
 Browser proofs (headless Chromium against the running stack; only the
-microphone/system voices are stubbed): `node scripts/proof_frontend.mjs`
-and `node scripts/proof_ui_flows.mjs`. API proofs: `scripts/day1_proof.py`,
+microphone/system voices are stubbed): `node scripts/proof_frontend.mjs`,
+`node scripts/proof_ui_flows.mjs` and `node scripts/proof_position_questions.mjs`
+(the last one needs a fresh database and the backend started with
+`LICHESS_EXPLORER_URL=http://127.0.0.1:8765 LICHESS_EXPLORER_BACKOFF_S=2`;
+see the script header). API proofs: `scripts/day1_proof.py`,
 `proof_italian_session.py`, `proof_mastery.py`, `proof_opponent.py`.
 
 ## Configuration
@@ -112,6 +118,11 @@ and `node scripts/proof_ui_flows.mjs`. API proofs: `scripts/day1_proof.py`,
 | `STOCKFISH_DEFAULT_MULTIPV` | `3` | |
 | `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated exact origins. |
 | `CORS_ORIGIN_REGEX` | empty | Optional extra origin regex (used for the Render static-site host). |
+| `LICHESS_EXPLORER_ENABLED` | `true` | Fetch real master stats from the Lichess explorer. Tests set it to `false`. |
+| `LICHESS_EXPLORER_URL` | `https://explorer.lichess.ovh` | Base URL; `/masters` is appended. |
+| `LICHESS_EXPLORER_TTL_HOURS` | `168` | How long a cached position is served before refetching. |
+| `LICHESS_EXPLORER_TIMEOUT_S` / `LICHESS_EXPLORER_BACKOFF_S` | `4` / `60` | Per-request timeout; after a failure, no upstream calls for this long (a 429 honours `Retry-After`). |
+| `LICHESS_API_TOKEN` | empty | Optional. Sent as `Authorization: Bearer` if Lichess starts requiring a token for the explorer. |
 | `VITE_API_BASE_URL` (frontend, build time) | `http://localhost:8000` | Full URL, or a bare host: `api.example.com` → `https://api.example.com`; a dot-less Render service host `chessmind-api` → `https://chessmind-api.onrender.com`. |
 
 ## Dataset ingestion
@@ -133,6 +144,22 @@ and `node scripts/proof_ui_flows.mjs`. API proofs: `scripts/day1_proof.py`,
 - **Opponent PGNs** — `POST /opponents`, then `POST /opponents/{id}/import`
   (or the `opponent` intent). Rebuilds the opponent's conditional move
   frequencies used by the twin sampler.
+- **Real master statistics (Lichess Masters)** — fetched on demand, per
+  position, from `https://explorer.lichess.ovh/masters?fen=…` (free; no key
+  needed today). `/openings/tree` returns them in a separate `masters` block
+  (source, status, fetch time, total games, per-move White/Draw/Black and
+  average rating, opening name, lichess.org link). They are never mixed
+  into the local counts, which carry a `local_stats_note`. `GET
+  /openings/masters?fen=…` works for any legal position, even one outside
+  the local graph. Every move in a response is validated with python-chess
+  (`parse_san` on the queried board; Lichess's `e1h1`-style castling is
+  normalized) before it is stored or served. Snapshots are cached in
+  `master_explorer_cache` keyed by canonical FEN, with a TTL, and the
+  per-move counts are mirrored into `master_move_stat`, so the opponent
+  sampler's master tier runs on the same real data. If Lichess is
+  unreachable, a stale cached snapshot is served (`status: stale`), or
+  `status: unavailable` and the UI shows local counts only. The Openings
+  page shows the Lichess attribution and a link back.
 - Fixtures: `scripts/data/ui_repertoire_153.pgn`, `ui_opponent_120.pgn`.
 
 ## Stockfish deployment
@@ -167,6 +194,25 @@ Voice is the browser's Web Speech API: no server-side speech, no keys.
   `voiceschanged`, and the choice is stored in `player.settings_json.tts_voice`.
 - Blindfold reveals: `settings_json.blindfold_free_reveals_per_session`
   (default 2); extra reveals lower the visualization score.
+- **Position questions** (handoff §3.3), by voice or text, at any point in
+  a session. Questions are recognized client-side (`isBoardQuestion`) and
+  sent to `POST /sessions/{id}/ask`, which parses them on the server.
+  Supported: "where is my knight" / "where are your bishops", "what's on
+  e5" ("see five" works), "anything hanging?" / "is your rook hanging",
+  "whose move is it", and "what's the eval" / "who is better". Answers come
+  from the session FEN via python-chess. The evaluation comes from the
+  cache-first Stockfish path (depth 10, the persisted `engine_analysis`
+  row), white-centric with a player-relative reading. Answers are
+  captioned and spoken. "Hanging" means attacked by more enemy pieces than
+  defenders (no exchange evaluation); the answer says so.
+- **Quiz mode**: "quiz me" (or the button) gets a seeded question about
+  the current board. Kinds: piece location, square contents, hanging
+  pieces, side to move, rough evaluation. The spoken answer is scored
+  against facts captured when the question was asked
+  (`POST /sessions/{id}/quiz/{qid}/answer`). Square sets use Jaccard
+  overlap, square contents give half credit each for piece and colour, and
+  the evaluation bucket uses ±50 cp. Every question and answer is stored
+  in `position_question`. `GET /sessions/{id}/questions` returns the tally.
 
 ## Deploy to Render
 
@@ -242,13 +288,26 @@ deployed numbers.
   MetaDb or ChessBase vendor API integration, and none will be built
   without credentials and licensing. Nothing in the repo talks to either
   vendor.
-- **Lichess master statistics are not ingested.** The sampler has a
-  `master_move_stat` tier (with source and sample size), but the table is
-  empty. The plan is to fetch Lichess masters stats at runtime on the
-  deployed host, because this build sandbox cannot reach lichess.org. That
-  fetcher is not written. Until it is, "open" statistics come only from
-  imported PGNs, and the seeded W/L/D counts are not real (see Dataset
-  ingestion).
+- **Lichess master statistics are verified against a hand-written
+  fixture only.** The adapter, cache, fallback and UI are built and tested,
+  but explorer.lichess.ovh is blocked by this build sandbox's network
+  policy. Parsing, caching, TTL, `master_move_stat` mirroring, stale/
+  unavailable fallback and the UI panel are proven with JSON fixtures
+  hand-written in the documented response shape
+  (`backend/tests/fixtures/`, marked as such inside the files) and a
+  local replay server. The first live fetch happens on the deployed host.
+  Check it there (Openings page → "fetched just now"), and run
+  `python scripts/record_explorer_fixture.py` from a networked host to
+  replace the fixtures with recorded responses. If Lichess requires a
+  token for the explorer, set `LICHESS_API_TOKEN`. Seeded local W/L/D
+  counts remain assigned, not real, and are labelled as such.
+- **Opening names on local positions are wrong for early moves.**
+  Pre-existing: the PGN importer stamps a game's header ECO/Opening on
+  every position of that game, and the first game imported wins. On the
+  seeded database the start position reads "C50 Italian Giuoco
+  Pianissimo". The masters panel shows Lichess's per-position opening name
+  instead. Fixing the importer needs a data repair of existing rows and is
+  not done here.
 - **Render free-tier cold start.** The free web service sleeps after
   ~15 min idle. The first request then waits for the container to boot,
   and the first analysis also pays the Stockfish process spawn. Expect
@@ -262,8 +321,10 @@ deployed numbers.
   CI and local proofs drive the same resolver → `/move` path with typed
   input and a stubbed `speechSynthesis`. No real microphone is available
   headless.
-- **Visualization questions** (piece-location / hanging-piece quizzes over
-  a spoken variation) are not built. Blindfold play with reveal budgets is.
+- **Position questions cover five kinds.** Threatened squares, pawn
+  structure, candidate moves and tactical motifs (also listed in handoff
+  §3.3) are not built. Asking questions in blindfold mode is counted
+  (`questions_asked`) but does not reduce the visualization score.
 - **Chess DNA** (`GET /players/{id}/chess-dna`) and the progress dashboard
   beyond the mastery page are not built.
 - **LLM coach not wired.** Coaching is a deterministic template over
