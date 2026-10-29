@@ -61,11 +61,34 @@ def _schema() -> None:
     _reset_schema_sync()
 
 
+_TABLES_TO_TRUNCATE = [
+    "repertoire_line",
+    "move_edge",
+    "position",
+    "game",
+    "import_job",
+    "player",
+]
+
+
+async def _truncate_all(engine) -> None:
+    """TRUNCATE every table so each test starts from an empty DB.
+
+    Simpler than nested transactions when tests commit mid-way (e.g. the
+    import endpoint commits the ImportJob row so the background task can
+    see it).
+    """
+    async with engine.begin() as conn:
+        tables = ", ".join(_TABLES_TO_TRUNCATE)
+        await conn.exec_driver_sql(f"TRUNCATE TABLE {tables} RESTART IDENTITY CASCADE")
+
+
 @pytest_asyncio.fixture
 async def db() -> AsyncIterator[AsyncSession]:
     """Function-scoped session on a function-scoped engine so loop affinity matches."""
     settings = get_settings()
     engine = create_async_engine(settings.database_url, poolclass=None)
+    await _truncate_all(engine)
     SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with SessionLocal() as session:
         try:
