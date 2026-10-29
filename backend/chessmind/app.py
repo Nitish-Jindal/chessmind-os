@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 
 from chessmind import __version__
-from chessmind.routers import auth, health, imports, players
+from chessmind.routers import auth, health, imports, openings, players
 
 logger = logging.getLogger("chessmind")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -43,3 +43,4 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(players.router)
 app.include_router(imports.router)
+app.include_router(openings.router)
