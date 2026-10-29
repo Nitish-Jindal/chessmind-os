@@ -462,7 +462,7 @@ async def _update_mastery_state(
         else SM2State()
     )
     sm2 = apply_review(prev, quality=quality, now=now)
-    state_label = mastery_state_label(sm2.reps, sm2.ease_factor, sm2.interval_days)
+    state_label = mastery_state_label(sm2.reps, sm2.ease_factor, sm2.interval_days, tested=True)
 
     recall = max(0.0, 1.0 - (label.eval_swing_cp / 500.0))
     recall = min(1.0, recall)

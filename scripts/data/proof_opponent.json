@@ -1,0 +1,50 @@
+{
+  "proof": "opponent_conditioned_session",
+  "email": "proof-c-2efccd@chessmind.example.com",
+  "opponent_profile_id": "578224c9-0efd-4812-beb1-f986e49b736b",
+  "import_job": {
+    "id": "d5f40f0c-179d-46b3-bef6-673033e2172c",
+    "kind": "opponent_pgn",
+    "source": "proof",
+    "status": "succeeded",
+    "progress_games": 120,
+    "total_games": 120,
+    "error": null,
+    "artifacts_json": {
+      "edges": 1200,
+      "games": 120,
+      "errors": [],
+      "positions_touched": 47
+    },
+    "started_at": "2026-10-29T13:32:15.070346Z",
+    "finished_at": "2026-10-29T13:32:28.524509Z",
+    "created_at": "2026-10-29T13:32:15.042575Z"
+  },
+  "opponent_tree_after_d4": {
+    "opponent_profile_id": "578224c9-0efd-4812-beb1-f986e49b736b",
+    "position_canonical_key": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -",
+    "position_fen": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1",
+    "opponent_color": "black",
+    "edges": [
+      {
+        "move_uci": "g8f6",
+        "move_san": "Nf6",
+        "games_count": 60,
+        "wins": 30,
+        "losses": 0,
+        "draws": 30,
+        "recency_weight": 1.0,
+        "sample_size_bucket": "large",
+        "confidence": 1.0
+      }
+    ],
+    "sample_total": 60
+  },
+  "first_opponent_move": {
+    "san": "Nf6",
+    "uci": "g8f6",
+    "source_tier": "opponent_profile",
+    "confidence": 1.0,
+    "sample_size": 60
+  }
+}

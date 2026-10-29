@@ -72,7 +72,11 @@ def apply_review(
 
     if quality < 3:
         reps = 0
-        interval = 1.0
+        # Immediate re-review on failure (ARCHITECTURE §3.5 / Day-2 corrective
+        # coaching flow): classic SM-2 defers to tomorrow, but a mistake made
+        # right now needs to be retrained today — the next_drill endpoint picks
+        # it back up on the next request.
+        interval = 0.0
         ease = prev.ease_factor  # EF unchanged on failure in classic SM-2.
     else:
         reps = prev.reps + 1
@@ -95,10 +99,18 @@ def apply_review(
     )
 
 
-def mastery_state_label(reps: int, ease: float, interval: float) -> str:
-    """Classify a MasteryState row into {untested|emerging|competent|mastered|decayed}."""
+def mastery_state_label(reps: int, ease: float, interval: float, *, tested: bool = False) -> str:
+    """Classify a MasteryState row into {untested|emerging|competent|mastered|decayed}.
+
+    ``tested`` lets callers distinguish rows that have never been reviewed
+    (``untested``) from rows that were reviewed and failed back to zero reps
+    (``decayed`` / ``emerging``).
+    """
     if reps == 0:
-        return "untested"
+        if not tested:
+            return "untested"
+        # A failed review resets reps to 0 but the position has been seen.
+        return "decayed" if ease < 2.3 else "emerging"
     if reps < 3:
         return "emerging"
     if interval >= 30 and ease >= 2.3:

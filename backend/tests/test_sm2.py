@@ -53,8 +53,10 @@ def test_blunder_resets_reps_and_interval():
     prev = SM2State(ease_factor=2.6, interval_days=15.6, reps=3)
     out = apply_review(prev, quality=1, now=NOW)  # blunder
     assert out.reps == 0
-    assert out.interval_days == 1.0
-    assert out.due_at == NOW + timedelta(days=1)
+    # Day-2 flow: failed review is immediately due so the next_drill endpoint
+    # picks it right back up.
+    assert out.interval_days == 0.0
+    assert out.due_at == NOW
     # Ease unchanged on failure (classic SM-2).
     assert out.ease_factor == 2.6
 
@@ -75,6 +77,8 @@ def test_quality_bounds_validation():
 
 def test_mastery_state_label_tiers():
     assert mastery_state_label(reps=0, ease=2.5, interval=0.0) == "untested"
+    assert mastery_state_label(reps=0, ease=2.5, interval=0.0, tested=True) == "emerging"
+    assert mastery_state_label(reps=0, ease=2.0, interval=0.0, tested=True) == "decayed"
     assert mastery_state_label(reps=1, ease=2.5, interval=1.0) == "emerging"
     assert mastery_state_label(reps=5, ease=2.4, interval=10.0) == "competent"
     assert mastery_state_label(reps=6, ease=2.4, interval=45.0) == "mastered"
