@@ -3,7 +3,7 @@
 A single-pane view of where the five-day MVP is. Update as items land; do
 not mark a phase complete until its proof condition is demonstrated.
 
-Last updated: 2026-10-29 — Day 1 complete.
+Last updated: 2026-10-29 — Day 1 complete; frontend import / mastery-drill / opponent-twin surfaces wired and proven in a real browser.
 
 ## Phase 0 — Scaffold & plan
 
@@ -54,8 +54,10 @@ and the backend scaffold boots clean (uvicorn + Postgres via docker-compose).
       real opening lines across Italian, Ruy Lopez, Sicilian, and QGD
       family (QGD, Slav, Catalan, Nimzo-Indian) and feeds them
       through the same import pipeline the API uses.
-- [ ] Frontend shell: login, profile, PGN upload page, opening tree
-      view. **Deferred to Day 2** per the sprint plan.
+- [x] Frontend shell: login, profile, PGN upload page, opening tree
+      view. Landed with the Day-2 frontend; the upload page (`/import`)
+      gained file + paste input, an intent selector, job polling and
+      error display (see "UI flows proof" below).
 
 **Proof — passed 2026-10-29:**
 
@@ -122,31 +124,71 @@ receive a corrective explanation.
       initiative, pawn structure) with confidence and evidence.
 - [ ] `training_attempt` captures played move, best alternatives, eval
       swing, latency, hints used.
-- [ ] Mastery states (`untested → emerging → competent → mastered →
+- [x] Mastery states (`untested → emerging → competent → mastered →
       decayed`) with separate recall / understanding / visualization / speed
-      scores.
-- [ ] Spaced-repetition scheduler (retry today / next day / interval).
+      scores. (Backend `mastery_state`; visible per-position before/after in
+      the drill UI.)
+- [x] Spaced-repetition scheduler (retry today / next day / interval).
+      (SM-2; `POST /players/{id}/mastery/next` picks the due item.)
 - [ ] Progress dashboard: weak branches, due drills, opening readiness.
 - [ ] Visualization questions (hanging pieces, pawn structure, candidate
       moves) scored against the live board.
 
 **Proof:** a mistake is tracked, retrained, and the mastery score moves.
+Demonstrated at the API (`scripts/proof_mastery.py`) and now in the UI
+(`scripts/proof_ui_flows.mjs`: 1.g4 graded a mistake → Mastery page
+"Start due drill" → answer 1.e4 → reps 0→1, interval 0→1 day, next-due
+and recall move on screen, dashboard drops to 0 due).
 
 ## Phase 4 — Day 4: Opponent
 
-- [ ] Bulk opponent PGN import under `POST /opponents/import`; async via
-      `ImportJob`; dedupe by source + headers; attribution preserved.
+- [x] Bulk opponent PGN import (`POST /opponents/{id}/import`, and
+      `POST /imports/pgn` with `intent=opponent`); async via `ImportJob`;
+      attribution preserved. (Dedupe by source + headers not verified.)
 - [ ] `opponent_profile` + opening-tree stats filtered by recency, color,
       time control, rating.
-- [ ] `GET /opponents/{id}/tree?limit=N` with `limit=20` default per
-      position; no cursor pagination.
-- [ ] Digital twin sampler: historical conditional move frequencies with
+- [x] `GET /opponents/{id}/tree?limit=N` with `limit=20` default per
+      position; no cursor pagination. Browsable in the Opponents page.
+- [x] Digital twin sampler: historical conditional move frequencies with
       smoothing / fallback to broader data; confidence and sample size on
-      every row.
-- [ ] Opponent-specific voice session mode.
+      every row. (Seeded; `opponent_profile` tier verified from the UI.)
+- [x] Opponent-specific session mode: "Play the twin" starts an
+      `opponent_twin` session. Voice input is the shared session screen
+      (real-mic voice is verified on the HTTPS deploy, not in CI).
 
 **Proof:** import 100+ opponent PGNs and run a frequency-weighted voice
-game.
+game. Done at the API (`scripts/proof_opponent.py`) and from the UI: 120
+opponent games uploaded on `/import`, tree on `/opponents`, "Play the twin"
+→ 1.d4 answered `Nf6` from the `opponent_profile` tier.
+
+### UI flows proof — 2026-10-29
+
+`node scripts/proof_ui_flows.mjs` drives the Vite frontend in headless
+Chromium against the real FastAPI backend, Postgres 16 and Stockfish 16.
+Only `speechSynthesis` is stubbed (no system voices in headless); moves are
+typed, which takes the same resolver → `POST /sessions/{id}/move` path as
+voice. Artifacts: `scripts/data/proof_ui_flows.json`, `ui_*.png`; fixtures
+`ui_repertoire_153.pgn`, `ui_opponent_120.pgn`.
+
+- **PGN upload (`/import`)** — intent selector (repertoire / corpus /
+  opponent), file + paste, `POST /imports/pgn` then polling `GET /imports/{id}`.
+  153-game file → "153 of 153 games imported · 266 positions · 1725 move
+  edges · 1725 repertoire lines"; link to the opening tree shows 1.e4 = 108
+  games. Corpus intent writes graph only (0 repertoire lines). Job errors
+  render in the UI (opponent not in headers → `partial` + message).
+  Backend: `/imports/pgn` gained `intent` (+ `opponent_profile_id`).
+- **Mastery drill** — "Start due drill" → `POST /players/{id}/mastery/next` →
+  session started at that FEN (`?drill=<position_id>`) → before/after
+  `MasteryState` table via new `GET /players/{id}/mastery/{position_id}`.
+- **Opponents** — shared import panel (120 games), conditional tree, "Play
+  the twin" with a colour choice.
+- **`PATCH /players/me`** already merged `settings_json` (top-level key
+  merge; nested objects are replaced whole). Verified in the browser run and
+  covered by `test_patch_me_merges_settings` plus a new
+  profile-only/partial-patch test.
+- Backend tests: 76 passing (5 new). Also fixed a test-infra bug: background
+  import jobs reuse the app's module-level engine, whose pooled connections
+  outlived the previous test's event loop; `conftest` now drops them per test.
 
 ## Phase 5 — Day 5: Integration & deploy
 

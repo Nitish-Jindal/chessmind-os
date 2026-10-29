@@ -138,3 +138,24 @@ async def next_drill(
             due_now=False, row=await _row(session, upcoming), reason="next due in the future"
         )
     return NextDrillResponse(due_now=True, row=await _row(session, row), reason="due now")
+
+
+@router.get("/{player_id}/mastery/{position_id}", response_model=MasteryRow)
+async def get_mastery_row(
+    player_id: UUID,
+    position_id: UUID,
+    player: Player = Depends(get_current_player),
+    session: AsyncSession = Depends(get_session),
+) -> MasteryRow:
+    """One position's MasteryState — lets a drill show its row before and after an answer."""
+    _ensure_self(player_id, player)
+    m = (
+        await session.execute(
+            select(MasteryState).where(
+                MasteryState.player_id == player_id, MasteryState.position_id == position_id
+            )
+        )
+    ).scalar_one_or_none()
+    if m is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "no mastery state for that position")
+    return await _row(session, m)

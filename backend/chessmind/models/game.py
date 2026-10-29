@@ -20,7 +20,7 @@ class ImportJob(Base, UUIDPrimaryKey, Timestamped):
         PGUUID(as_uuid=True), ForeignKey("player.id", ondelete="CASCADE"), nullable=False, index=True
     )
     kind: Mapped[str] = mapped_column(String(32), nullable=False)
-    # 'player_pgn' | 'opponent_pgn' | 'seed'
+    # 'player_pgn' | 'corpus_pgn' | 'opponent_pgn' | 'seed'
     opponent_profile_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
     # kept nullable; opponent_profile table lands in Phase 4
     source: Mapped[str] = mapped_column(String(64), nullable=False, default="upload")

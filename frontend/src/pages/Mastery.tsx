@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api, type MasteryDashboard, type MasteryRow } from "../api";
 import { useAuth } from "../auth";
 
@@ -36,13 +37,42 @@ export function Mastery() {
   const { player } = useAuth();
   const [d, setD] = useState<MasteryDashboard | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const nav = useNavigate();
   useEffect(() => {
     if (player) api.mastery(player.id).then(setD).catch((e: Error) => setErr(e.message));
   }, [player]);
+
+  /** POST /mastery/next picks the next due item; the drill is a real session started at that position. */
+  async function startDrill() {
+    if (!player) return;
+    setErr(null);
+    setNote(null);
+    try {
+      const n = await api.nextDrill(player.id);
+      if (!n.row) return setNote("Nothing to drill yet — play a session first and your mistakes will show up here.");
+      if (!n.due_now) return setNote(`Nothing is due right now. Next item is due ${new Date(n.row.due_at).toLocaleString()}.`);
+      const s = await api.createSession({
+        mode: "guided",
+        player_color: n.row.fen.split(" ")[1] === "b" ? "black" : "white",
+        sampler_mode: "mainline",
+        novelty_prob: 0,
+        starting_fen: n.row.fen,
+      });
+      nav(`/session/${s.id}?drill=${n.row.position_id}`);
+    } catch (e) {
+      setErr((e as Error).message);
+    }
+  }
   return (
     <>
       <h1>Mastery</h1>
-      {err && <p className="error">{err}</p>}
+      <div className="row">
+        <button className="primary" onClick={() => void startDrill()}>Start due drill</button>
+        {d && <span className="muted">{d.due_now} due now</span>}
+        {note && <span role="status">{note}</span>}
+      </div>
+      {err && <p className="error" role="alert">{err}</p>}
       {d && (
         <>
           <div className="row">

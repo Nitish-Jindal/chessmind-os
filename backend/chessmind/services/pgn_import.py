@@ -133,8 +133,13 @@ async def import_pgn_text(
     source: str = "upload",
     import_job_id: UUID | None = None,
     stats: ImportStats | None = None,
+    with_repertoire: bool = True,
 ) -> ImportStats:
-    """Parse ``pgn_text`` and persist every game it contains."""
+    """Parse ``pgn_text`` and persist every game it contains.
+
+    ``with_repertoire=False`` is the "corpus" intent: games feed the opening
+    graph (positions, edges, counts) but create no repertoire lines.
+    """
     stats = stats or ImportStats()
     for game in iter_games(pgn_text):
         try:
@@ -145,6 +150,7 @@ async def import_pgn_text(
                 source=source,
                 import_job_id=import_job_id,
                 stats=stats,
+                with_repertoire=with_repertoire,
             )
         except Exception as exc:  # noqa: BLE001 — surface in artifacts, keep importing
             logger.exception("game import failed")
@@ -160,6 +166,7 @@ async def _import_single_game(
     source: str,
     import_job_id: UUID | None,
     stats: ImportStats,
+    with_repertoire: bool = True,
 ) -> None:
     headers = game.headers
     pgn_text = str(game)
@@ -213,6 +220,8 @@ async def _import_single_game(
         touched_positions.add(from_pos_id)
         touched_positions.add(to_pos_id)
 
+        if not with_repertoire:
+            continue
         color = "white" if visit.board_before.turn == chess.WHITE else "black"
         await upsert_repertoire_line(
             session,
@@ -255,6 +264,7 @@ async def run_import_job(job_id: UUID, pgn_text: str) -> None:
         job.started_at = datetime.now(timezone.utc)
         await session.commit()
         player_id = job.player_id
+        with_repertoire = job.kind != "corpus_pgn"
 
     stats = ImportStats()
     try:
@@ -266,6 +276,7 @@ async def run_import_job(job_id: UUID, pgn_text: str) -> None:
                 source="upload",
                 import_job_id=job_id,
                 stats=stats,
+                with_repertoire=with_repertoire,
             )
             await session.commit()
         final_status = "succeeded" if not stats.errors else "partial"

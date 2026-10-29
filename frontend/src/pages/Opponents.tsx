@@ -1,8 +1,9 @@
 import { Chess } from "chess.js";
-import { useCallback, useEffect, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, type Opponent, type OpponentTree } from "../api";
 import { Board } from "../components/Board";
+import { ImportPanel } from "../components/ImportPanel";
 
 function TreeBrowser({ opp }: { opp: Opponent }) {
   const [path, setPath] = useState<{ fen: string; san: string | null }[]>([{ fen: new Chess().fen(), san: null }]);
@@ -59,8 +60,7 @@ export function Opponents() {
   const [list, setList] = useState<Opponent[]>([]);
   const [sel, setSel] = useState<Opponent | null>(null);
   const [name, setName] = useState("");
-  const [pgn, setPgn] = useState("");
-  const [status, setStatus] = useState<string | null>(null);
+  const [color, setColor] = useState<"white" | "black">("white");
   const [err, setErr] = useState<string | null>(null);
 
   const reload = useCallback(async (keep?: string) => {
@@ -82,33 +82,15 @@ export function Opponents() {
     }
   }
 
-  async function runImport() {
+  async function playTwin() {
     if (!sel) return;
     setErr(null);
     try {
-      let job = await api.importOpponentPgn(sel.id, pgn);
-      while (job.status === "queued" || job.status === "running") {
-        setStatus(`Importing… ${job.progress_games}/${job.total_games || "?"} games`);
-        await new Promise((r) => setTimeout(r, 700));
-        job = await api.importJob(job.id);
-      }
-      setStatus(`Import ${job.status}: ${job.progress_games} games`);
-      setPgn("");
-      await reload(sel.id);
+      const s = await api.createSession({ mode: "opponent", player_color: color, sampler_mode: "opponent_twin", opponent_profile_id: sel.id });
+      nav(`/session/${s.id}`);
     } catch (e) {
       setErr((e as Error).message);
     }
-  }
-
-  function onFile(e: ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (f) void f.text().then(setPgn);
-  }
-
-  async function playTwin() {
-    if (!sel) return;
-    const s = await api.createSession({ mode: "guided", player_color: "white", sampler_mode: "opponent_twin", opponent_profile_id: sel.id });
-    nav(`/session/${s.id}`);
   }
 
   return (
@@ -126,12 +108,17 @@ export function Opponents() {
         <>
           <section className="card">
             <h2>Import games for {sel.display_name}</h2>
-            <input type="file" accept=".pgn,text/plain" onChange={onFile} aria-label="PGN file" />
-            <textarea rows={5} style={{ width: "100%", marginTop: ".5rem" }} placeholder="…or paste PGN here" value={pgn} onChange={(e) => setPgn(e.target.value)} />
-            <div className="row">
-              <button className="primary" disabled={!pgn.trim()} onClick={runImport}>Import</button>
-              <button disabled={sel.games_imported === 0} onClick={playTwin}>Play this opponent</button>
-              {status && <span role="status">{status}</span>}
+            <ImportPanel key={sel.id} intent="opponent" opponentId={sel.id} onDone={() => void reload(sel.id)} />
+            <div className="row" style={{ marginTop: ".75rem" }}>
+              <label>
+                You play{" "}
+                <select value={color} onChange={(e) => setColor(e.target.value as "white" | "black")} aria-label="Your color against the twin">
+                  <option value="white">White</option>
+                  <option value="black">Black</option>
+                </select>
+              </label>
+              <button className="primary" disabled={sel.games_imported === 0} onClick={playTwin}>Play the twin</button>
+              {sel.games_imported === 0 && <span className="muted">Import some of their games first.</span>}
             </div>
           </section>
           <h2>Opening tree</h2>

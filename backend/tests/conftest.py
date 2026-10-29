@@ -28,6 +28,7 @@ os.environ.setdefault("STOCKFISH_PATH", os.path.abspath("../engines/stockfish-bi
 
 from chessmind.app import app  # noqa: E402
 from chessmind.config import get_settings  # noqa: E402
+from chessmind.db import engine as app_engine  # noqa: E402
 from chessmind.db import get_session  # noqa: E402
 from chessmind.models import Base  # noqa: E402
 
@@ -94,6 +95,9 @@ async def _truncate_all(engine) -> None:
 async def db() -> AsyncIterator[AsyncSession]:
     """Function-scoped session on a function-scoped engine so loop affinity matches."""
     settings = get_settings()
+    # Background import jobs use the app's module-level engine. Its pooled connections are bound to
+    # the previous test's (closed) event loop, so drop them rather than reuse them.
+    await app_engine.dispose(close=False)
     engine = create_async_engine(settings.database_url, poolclass=None)
     await _truncate_all(engine)
     SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

@@ -133,3 +133,31 @@ async def test_rating_bounds_rejected(client):
         json={"rating_fide": 9999},
     )
     assert r.status_code == 422
+
+
+async def test_patch_me_without_settings_leaves_them_untouched(client):
+    await client.post("/auth/register", json={**REGISTER_PAYLOAD, "email": "keep@example.com"})
+    r = await client.post(
+        "/auth/login",
+        json={"email": "keep@example.com", "password": REGISTER_PAYLOAD["password"]},
+    )
+    hdr = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+    voice = {"name": "Alex", "lang": "en-US"}
+    r = await client.patch(
+        "/players/me", headers=hdr, json={"settings_json": {"tts_voice": voice, "other": 1}}
+    )
+    assert r.status_code == 200
+
+    # A profile-only patch must not clear settings_json.
+    r = await client.patch("/players/me", headers=hdr, json={"display_name": "Renamed"})
+    assert r.json()["settings_json"] == {"tts_voice": voice, "other": 1}
+
+    # Saving only the voice (what the UI does) overwrites that key, not the rest.
+    new_voice = {"name": "Daniel", "lang": "en-GB"}
+    r = await client.patch("/players/me", headers=hdr, json={"settings_json": {"tts_voice": new_voice}})
+    assert r.json()["settings_json"] == {"tts_voice": new_voice, "other": 1}
+
+    # Persisted, not just echoed.
+    r = await client.get("/players/me", headers=hdr)
+    assert r.json()["settings_json"] == {"tts_voice": new_voice, "other": 1}

@@ -1,0 +1,1439 @@
+[Event "Opp Series 000"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "1"]
+[White "KID_Specialist"]
+[Black "Opponent0"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 001"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "2"]
+[White "Opponent1"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 0-1
+
+[Event "Opp Series 002"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "3"]
+[White "Opponent2"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 1/2-1/2
+
+[Event "Opp Series 003"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "4"]
+[White "KID_Specialist"]
+[Black "Opponent3"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 004"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "5"]
+[White "Opponent4"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 0-1
+
+[Event "Opp Series 005"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "6"]
+[White "Opponent5"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 1/2-1/2
+
+[Event "Opp Series 006"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "7"]
+[White "KID_Specialist"]
+[Black "Opponent6"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 007"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "8"]
+[White "Opponent7"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 0-1
+
+[Event "Opp Series 008"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "9"]
+[White "Opponent8"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 1/2-1/2
+
+[Event "Opp Series 009"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "10"]
+[White "KID_Specialist"]
+[Black "Opponent9"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 010"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "11"]
+[White "Opponent10"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 0-1
+
+[Event "Opp Series 011"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "12"]
+[White "Opponent11"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 1/2-1/2
+
+[Event "Opp Series 012"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "13"]
+[White "KID_Specialist"]
+[Black "Opponent12"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 013"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "14"]
+[White "Opponent13"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 0-1
+
+[Event "Opp Series 014"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "15"]
+[White "Opponent14"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 1/2-1/2
+
+[Event "Opp Series 015"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "16"]
+[White "KID_Specialist"]
+[Black "Opponent15"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 016"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "17"]
+[White "Opponent16"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 0-1
+
+[Event "Opp Series 017"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "18"]
+[White "Opponent17"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 1/2-1/2
+
+[Event "Opp Series 018"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "19"]
+[White "KID_Specialist"]
+[Black "Opponent18"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 019"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "20"]
+[White "Opponent19"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 0-1
+
+[Event "Opp Series 020"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "21"]
+[White "Opponent20"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 1/2-1/2
+
+[Event "Opp Series 021"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "22"]
+[White "KID_Specialist"]
+[Black "Opponent21"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 022"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "23"]
+[White "Opponent22"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 0-1
+
+[Event "Opp Series 023"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "24"]
+[White "Opponent23"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 1/2-1/2
+
+[Event "Opp Series 024"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "25"]
+[White "KID_Specialist"]
+[Black "Opponent24"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 025"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "26"]
+[White "Opponent25"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 0-1
+
+[Event "Opp Series 026"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "27"]
+[White "Opponent26"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 1/2-1/2
+
+[Event "Opp Series 027"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "28"]
+[White "KID_Specialist"]
+[Black "Opponent27"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 028"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "29"]
+[White "Opponent28"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 0-1
+
+[Event "Opp Series 029"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "30"]
+[White "Opponent29"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 1/2-1/2
+
+[Event "Opp Series 030"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "31"]
+[White "KID_Specialist"]
+[Black "Opponent30"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 031"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "32"]
+[White "Opponent31"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 0-1
+
+[Event "Opp Series 032"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "33"]
+[White "Opponent32"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 1/2-1/2
+
+[Event "Opp Series 033"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "34"]
+[White "KID_Specialist"]
+[Black "Opponent33"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 034"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "35"]
+[White "Opponent34"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 0-1
+
+[Event "Opp Series 035"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "36"]
+[White "Opponent35"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 1/2-1/2
+
+[Event "Opp Series 036"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "37"]
+[White "KID_Specialist"]
+[Black "Opponent36"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 037"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "38"]
+[White "Opponent37"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 0-1
+
+[Event "Opp Series 038"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "39"]
+[White "Opponent38"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 1/2-1/2
+
+[Event "Opp Series 039"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "40"]
+[White "KID_Specialist"]
+[Black "Opponent39"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 040"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "41"]
+[White "Opponent40"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 0-1
+
+[Event "Opp Series 041"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "42"]
+[White "Opponent41"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 1/2-1/2
+
+[Event "Opp Series 042"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "43"]
+[White "KID_Specialist"]
+[Black "Opponent42"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 043"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "44"]
+[White "Opponent43"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 0-1
+
+[Event "Opp Series 044"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "45"]
+[White "Opponent44"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 1/2-1/2
+
+[Event "Opp Series 045"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "46"]
+[White "KID_Specialist"]
+[Black "Opponent45"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 046"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "47"]
+[White "Opponent46"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 0-1
+
+[Event "Opp Series 047"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "48"]
+[White "Opponent47"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 1/2-1/2
+
+[Event "Opp Series 048"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "49"]
+[White "KID_Specialist"]
+[Black "Opponent48"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 049"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "50"]
+[White "Opponent49"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 0-1
+
+[Event "Opp Series 050"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "51"]
+[White "Opponent50"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 1/2-1/2
+
+[Event "Opp Series 051"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "52"]
+[White "KID_Specialist"]
+[Black "Opponent51"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 052"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "53"]
+[White "Opponent52"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 0-1
+
+[Event "Opp Series 053"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "54"]
+[White "Opponent53"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 1/2-1/2
+
+[Event "Opp Series 054"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "55"]
+[White "KID_Specialist"]
+[Black "Opponent54"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 055"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "56"]
+[White "Opponent55"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 0-1
+
+[Event "Opp Series 056"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "57"]
+[White "Opponent56"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 1/2-1/2
+
+[Event "Opp Series 057"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "58"]
+[White "KID_Specialist"]
+[Black "Opponent57"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 058"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "59"]
+[White "Opponent58"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 0-1
+
+[Event "Opp Series 059"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "60"]
+[White "Opponent59"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 1/2-1/2
+
+[Event "Opp Series 060"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "61"]
+[White "KID_Specialist"]
+[Black "Opponent60"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 061"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "62"]
+[White "Opponent61"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 0-1
+
+[Event "Opp Series 062"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "63"]
+[White "Opponent62"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 1/2-1/2
+
+[Event "Opp Series 063"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "64"]
+[White "KID_Specialist"]
+[Black "Opponent63"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 064"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "65"]
+[White "Opponent64"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 0-1
+
+[Event "Opp Series 065"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "66"]
+[White "Opponent65"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 1/2-1/2
+
+[Event "Opp Series 066"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "67"]
+[White "KID_Specialist"]
+[Black "Opponent66"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 067"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "68"]
+[White "Opponent67"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 0-1
+
+[Event "Opp Series 068"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "69"]
+[White "Opponent68"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 1/2-1/2
+
+[Event "Opp Series 069"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "70"]
+[White "KID_Specialist"]
+[Black "Opponent69"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 070"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "71"]
+[White "Opponent70"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 0-1
+
+[Event "Opp Series 071"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "72"]
+[White "Opponent71"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 1/2-1/2
+
+[Event "Opp Series 072"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "73"]
+[White "KID_Specialist"]
+[Black "Opponent72"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 073"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "74"]
+[White "Opponent73"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 0-1
+
+[Event "Opp Series 074"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "75"]
+[White "Opponent74"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 1/2-1/2
+
+[Event "Opp Series 075"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "76"]
+[White "KID_Specialist"]
+[Black "Opponent75"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 076"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "77"]
+[White "Opponent76"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 0-1
+
+[Event "Opp Series 077"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "78"]
+[White "Opponent77"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 1/2-1/2
+
+[Event "Opp Series 078"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "79"]
+[White "KID_Specialist"]
+[Black "Opponent78"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 079"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "80"]
+[White "Opponent79"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 0-1
+
+[Event "Opp Series 080"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "81"]
+[White "Opponent80"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 1/2-1/2
+
+[Event "Opp Series 081"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "82"]
+[White "KID_Specialist"]
+[Black "Opponent81"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 082"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "83"]
+[White "Opponent82"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 0-1
+
+[Event "Opp Series 083"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "84"]
+[White "Opponent83"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 1/2-1/2
+
+[Event "Opp Series 084"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "85"]
+[White "KID_Specialist"]
+[Black "Opponent84"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 085"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "86"]
+[White "Opponent85"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 0-1
+
+[Event "Opp Series 086"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "87"]
+[White "Opponent86"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 1/2-1/2
+
+[Event "Opp Series 087"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "88"]
+[White "KID_Specialist"]
+[Black "Opponent87"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 088"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "89"]
+[White "Opponent88"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 0-1
+
+[Event "Opp Series 089"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "90"]
+[White "Opponent89"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 1/2-1/2
+
+[Event "Opp Series 090"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "91"]
+[White "KID_Specialist"]
+[Black "Opponent90"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 091"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "92"]
+[White "Opponent91"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 0-1
+
+[Event "Opp Series 092"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "93"]
+[White "Opponent92"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 1/2-1/2
+
+[Event "Opp Series 093"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "94"]
+[White "KID_Specialist"]
+[Black "Opponent93"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 094"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "95"]
+[White "Opponent94"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 0-1
+
+[Event "Opp Series 095"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "96"]
+[White "Opponent95"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 1/2-1/2
+
+[Event "Opp Series 096"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "97"]
+[White "KID_Specialist"]
+[Black "Opponent96"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 097"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "98"]
+[White "Opponent97"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 0-1
+
+[Event "Opp Series 098"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "99"]
+[White "Opponent98"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 1/2-1/2
+
+[Event "Opp Series 099"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "100"]
+[White "KID_Specialist"]
+[Black "Opponent99"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 100"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "101"]
+[White "Opponent100"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 0-1
+
+[Event "Opp Series 101"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "102"]
+[White "Opponent101"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 1/2-1/2
+
+[Event "Opp Series 102"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "103"]
+[White "KID_Specialist"]
+[Black "Opponent102"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 103"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "104"]
+[White "Opponent103"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 0-1
+
+[Event "Opp Series 104"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "105"]
+[White "Opponent104"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 1/2-1/2
+
+[Event "Opp Series 105"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "106"]
+[White "KID_Specialist"]
+[Black "Opponent105"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 106"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "107"]
+[White "Opponent106"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 0-1
+
+[Event "Opp Series 107"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "108"]
+[White "Opponent107"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 1/2-1/2
+
+[Event "Opp Series 108"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "109"]
+[White "KID_Specialist"]
+[Black "Opponent108"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 109"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "110"]
+[White "Opponent109"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 0-1
+
+[Event "Opp Series 110"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "111"]
+[White "Opponent110"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 1/2-1/2
+
+[Event "Opp Series 111"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "112"]
+[White "KID_Specialist"]
+[Black "Opponent111"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 112"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "113"]
+[White "Opponent112"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 0-1
+
+[Event "Opp Series 113"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "114"]
+[White "Opponent113"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 1/2-1/2
+
+[Event "Opp Series 114"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "115"]
+[White "KID_Specialist"]
+[Black "Opponent114"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 e5 2. Nc3 Nf6 3. g3 Bb4 4. Bg2 O-O 5. Nf3 e4 1-0
+
+[Event "Opp Series 115"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "116"]
+[White "Opponent115"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 0-1
+
+[Event "Opp Series 116"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "117"]
+[White "Opponent116"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 1/2-1/2
+
+[Event "Opp Series 117"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "118"]
+[White "KID_Specialist"]
+[Black "Opponent117"]
+[Result "1-0"]
+[ECO "A20"]
+[Opening "English Opening"]
+
+1. c4 c5 2. Nf3 Nc6 3. g3 g6 4. Bg2 Bg7 5. Nc3 e6 1-0
+
+[Event "Opp Series 118"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "119"]
+[White "Opponent118"]
+[Black "KID_Specialist"]
+[Result "0-1"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. d4 Nf6 2. c4 g6 3. g3 Bg7 4. Bg2 O-O 5. Nc3 d6 0-1
+
+[Event "Opp Series 119"]
+[Site "chessmind-seed"]
+[Date "2026.09.15"]
+[Round "120"]
+[White "Opponent119"]
+[Black "KID_Specialist"]
+[Result "1/2-1/2"]
+[ECO "E60"]
+[Opening "King's Indian Defense"]
+
+1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. e4 d6 1/2-1/2

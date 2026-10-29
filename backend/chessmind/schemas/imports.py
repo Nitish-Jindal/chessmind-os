@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -12,6 +12,15 @@ from pydantic import BaseModel, ConfigDict, Field
 class ImportPgnRequest(BaseModel):
     pgn: str = Field(min_length=1, description="Raw PGN text; may contain many games.")
     source: str = Field(default="upload", max_length=64)
+    intent: Literal["repertoire", "opponent", "corpus"] = Field(
+        default="repertoire",
+        description=(
+            "repertoire: feed the opening graph and the player's repertoire lines. "
+            "corpus: feed the opening graph only (reference games, no repertoire lines). "
+            "opponent: feed an opponent profile's conditional tree (requires opponent_profile_id)."
+        ),
+    )
+    opponent_profile_id: UUID | None = None
 
 
 class ImportJobRead(BaseModel):

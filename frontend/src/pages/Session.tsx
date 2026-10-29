@@ -1,9 +1,11 @@
 import { Chess } from "chess.js";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { useParams } from "react-router-dom";
-import { api, type LegalMoves, type MoveResult, type SessionState } from "../api";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { api, type LegalMoves, type MasteryRow, type MoveResult, type SessionState } from "../api";
+import { useAuth } from "../auth";
 import { Board } from "../components/Board";
 import { Captions } from "../components/Captions";
+import { MasteryDelta } from "../components/MasteryDelta";
 import { VoicePicker } from "../components/VoicePicker";
 import {
   buildLegalMoves,
@@ -22,9 +24,20 @@ function fmtEval(cp: number | null | undefined, mate?: number | null): string {
   return `${cp >= 0 ? "+" : ""}${(cp / 100).toFixed(2)}`;
 }
 
+/** Remount per session id so "next drill" starts from clean state. */
 export function Session() {
   const { id = "" } = useParams();
+  return <SessionView key={id} id={id} />;
+}
+
+function SessionView({ id }: { id: string }) {
   const { say, caption, clearCaptions } = useVoice();
+  const { player } = useAuth();
+  const nav = useNavigate();
+  // ?drill=<position_id>: this session was opened from a due mastery item; show its row before/after the answer.
+  const drillPos = useSearchParams()[0].get("drill");
+  const [drill, setDrill] = useState<{ before: MasteryRow; after: MasteryRow | null } | null>(null);
+  const drillAnswered = useRef(false);
 
   const [sess, setSess] = useState<SessionState | null>(null);
   const [legal, setLegal] = useState<LegalMoves | null>(null);
@@ -72,6 +85,26 @@ export function Session() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    if (!drillPos || !player) return;
+    api.masteryRow(player.id, drillPos).then((before) => setDrill({ before, after: null })).catch((e: Error) => setErr(e.message));
+  }, [drillPos, player]);
+
+  async function nextDrill() {
+    if (!player) return;
+    await api.finish(id).catch(() => {});
+    const n = await api.nextDrill(player.id);
+    if (!n.row || !n.due_now) return nav("/mastery");
+    const s = await api.createSession({
+      mode: "guided",
+      player_color: n.row.fen.split(" ")[1] === "b" ? "black" : "white",
+      sampler_mode: "mainline",
+      novelty_prob: 0,
+      starting_fen: n.row.fen,
+    });
+    nav(`/session/${s.id}?drill=${n.row.position_id}`);
+  }
+
   /** Every move — dragged, spoken or typed — goes through the backend, which is the only authority. */
   const submit = useCallback(
     async (m: { san?: string; uci?: string }) => {
@@ -82,6 +115,12 @@ export function Session() {
       try {
         const r = await api.move(id, { ...m, latency_ms: Date.now() - turnStart.current });
         setLast(r);
+        if (drillPos && player && !drillAnswered.current) {
+          // First answer in a drill session is the graded recall of the drilled position.
+          drillAnswered.current = true;
+          const after = await api.masteryRow(player.id, drillPos);
+          setDrill((d) => (d ? { ...d, after } : d));
+        }
         setFen(r.current_fen);
         setRevealed(false);
         if (r.opponent_move) say("opponent", `Opponent plays ${speakMove(r.opponent_move.san)}.`);
@@ -97,7 +136,7 @@ export function Session() {
         setBusy(false);
       }
     },
-    [busy, id, say, caption, refresh],
+    [busy, id, say, caption, refresh, drillPos, player],
   );
 
   // Mutable view of state for callbacks owned by the recognizer.
@@ -233,7 +272,8 @@ export function Session() {
   return (
     <>
       <h1>
-        {blindfold ? "Blindfold session" : "Guided session"} <span className="badge">{color}</span>
+        {drillPos ? "Mastery drill" : blindfold ? "Blindfold session" : sess.settings_json.sampler_mode === "opponent_twin" ? "Playing the twin" : "Guided session"}{" "}
+        <span className="badge">{color}</span>
       </h1>
       <div className="grid">
         <div>
@@ -305,6 +345,27 @@ export function Session() {
           <h2>Live captions</h2>
           <Captions interim={interim} />
           {err && <p className="error" role="alert">{err}</p>}
+
+          {drill && (
+            <section className="card" aria-label="Drill mastery">
+              <h2 style={{ marginTop: 0 }}>{drill.before.opening_name ?? "Drilled position"}</h2>
+              {!drill.after && <p className="muted">Answer from this position — your result updates the mastery schedule.</p>}
+              {drill.after && (
+                <p>
+                  {drill.after.reps > drill.before.reps
+                    ? <>Recalled: reps {drill.before.reps} → <strong>{drill.after.reps}</strong>, next due {new Date(drill.after.due_at).toLocaleString()}.</>
+                    : <>Missed: this position stays in rotation and is due {new Date(drill.after.due_at).toLocaleString()}.</>}
+                </p>
+              )}
+              <MasteryDelta before={drill.before} after={drill.after} />
+              {drill.after && (
+                <div className="row" style={{ marginTop: ".5rem" }}>
+                  <button className="primary" onClick={() => void nextDrill()}>Next due drill</button>
+                  <Link to="/mastery">Back to mastery</Link>
+                </div>
+              )}
+            </section>
+          )}
 
           {last && (
             <section className="card" aria-label="Coach feedback">
