@@ -1,0 +1,568 @@
+{
+  "proof": "italian_sideline_correction",
+  "email": "proof-a-e6c37b@chessmind.example.com",
+  "turns": [
+    {
+      "note": "italian 1",
+      "san": "e4",
+      "move": {
+        "session_id": "aba7e1cf-184e-45db-bd89-9d3f442e2895",
+        "attempt_id": "b94b4be3-7b48-491f-974f-4ac66e0458fe",
+        "played_san": "e4",
+        "played_uci": "e2e4",
+        "classification": "best",
+        "eval_before_cp_white": 66,
+        "eval_after_cp_white": 40,
+        "eval_swing_cp": 26,
+        "player_relative_before_cp": 66,
+        "player_relative_after_cp": 40,
+        "mate_flip": null,
+        "engine_version": "17.1",
+        "engine_depth": 10,
+        "engine_multipv": 3,
+        "best_lines": [
+          {
+            "line_rank": 1,
+            "cp": 66,
+            "mate": null,
+            "pv_san": [
+              "e4",
+              "e5",
+              "Nf3",
+              "Nc6",
+              "Bc4",
+              "Nf6",
+              "d4",
+              "exd4",
+              "O-O",
+              "Nxe4"
+            ],
+            "pv_uci": [
+              "e2e4",
+              "e7e5",
+              "g1f3",
+              "b8c6",
+              "f1c4",
+              "g8f6",
+              "d2d4",
+              "e5d4",
+              "e1g1",
+              "f6e4"
+            ]
+          },
+          {
+            "line_rank": 2,
+            "cp": 29,
+            "mate": null,
+            "pv_san": [
+              "d4",
+              "Nf6",
+              "Nf3",
+              "e6",
+              "c4",
+              "Bb4+",
+              "Nc3",
+              "Bxc3+",
+              "bxc3",
+              "O-O",
+              "Ba3"
+            ],
+            "pv_uci": [
+              "d2d4",
+              "g8f6",
+              "g1f3",
+              "e7e6",
+              "c2c4",
+              "f8b4",
+              "b1c3",
+              "b4c3",
+              "b2c3",
+              "e8g8",
+              "c1a3"
+            ]
+          },
+          {
+            "line_rank": 3,
+            "cp": 16,
+            "mate": null,
+            "pv_san": [
+              "Nf3",
+              "d5",
+              "e3",
+              "Bf5",
+              "Be2",
+              "c6",
+              "O-O",
+              "e6",
+              "c4",
+              "Bd6",
+              "Nc3"
+            ],
+            "pv_uci": [
+              "g1f3",
+              "d7d5",
+              "e2e3",
+              "c8f5",
+              "f1e2",
+              "c7c6",
+              "e1g1",
+              "e7e6",
+              "c2c4",
+              "f8d6",
+              "b1c3"
+            ]
+          }
+        ],
+        "coaching": {
+          "spoken_summary": "e4 is the top choice.",
+          "correction_san": null,
+          "evidence_refs": [
+            "fen:3ce06ef6-7f9f-46d8-83a6-4e34116255c1",
+            "engine_analysis:3ce06ef6-7f9f-46d8-83a6-4e34116255c1",
+            "best_san:e4"
+          ],
+          "board_features": {
+            "material_delta_player_relative": 0,
+            "new_hanging_squares": [],
+            "captured_opp_hanging_squares": [],
+            "lost_castling_kingside": false,
+            "lost_castling_queenside": false,
+            "delivered_check": false,
+            "walked_into_check": false
+          }
+        },
+        "opponent_move": {
+          "san": "e5",
+          "uci": "e7e5",
+          "source_tier": "opening_graph",
+          "confidence": 1.0,
+          "sample_size": 50
+        },
+        "current_fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+        "status": "active"
+      }
+    },
+    {
+      "note": "develop knight",
+      "san": "Nf3",
+      "move": {
+        "session_id": "aba7e1cf-184e-45db-bd89-9d3f442e2895",
+        "attempt_id": "f651638a-4d7e-46b1-8737-95e681dfd04b",
+        "played_san": "Nf3",
+        "played_uci": "g1f3",
+        "classification": "best",
+        "eval_before_cp_white": 43,
+        "eval_after_cp_white": 41,
+        "eval_swing_cp": 2,
+        "player_relative_before_cp": 43,
+        "player_relative_after_cp": 41,
+        "mate_flip": null,
+        "engine_version": "17.1",
+        "engine_depth": 10,
+        "engine_multipv": 3,
+        "best_lines": [
+          {
+            "line_rank": 1,
+            "cp": 43,
+            "mate": null,
+            "pv_san": [
+              "Nf3",
+              "Nc6",
+              "d4",
+              "exd4",
+              "Nxd4",
+              "Nf6",
+              "Nxc6",
+              "bxc6",
+              "Bd3"
+            ],
+            "pv_uci": [
+              "g1f3",
+              "b8c6",
+              "d2d4",
+              "e5d4",
+              "f3d4",
+              "g8f6",
+              "d4c6",
+              "b7c6",
+              "f1d3"
+            ]
+          },
+          {
+            "line_rank": 2,
+            "cp": 31,
+            "mate": null,
+            "pv_san": [
+              "d4",
+              "exd4",
+              "Nf3",
+              "Bb4+",
+              "c3",
+              "dxc3",
+              "Nxc3",
+              "Bxc3+",
+              "bxc3",
+              "d6"
+            ],
+            "pv_uci": [
+              "d2d4",
+              "e5d4",
+              "g1f3",
+              "f8b4",
+              "c2c3",
+              "d4c3",
+              "b1c3",
+              "b4c3",
+              "b2c3",
+              "d7d6"
+            ]
+          },
+          {
+            "line_rank": 3,
+            "cp": 28,
+            "mate": null,
+            "pv_san": [
+              "Nc3",
+              "Nc6",
+              "Nf3",
+              "Nf6",
+              "Bc4",
+              "Bc5",
+              "d3",
+              "d6",
+              "Nd5",
+              "O-O"
+            ],
+            "pv_uci": [
+              "b1c3",
+              "b8c6",
+              "g1f3",
+              "g8f6",
+              "f1c4",
+              "f8c5",
+              "d2d3",
+              "d7d6",
+              "c3d5",
+              "e8g8"
+            ]
+          }
+        ],
+        "coaching": {
+          "spoken_summary": "Nf3 is the top choice.",
+          "correction_san": null,
+          "evidence_refs": [
+            "fen:b9e98d72-5924-4d28-8367-1d0c7903ffe4",
+            "engine_analysis:b9e98d72-5924-4d28-8367-1d0c7903ffe4",
+            "best_san:Nf3"
+          ],
+          "board_features": {
+            "material_delta_player_relative": 0,
+            "new_hanging_squares": [],
+            "captured_opp_hanging_squares": [],
+            "lost_castling_kingside": false,
+            "lost_castling_queenside": false,
+            "delivered_check": false,
+            "walked_into_check": false
+          }
+        },
+        "opponent_move": {
+          "san": "Nc6",
+          "uci": "b8c6",
+          "source_tier": "opening_graph",
+          "confidence": 1.0,
+          "sample_size": 50
+        },
+        "current_fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+        "status": "active"
+      }
+    },
+    {
+      "note": "deliberate sideline deviation (g4)",
+      "san": "g4",
+      "move": {
+        "session_id": "aba7e1cf-184e-45db-bd89-9d3f442e2895",
+        "attempt_id": "a58d0d41-043e-4177-9642-de0472d9c6b0",
+        "played_san": "g4",
+        "played_uci": "g2g4",
+        "classification": "mistake",
+        "eval_before_cp_white": 45,
+        "eval_after_cp_white": -159,
+        "eval_swing_cp": 204,
+        "player_relative_before_cp": 45,
+        "player_relative_after_cp": -159,
+        "mate_flip": null,
+        "engine_version": "17.1",
+        "engine_depth": 10,
+        "engine_multipv": 3,
+        "best_lines": [
+          {
+            "line_rank": 1,
+            "cp": 45,
+            "mate": null,
+            "pv_san": [
+              "Bb5",
+              "a6",
+              "Bxc6",
+              "dxc6",
+              "Nc3",
+              "f6",
+              "d4",
+              "Bg4",
+              "dxe5",
+              "Qxd1+",
+              "Nxd1",
+              "Bxf3",
+              "gxf3",
+              "fxe5"
+            ],
+            "pv_uci": [
+              "f1b5",
+              "a7a6",
+              "b5c6",
+              "d7c6",
+              "b1c3",
+              "f7f6",
+              "d2d4",
+              "c8g4",
+              "d4e5",
+              "d8d1",
+              "c3d1",
+              "g4f3",
+              "g2f3",
+              "f6e5"
+            ]
+          },
+          {
+            "line_rank": 2,
+            "cp": 30,
+            "mate": null,
+            "pv_san": [
+              "d4",
+              "exd4",
+              "Nxd4",
+              "Nf6",
+              "Nxc6",
+              "bxc6",
+              "Bd3",
+              "d5",
+              "exd5",
+              "cxd5"
+            ],
+            "pv_uci": [
+              "d2d4",
+              "e5d4",
+              "f3d4",
+              "g8f6",
+              "d4c6",
+              "b7c6",
+              "f1d3",
+              "d7d5",
+              "e4d5",
+              "c6d5"
+            ]
+          },
+          {
+            "line_rank": 3,
+            "cp": 20,
+            "mate": null,
+            "pv_san": [
+              "Nc3",
+              "Nf6",
+              "d4",
+              "exd4",
+              "Nxd4",
+              "Bb4",
+              "Nxc6",
+              "bxc6",
+              "Bd3",
+              "O-O",
+              "O-O"
+            ],
+            "pv_uci": [
+              "b1c3",
+              "g8f6",
+              "d2d4",
+              "e5d4",
+              "f3d4",
+              "f8b4",
+              "d4c6",
+              "b7c6",
+              "f1d3",
+              "e8g8",
+              "e1g1"
+            ]
+          }
+        ],
+        "coaching": {
+          "spoken_summary": "g4 is a mistake \u2014 a +2.04-pawn swing against you. Better was Bb5, planning Bb5 a6 Bxc6 dxc6.",
+          "correction_san": "Bb5",
+          "evidence_refs": [
+            "fen:585850c5-812c-467c-9ca8-f63b0dc691f4",
+            "engine_analysis:585850c5-812c-467c-9ca8-f63b0dc691f4",
+            "best_san:Bb5"
+          ],
+          "board_features": {
+            "material_delta_player_relative": 0,
+            "new_hanging_squares": [],
+            "captured_opp_hanging_squares": [],
+            "lost_castling_kingside": false,
+            "lost_castling_queenside": false,
+            "delivered_check": false,
+            "walked_into_check": false
+          }
+        },
+        "opponent_move": {
+          "san": "Nf6",
+          "uci": "g8f6",
+          "source_tier": "engine_fallback",
+          "confidence": 0.0,
+          "sample_size": 0
+        },
+        "current_fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/4P1P1/5N2/PPPP1P1P/RNBQKB1R w KQkq - 1 4",
+        "status": "active"
+      }
+    },
+    {
+      "note": "retrain with engine correction",
+      "san": "Bb5",
+      "move": {
+        "session_id": "aba7e1cf-184e-45db-bd89-9d3f442e2895",
+        "attempt_id": "4d732125-13c4-4c85-a458-7ba6d7ceb279",
+        "played_san": "Bb5",
+        "played_uci": "f1b5",
+        "classification": "inaccuracy",
+        "eval_before_cp_white": -134,
+        "eval_after_cp_white": -195,
+        "eval_swing_cp": 61,
+        "player_relative_before_cp": -134,
+        "player_relative_after_cp": -195,
+        "mate_flip": null,
+        "engine_version": "17.1",
+        "engine_depth": 10,
+        "engine_multipv": 3,
+        "best_lines": [
+          {
+            "line_rank": 1,
+            "cp": -134,
+            "mate": null,
+            "pv_san": [
+              "Qe2",
+              "Nxg4",
+              "Rg1",
+              "d5",
+              "exd5",
+              "Qxd5",
+              "Nc3",
+              "Qc5",
+              "h3",
+              "Nf6"
+            ],
+            "pv_uci": [
+              "d1e2",
+              "f6g4",
+              "h1g1",
+              "d7d5",
+              "e4d5",
+              "d8d5",
+              "b1c3",
+              "d5c5",
+              "h2h3",
+              "g4f6"
+            ]
+          },
+          {
+            "line_rank": 2,
+            "cp": -144,
+            "mate": null,
+            "pv_san": [
+              "d4",
+              "d5",
+              "Nxe5",
+              "Nxe5",
+              "dxe5",
+              "Nxe4",
+              "Bg2",
+              "Bc5",
+              "Bxe4"
+            ],
+            "pv_uci": [
+              "d2d4",
+              "d7d5",
+              "f3e5",
+              "c6e5",
+              "d4e5",
+              "f6e4",
+              "f1g2",
+              "f8c5",
+              "g2e4"
+            ]
+          },
+          {
+            "line_rank": 3,
+            "cp": -159,
+            "mate": null,
+            "pv_san": [
+              "Nc3",
+              "d5",
+              "exd5",
+              "Nxd5",
+              "Rg1",
+              "Be6",
+              "Bb5",
+              "Bd6",
+              "d4",
+              "Nxc3",
+              "bxc3"
+            ],
+            "pv_uci": [
+              "b1c3",
+              "d7d5",
+              "e4d5",
+              "f6d5",
+              "h1g1",
+              "c8e6",
+              "f1b5",
+              "f8d6",
+              "d2d4",
+              "d5c3",
+              "b2c3"
+            ]
+          }
+        ],
+        "coaching": {
+          "spoken_summary": "Bb5 is an inaccuracy \u2014 a +0.61-pawn swing against you. Better was Qe2, planning Qe2 Nxg4 Rg1 d5.",
+          "correction_san": "Qe2",
+          "evidence_refs": [
+            "fen:d8a65dda-303b-4cde-8642-e1f2ea455e7f",
+            "engine_analysis:d8a65dda-303b-4cde-8642-e1f2ea455e7f",
+            "best_san:Qe2"
+          ],
+          "board_features": {
+            "material_delta_player_relative": 0,
+            "new_hanging_squares": [],
+            "captured_opp_hanging_squares": [],
+            "lost_castling_kingside": false,
+            "lost_castling_queenside": false,
+            "delivered_check": false,
+            "walked_into_check": false
+          }
+        },
+        "opponent_move": {
+          "san": "Nxe4",
+          "uci": "f6e4",
+          "source_tier": "engine_fallback",
+          "confidence": 0.0,
+          "sample_size": 0
+        },
+        "current_fen": "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n1P1/5N2/PPPP1P1P/RNBQK2R w KQkq - 0 5",
+        "status": "active"
+      }
+    }
+  ],
+  "session_id": "aba7e1cf-184e-45db-bd89-9d3f442e2895",
+  "finish": {
+    "session_id": "aba7e1cf-184e-45db-bd89-9d3f442e2895",
+    "status": "finished",
+    "ended_at": "2026-10-29T13:30:31.027076Z"
+  }
+}

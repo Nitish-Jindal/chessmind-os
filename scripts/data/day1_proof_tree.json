@@ -1,0 +1,56 @@
+{
+  "proof": "Day-1: import 100+ games, GET /openings/tree",
+  "email": "day1-ae42a06a@chessmind.example.com",
+  "games_submitted": 153,
+  "import_job": {
+    "id": "e522c452-1815-410c-943f-c01018d43d04",
+    "kind": "player_pgn",
+    "source": "day1_proof",
+    "status": "succeeded",
+    "progress_games": 153,
+    "total_games": 153,
+    "error": null,
+    "artifacts_json": {
+      "edges": 1725,
+      "games": 153,
+      "errors": [],
+      "repertoire_lines": 1725,
+      "positions_touched": 266
+    },
+    "started_at": "2026-10-29T12:32:35.541703Z",
+    "finished_at": "2026-10-29T12:32:50.768853Z",
+    "created_at": "2026-10-29T12:32:35.521788Z"
+  },
+  "openings_tree": {
+    "root": {
+      "position_id": "78096628-d9fa-421f-af37-741b0ae947c3",
+      "canonical_key": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
+      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "eco": "C50",
+      "opening_name": "Italian Giuoco Pianissimo",
+      "popularity": 153,
+      "edges": [
+        {
+          "uci": "e2e4",
+          "san": "e4",
+          "to_position_id": "6adb9cba-2aae-42a6-b126-9faf5cfe8273",
+          "games_count": 108,
+          "white_wins": 36,
+          "black_wins": 39,
+          "draws": 33
+        },
+        {
+          "uci": "d2d4",
+          "san": "d4",
+          "to_position_id": "451e6ee8-a3ee-4876-a7a6-892b329b4845",
+          "games_count": 45,
+          "white_wins": 14,
+          "black_wins": 17,
+          "draws": 14
+        }
+      ]
+    },
+    "total_positions": 266,
+    "total_edges": 267
+  }
+}

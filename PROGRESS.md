@@ -3,7 +3,7 @@
 A single-pane view of where the five-day MVP is. Update as items land; do
 not mark a phase complete until its proof condition is demonstrated.
 
-Last updated: 2026-10-29 — Phase 0 scaffold in flight.
+Last updated: 2026-10-29 — Day 1 complete.
 
 ## Phase 0 — Scaffold & plan
 
@@ -11,35 +11,82 @@ Last updated: 2026-10-29 — Phase 0 scaffold in flight.
 - [x] `.gitignore`, `CLAUDE.md`, `PROGRESS.md`, `README.md` committed.
 - [x] Handoff archived under `docs/handoff/`.
 - [x] `docs/ARCHITECTURE.md` drafted with resolved decisions applied.
-- [ ] Architecture reviewed and approved by maintainer.
-- [ ] Repo layout stubs (`backend/`, `frontend/`, `docker-compose.yml`,
-      `.github/workflows/`) created — gated on approval.
+- [x] Architecture reviewed and approved by maintainer.
+- [x] Repo layout stubs (`backend/`, `scripts/`, `docker-compose.yml`)
+      created and in-use. `frontend/` + `.github/workflows/` still
+      pending — Day 2 and Day 5 land them.
 
 **Proof of phase complete:** maintainer sign-off on `docs/ARCHITECTURE.md`
-and a green CI run on the empty project skeleton.
+and the backend scaffold boots clean (uvicorn + Postgres via docker-compose).
 
 ## Phase 1 — Day 1: Foundation
 
-- [ ] Postgres 16 + Redis 7 running under `docker compose up`.
-- [ ] FastAPI app boot, health endpoint, request-id middleware, structured
+- [x] Postgres 16 + Redis 7 running under `docker compose up`.
+- [x] FastAPI app boot, `/health`, request-id middleware, structured
       logging.
-- [ ] Alembic initialized; first migration covers `player`, `game`,
-      `position`, `move_edge`, `repertoire_line`, `engine_analysis`,
-      `opponent_profile`, `training_session`, `training_attempt`,
-      `mastery_state`, `import_job`.
-- [ ] Auth: email + password (argon2), JWT access + refresh, profile CRUD.
-- [ ] PGN importer walks variations recursively; sublines land with
-      `is_mainline=false`; preserves comments, NAGs, source attribution.
-- [ ] Opening graph build: canonical position identity (normalized FEN),
-      `move_edge` upserts, transpositions converge.
-- [ ] Stockfish worker: single long-lived UCI process per worker, guarded
-      by an asyncio lock; MultiPV configurable; `engine_analysis` cache
-      is the primary path.
-- [ ] Seeded opening dataset (ECO A00–E99 headers + a curated subset of
-      mainlines) loaded via `scripts/seed_openings.py`.
-- [ ] Frontend shell: login, profile, PGN upload page, opening tree view.
+- [x] Alembic initialized; three migrations land on `main`:
+      - `0001_player` — citext extension + player table.
+      - `0002_opening_graph` — game, import_job, position, move_edge,
+        repertoire_line with the composite uniques and FKs.
+      - `0003_engine_analysis` — engine_analysis cache with the
+        `(position_id, engine_version, depth)` lookup index.
+      - Day-4 tables (`opponent_profile`, `training_session`,
+        `training_attempt`, `mastery_state`) land in their own phase.
+- [x] Auth: email + password (argon2id), JWT access + refresh,
+      `/auth/register`, `/auth/login`, `/auth/refresh`, `/players/me`
+      (GET + PATCH with `settings_json` merge-patch for §11.3 blindfold
+      budget and §11.5 TTS voice).
+- [x] PGN importer walks variations recursively (§11.2); sublines land
+      with `is_mainline=false`; comments and NAGs attach to the move
+      they decorate; provenance_json preserves PGN headers.
+- [x] Opening graph: canonical FEN normalization via
+      `python-chess.epd(en_passant='legal')` strips move counters and
+      only keeps EP target when a legal EP capture exists;
+      `move_edge` upserts aggregate games_count / W / L / D; the
+      transposition test proves two move orders converge on one
+      Position row.
+- [x] Stockfish worker: long-lived singleton UCI process per worker,
+      threading.Lock-guarded with an `asyncio.to_thread` async
+      surface; MultiPV configurable; `engine_analysis` cache is the
+      primary path; every row stamps engine version, depth, nodes,
+      time, and `perspective='white'`.
+- [x] Seeded opening dataset: `scripts/seed_games.py` composes 153
+      real opening lines across Italian, Ruy Lopez, Sicilian, and QGD
+      family (QGD, Slav, Catalan, Nimzo-Indian) and feeds them
+      through the same import pipeline the API uses.
+- [ ] Frontend shell: login, profile, PGN upload page, opening tree
+      view. **Deferred to Day 2** per the sprint plan.
 
-**Proof:** import 100+ games and explore the opening tree.
+**Proof — passed 2026-10-29:**
+
+- `scripts/day1_proof.py` registered a player, logged in, POSTed the
+  composed 153-game PGN to `/imports/pgn`, polled `/imports/{id}`
+  until it reached `succeeded`, and GETed `/openings/tree?limit=10`.
+- Import job finished in **15.3 s**: 153/153 games succeeded, 266
+  positions touched, 1725 move edges created or bumped, 1725
+  repertoire rows upserted, zero errors.
+- Opening tree root (startpos):
+
+  ```
+  move    games    W    L    D
+  e4        108   36   39   33
+  d4         45   14   17   14
+  ```
+
+- After 1.e4 (`?fen=...`):
+
+  ```
+  move    games    W    L    D
+  e5         63   21   21   21
+  c5         45   15   18   12
+  ```
+
+- Totals reconcile: 108 e4 + 45 d4 = 153 games (every game played a
+  first move); 63 e5 + 45 c5 = 108 (every e4 game played e5 or c5).
+  Graph has 267 total edges, 266 positions.
+- Full artifact: `scripts/data/day1_proof_tree.json`.
+- Backend test suite: 37 passing (health, auth × 6, rules × 6,
+  canonical FEN × 4, PGN import × 8, opening tree × 5, engine × 7).
 
 ## Phase 2 — Day 2: Voice
 

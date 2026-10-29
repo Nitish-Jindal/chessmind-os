@@ -1,0 +1,426 @@
+{
+  "proof": "mistake_retrain_mastery",
+  "email": "proof-b-0743d9@chessmind.example.com",
+  "events": [
+    {
+      "stage": "mistake_played",
+      "move": {
+        "session_id": "d750c0c9-a6dd-4534-8280-ee6aa2bcca89",
+        "attempt_id": "eed5602c-03a1-4a1c-bedb-233732744f53",
+        "played_san": "g4",
+        "played_uci": "g2g4",
+        "classification": "mistake",
+        "eval_before_cp_white": 66,
+        "eval_after_cp_white": -103,
+        "eval_swing_cp": 169,
+        "player_relative_before_cp": 66,
+        "player_relative_after_cp": -103,
+        "mate_flip": null,
+        "engine_version": "17.1",
+        "engine_depth": 10,
+        "engine_multipv": 3,
+        "best_lines": [
+          {
+            "line_rank": 1,
+            "cp": 66,
+            "mate": null,
+            "pv_san": [
+              "e4",
+              "e5",
+              "Nf3",
+              "Nc6",
+              "Bc4",
+              "Nf6",
+              "d4",
+              "exd4",
+              "O-O",
+              "Nxe4"
+            ],
+            "pv_uci": [
+              "e2e4",
+              "e7e5",
+              "g1f3",
+              "b8c6",
+              "f1c4",
+              "g8f6",
+              "d2d4",
+              "e5d4",
+              "e1g1",
+              "f6e4"
+            ]
+          },
+          {
+            "line_rank": 2,
+            "cp": 29,
+            "mate": null,
+            "pv_san": [
+              "d4",
+              "Nf6",
+              "Nf3",
+              "e6",
+              "c4",
+              "Bb4+",
+              "Nc3",
+              "Bxc3+",
+              "bxc3",
+              "O-O",
+              "Ba3"
+            ],
+            "pv_uci": [
+              "d2d4",
+              "g8f6",
+              "g1f3",
+              "e7e6",
+              "c2c4",
+              "f8b4",
+              "b1c3",
+              "b4c3",
+              "b2c3",
+              "e8g8",
+              "c1a3"
+            ]
+          },
+          {
+            "line_rank": 3,
+            "cp": 16,
+            "mate": null,
+            "pv_san": [
+              "Nf3",
+              "d5",
+              "e3",
+              "Bf5",
+              "Be2",
+              "c6",
+              "O-O",
+              "e6",
+              "c4",
+              "Bd6",
+              "Nc3"
+            ],
+            "pv_uci": [
+              "g1f3",
+              "d7d5",
+              "e2e3",
+              "c8f5",
+              "f1e2",
+              "c7c6",
+              "e1g1",
+              "e7e6",
+              "c2c4",
+              "f8d6",
+              "b1c3"
+            ]
+          }
+        ],
+        "coaching": {
+          "spoken_summary": "g4 is a mistake \u2014 a +1.69-pawn swing against you. Better was e4, planning e4 e5 Nf3 Nc6.",
+          "correction_san": "e4",
+          "evidence_refs": [
+            "fen:6a0c2770-7ecd-4a4d-b8b4-3db1d61a15ea",
+            "engine_analysis:6a0c2770-7ecd-4a4d-b8b4-3db1d61a15ea",
+            "best_san:e4"
+          ],
+          "board_features": {
+            "material_delta_player_relative": 0,
+            "new_hanging_squares": [],
+            "captured_opp_hanging_squares": [],
+            "lost_castling_kingside": false,
+            "lost_castling_queenside": false,
+            "delivered_check": false,
+            "walked_into_check": false
+          }
+        },
+        "opponent_move": {
+          "san": "d5",
+          "uci": "d7d5",
+          "source_tier": "engine_fallback",
+          "confidence": 0.0,
+          "sample_size": 0
+        },
+        "current_fen": "rnbqkbnr/ppp1pppp/8/3p4/6P1/8/PPPPPP1P/RNBQKBNR w KQkq - 0 2",
+        "status": "active"
+      }
+    },
+    {
+      "stage": "mastery_after_mistake",
+      "dashboard": {
+        "counts_by_state": {
+          "untested": 0,
+          "emerging": 1,
+          "competent": 0,
+          "mastered": 0,
+          "decayed": 0
+        },
+        "due_now": 1,
+        "due_next_24h": 1,
+        "weakest": [],
+        "due_soon": [
+          {
+            "position_id": "6a0c2770-7ecd-4a4d-b8b4-3db1d61a15ea",
+            "canonical_key": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
+            "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "opening_name": "Italian Giuoco Pianissimo",
+            "state": "emerging",
+            "recall_score": 0.662,
+            "understanding_score": 0.662,
+            "visualization_score": 1.0,
+            "speed_score": 0.99,
+            "due_at": "2026-10-29T13:32:06.351764Z",
+            "last_tested_at": "2026-10-29T13:32:06.351764Z",
+            "ease_factor": 2.5,
+            "interval_days": 0.0,
+            "reps": 0
+          }
+        ]
+      }
+    },
+    {
+      "stage": "next_drill_due",
+      "pick": {
+        "due_now": true,
+        "row": {
+          "position_id": "6a0c2770-7ecd-4a4d-b8b4-3db1d61a15ea",
+          "canonical_key": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
+          "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+          "opening_name": "Italian Giuoco Pianissimo",
+          "state": "emerging",
+          "recall_score": 0.662,
+          "understanding_score": 0.662,
+          "visualization_score": 1.0,
+          "speed_score": 0.99,
+          "due_at": "2026-10-29T13:32:06.351764Z",
+          "last_tested_at": "2026-10-29T13:32:06.351764Z",
+          "ease_factor": 2.5,
+          "interval_days": 0.0,
+          "reps": 0
+        },
+        "reason": "due now"
+      }
+    },
+    {
+      "stage": "retrain_played",
+      "move": {
+        "session_id": "7863485c-3641-48aa-ace0-a8aee49daff2",
+        "attempt_id": "3f326684-b28b-4375-a134-f526b3e13b27",
+        "played_san": "e4",
+        "played_uci": "e2e4",
+        "classification": "best",
+        "eval_before_cp_white": 66,
+        "eval_after_cp_white": 35,
+        "eval_swing_cp": 31,
+        "player_relative_before_cp": 66,
+        "player_relative_after_cp": 35,
+        "mate_flip": null,
+        "engine_version": "17.1",
+        "engine_depth": 10,
+        "engine_multipv": 3,
+        "best_lines": [
+          {
+            "line_rank": 1,
+            "cp": 66,
+            "mate": null,
+            "pv_san": [
+              "e4",
+              "e5",
+              "Nf3",
+              "Nc6",
+              "Bc4",
+              "Nf6",
+              "d4",
+              "exd4",
+              "O-O",
+              "Nxe4"
+            ],
+            "pv_uci": [
+              "e2e4",
+              "e7e5",
+              "g1f3",
+              "b8c6",
+              "f1c4",
+              "g8f6",
+              "d2d4",
+              "e5d4",
+              "e1g1",
+              "f6e4"
+            ]
+          },
+          {
+            "line_rank": 2,
+            "cp": 29,
+            "mate": null,
+            "pv_san": [
+              "d4",
+              "Nf6",
+              "Nf3",
+              "e6",
+              "c4",
+              "Bb4+",
+              "Nc3",
+              "Bxc3+",
+              "bxc3",
+              "O-O",
+              "Ba3"
+            ],
+            "pv_uci": [
+              "d2d4",
+              "g8f6",
+              "g1f3",
+              "e7e6",
+              "c2c4",
+              "f8b4",
+              "b1c3",
+              "b4c3",
+              "b2c3",
+              "e8g8",
+              "c1a3"
+            ]
+          },
+          {
+            "line_rank": 3,
+            "cp": 16,
+            "mate": null,
+            "pv_san": [
+              "Nf3",
+              "d5",
+              "e3",
+              "Bf5",
+              "Be2",
+              "c6",
+              "O-O",
+              "e6",
+              "c4",
+              "Bd6",
+              "Nc3"
+            ],
+            "pv_uci": [
+              "g1f3",
+              "d7d5",
+              "e2e3",
+              "c8f5",
+              "f1e2",
+              "c7c6",
+              "e1g1",
+              "e7e6",
+              "c2c4",
+              "f8d6",
+              "b1c3"
+            ]
+          }
+        ],
+        "coaching": {
+          "spoken_summary": "e4 is the top choice.",
+          "correction_san": null,
+          "evidence_refs": [
+            "fen:6a0c2770-7ecd-4a4d-b8b4-3db1d61a15ea",
+            "engine_analysis:6a0c2770-7ecd-4a4d-b8b4-3db1d61a15ea",
+            "best_san:e4"
+          ],
+          "board_features": {
+            "material_delta_player_relative": 0,
+            "new_hanging_squares": [],
+            "captured_opp_hanging_squares": [],
+            "lost_castling_kingside": false,
+            "lost_castling_queenside": false,
+            "delivered_check": false,
+            "walked_into_check": false
+          }
+        },
+        "opponent_move": {
+          "san": "e5",
+          "uci": "e7e5",
+          "source_tier": "opening_graph",
+          "confidence": 1.0,
+          "sample_size": 50
+        },
+        "current_fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+        "status": "active"
+      }
+    },
+    {
+      "stage": "mastery_after_retrain",
+      "dashboard": {
+        "counts_by_state": {
+          "untested": 0,
+          "emerging": 1,
+          "competent": 0,
+          "mastered": 0,
+          "decayed": 0
+        },
+        "due_now": 0,
+        "due_next_24h": 1,
+        "weakest": [
+          {
+            "position_id": "6a0c2770-7ecd-4a4d-b8b4-3db1d61a15ea",
+            "canonical_key": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
+            "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "opening_name": "Italian Giuoco Pianissimo",
+            "state": "emerging",
+            "recall_score": 0.8,
+            "understanding_score": 0.8,
+            "visualization_score": 1.0,
+            "speed_score": 0.9867,
+            "due_at": "2026-10-30T13:32:06.611592Z",
+            "last_tested_at": "2026-10-29T13:32:06.611592Z",
+            "ease_factor": 2.6,
+            "interval_days": 1.0,
+            "reps": 1
+          }
+        ],
+        "due_soon": [
+          {
+            "position_id": "6a0c2770-7ecd-4a4d-b8b4-3db1d61a15ea",
+            "canonical_key": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
+            "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "opening_name": "Italian Giuoco Pianissimo",
+            "state": "emerging",
+            "recall_score": 0.8,
+            "understanding_score": 0.8,
+            "visualization_score": 1.0,
+            "speed_score": 0.9867,
+            "due_at": "2026-10-30T13:32:06.611592Z",
+            "last_tested_at": "2026-10-29T13:32:06.611592Z",
+            "ease_factor": 2.6,
+            "interval_days": 1.0,
+            "reps": 1
+          }
+        ]
+      }
+    },
+    {
+      "stage": "mastery_delta",
+      "before": {
+        "position_id": "6a0c2770-7ecd-4a4d-b8b4-3db1d61a15ea",
+        "canonical_key": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
+        "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        "opening_name": "Italian Giuoco Pianissimo",
+        "state": "emerging",
+        "recall_score": 0.662,
+        "understanding_score": 0.662,
+        "visualization_score": 1.0,
+        "speed_score": 0.99,
+        "due_at": "2026-10-29T13:32:06.351764Z",
+        "last_tested_at": "2026-10-29T13:32:06.351764Z",
+        "ease_factor": 2.5,
+        "interval_days": 0.0,
+        "reps": 0
+      },
+      "after": {
+        "position_id": "6a0c2770-7ecd-4a4d-b8b4-3db1d61a15ea",
+        "canonical_key": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -",
+        "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        "opening_name": "Italian Giuoco Pianissimo",
+        "state": "emerging",
+        "recall_score": 0.8,
+        "understanding_score": 0.8,
+        "visualization_score": 1.0,
+        "speed_score": 0.9867,
+        "due_at": "2026-10-30T13:32:06.611592Z",
+        "last_tested_at": "2026-10-29T13:32:06.611592Z",
+        "ease_factor": 2.6,
+        "interval_days": 1.0,
+        "reps": 1
+      }
+    }
+  ],
+  "player_id": "394132ea-8913-482e-be6b-088f0fbabe1a"
+}
