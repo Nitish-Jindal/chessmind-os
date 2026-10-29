@@ -39,25 +39,39 @@ def event_loop():
     loop.close()
 
 
-@pytest_asyncio.fixture(scope="session")
-async def _schema() -> AsyncIterator[None]:
-    settings = get_settings()
-    engine = create_async_engine(settings.database_url, poolclass=None)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-    await engine.dispose()
-    yield
+def _reset_schema_sync() -> None:
+    """Reset the schema using the sync psycopg driver so this can run outside asyncio.
+
+    Called once per test session; keeps the schema fixture isolated from the
+    per-test event loop.
+    """
+    from sqlalchemy import create_engine
+
+    sync_engine = create_engine(get_settings().database_url_sync)
+    with sync_engine.begin() as conn:
+        conn.exec_driver_sql("CREATE EXTENSION IF NOT EXISTS citext")
+        conn.exec_driver_sql('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
+        Base.metadata.drop_all(conn)
+        Base.metadata.create_all(conn)
+    sync_engine.dispose()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _schema() -> None:
+    _reset_schema_sync()
 
 
 @pytest_asyncio.fixture
-async def db(_schema) -> AsyncIterator[AsyncSession]:
+async def db() -> AsyncIterator[AsyncSession]:
+    """Function-scoped session on a function-scoped engine so loop affinity matches."""
     settings = get_settings()
     engine = create_async_engine(settings.database_url, poolclass=None)
     SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with SessionLocal() as session:
-        yield session
-        await session.rollback()
+        try:
+            yield session
+        finally:
+            await session.rollback()
     await engine.dispose()
 
 

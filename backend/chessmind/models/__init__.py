@@ -5,5 +5,6 @@ Alembic autogenerate and test fixtures see the full schema.
 """
 
 from chessmind.models.base import Base
+from chessmind.models.player import Player
 
-__all__ = ["Base"]
+__all__ = ["Base", "Player"]
