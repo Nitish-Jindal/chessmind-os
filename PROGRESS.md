@@ -90,8 +90,10 @@ and the backend scaffold boots clean (uvicorn + Postgres via docker-compose).
 
 ## Phase 2 — Day 2: Voice
 
-- [ ] Spoken-SAN resolver (SAN, "knight f3", "castle kingside", etc.)
+- [x] Spoken-SAN resolver (SAN, "knight f3", "castle kingside", etc.)
       constrained to legal moves; disambiguates rather than guesses.
+      (`frontend/src/voice/resolver.ts`, 21 vitest cases; resolves against
+      `GET /sessions/{id}/legal`, asks "Did you mean A or B?" on ambiguity.)
 - [ ] Guided session: AI announces opponent moves, player speaks replies,
       board state tracked server-side.
 - [ ] Blindfold session: no board; 2 free reveals per session (configurable
@@ -100,9 +102,16 @@ and the backend scaffold boots clean (uvicorn + Postgres via docker-compose).
 - [ ] Random branch generator: seeded, legal, mixes mainlines and sidelines.
 - [ ] Stockfish-grounded correction after an inaccuracy / mistake / blunder
       with a stronger alternative drawn from the engine PV.
-- [ ] TTS: browser default voice, with a `getVoices()` dropdown populated
+- [x] TTS: browser default voice, with a `getVoices()` dropdown populated
       on the `voiceschanged` event; choice persisted in
       `player.settings_json.tts_voice`.
+
+**Frontend (Vite + React + TS, `frontend/`):** home, openings, session,
+mastery and opponents pages against the real backend. Full-board and
+blindfold sessions, push-to-talk + text fallback + live captions. Proof:
+`node scripts/proof_frontend.mjs` (real browser, real API/Stockfish; only
+the microphone and system voices are stubbed) — transcript and screenshots
+in `scripts/data/proof_frontend.json` / `frontend_*.png`.
 
 **Proof:** complete a spoken Italian line, hit an unexpected sideline, and
 receive a corrective explanation.

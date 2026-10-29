@@ -1,0 +1,327 @@
+import { Chess } from "chess.js";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useParams } from "react-router-dom";
+import { api, type LegalMoves, type MoveResult, type SessionState } from "../api";
+import { Board } from "../components/Board";
+import { Captions } from "../components/Captions";
+import { VoicePicker } from "../components/VoicePicker";
+import {
+  buildLegalMoves,
+  parseCommand,
+  resolveAlternatives,
+  resolveConfirmation,
+  speakMove,
+  type LegalMove,
+} from "../voice/resolver";
+import { createRecognizer, sttSupported, cancelSpeech, type Recognizer } from "../voice/speech";
+import { useVoice } from "../voice/VoiceContext";
+
+function fmtEval(cp: number | null | undefined, mate?: number | null): string {
+  if (mate != null) return `mate in ${mate}`;
+  if (cp == null) return "—";
+  return `${cp >= 0 ? "+" : ""}${(cp / 100).toFixed(2)}`;
+}
+
+export function Session() {
+  const { id = "" } = useParams();
+  const { say, caption, clearCaptions } = useVoice();
+
+  const [sess, setSess] = useState<SessionState | null>(null);
+  const [legal, setLegal] = useState<LegalMoves | null>(null);
+  const [fen, setFen] = useState<string>("");
+  const [last, setLast] = useState<MoveResult | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [pending, setPending] = useState<LegalMove[] | null>(null);
+  const [interim, setInterim] = useState("");
+  const [listening, setListening] = useState(false);
+  const [text, setText] = useState("");
+  const turnStart = useRef(Date.now());
+
+  const legalMoves = useMemo(() => (legal ? buildLegalMoves(legal.legal_moves_san, legal.legal_moves_uci) : []), [legal]);
+  const blindfold = sess?.mode === "blindfold";
+  const showBoard = !blindfold || revealed;
+  const color = sess?.state_json.player_color ?? "white";
+  const finished = legal?.status === "finished";
+  const myTurn = legal?.next_to_move === "player" && !finished;
+
+  const refresh = useCallback(async () => {
+    const [s, l] = await Promise.all([api.getSession(id), api.legal(id)]);
+    setSess(s);
+    setLegal(l);
+    setFen(l.current_fen);
+    turnStart.current = Date.now();
+    return { s, l };
+  }, [id]);
+
+  // Initial load; announce an opening opponent move (player is black).
+  const announced = useRef<string | null>(null);
+  useEffect(() => {
+    if (announced.current === id) return; // StrictMode runs effects twice in dev
+    announced.current = id;
+    clearCaptions();
+    refresh()
+      .then(({ s }) => {
+        const om = s.state_json.last_opponent_move;
+        say("system", s.mode === "blindfold" ? "Blindfold session. The board is hidden. Hold the talk button and say your move." : "Session started. Make your move on the board, or by voice.");
+        if (om && s.state_json.move_history_san.length === 1) say("opponent", `Opponent plays ${speakMove(om.san)}.`);
+      })
+      .catch((e: Error) => setErr(e.message));
+    return () => cancelSpeech();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  /** Every move — dragged, spoken or typed — goes through the backend, which is the only authority. */
+  const submit = useCallback(
+    async (m: { san?: string; uci?: string }) => {
+      if (busy) return;
+      setBusy(true);
+      setErr(null);
+      setPending(null);
+      try {
+        const r = await api.move(id, { ...m, latency_ms: Date.now() - turnStart.current });
+        setLast(r);
+        setFen(r.current_fen);
+        setRevealed(false);
+        if (r.opponent_move) say("opponent", `Opponent plays ${speakMove(r.opponent_move.san)}.`);
+        say("coach", r.coaching.spoken_summary);
+        if (r.status === "finished") say("system", "The game is over.");
+        await refresh();
+      } catch (e) {
+        const msg = (e as Error).message;
+        setErr(msg);
+        caption("system", `Move rejected: ${msg}`);
+        await refresh().catch(() => {});
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, id, say, caption, refresh],
+  );
+
+  // Mutable view of state for callbacks owned by the recognizer.
+  const live = useRef({ legalMoves, pending, myTurn, busy, submit, last });
+  live.current = { legalMoves, pending, myTurn, busy, submit, last };
+
+  const doReveal = useCallback(async () => {
+    try {
+      const r = await api.reveal(id, "voice-or-button");
+      setFen(r.current_fen);
+      setRevealed(true);
+      setLegal((l) => (l ? { ...l, reveals_used: r.reveals_used, reveals_budget: r.reveals_budget, hints_used: r.hints_used } : l));
+      caption(
+        "system",
+        r.was_free
+          ? `Board revealed (${r.reveals_used} of ${r.reveals_budget} free reveals used).`
+          : `Board revealed — beyond the free budget, this counts against your visualization score (hints used: ${r.hints_used}).`,
+      );
+    } catch (e) {
+      setErr((e as Error).message);
+    }
+  }, [id, caption]);
+
+  /** Handle one recognized/typed utterance (all STT alternatives, best first). */
+  const handleUtterance = useCallback(
+    (alts: string[]) => {
+      const L = live.current;
+      const heard = alts[0];
+      caption("you", heard);
+
+      const cmd = parseCommand(heard);
+      if (cmd === "reveal" && blindfold) return void doReveal();
+      if (cmd === "repeat") {
+        const t = L.last?.opponent_move ? `Opponent played ${speakMove(L.last.opponent_move.san)}.` : "Nothing to repeat yet.";
+        return say("system", t);
+      }
+      if (!L.myTurn || L.busy) return say("system", "It is not your turn.");
+
+      if (L.pending) {
+        let outcome = resolveConfirmation(heard, L.pending);
+        for (let i = 1; outcome.kind === "unclear" && i < alts.length; i++) outcome = resolveConfirmation(alts[i], L.pending);
+        if (outcome.kind === "chosen") return void L.submit({ san: outcome.move.san, uci: outcome.move.uci });
+        if (outcome.kind === "cancel") {
+          setPending(null);
+          return say("system", "Cancelled. Say your move again.");
+        }
+        if (outcome.kind === "narrowed") {
+          setPending(outcome.moves);
+          return say("system", `Still ambiguous: ${outcome.moves.map((m) => speakMove(m.san)).join(", or ")}. Which one?`);
+        }
+        return say("system", `Say first, second, or the move. Options: ${L.pending.map((m) => speakMove(m.san)).join(", or ")}.`);
+      }
+
+      const r = resolveAlternatives(alts, L.legalMoves);
+      if (r.kind === "match") return void L.submit({ san: r.move.san, uci: r.move.uci });
+      if (r.kind === "ambiguous") {
+        setPending(r.moves);
+        return say("system", `More than one move fits. Did you mean ${r.moves.map((m) => speakMove(m.san)).join(", or ")}?`);
+      }
+      say("system", `I didn't find a legal move for "${heard}". Try again.`);
+    },
+    [blindfold, caption, say, doReveal],
+  );
+  const onUtterance = useRef(handleUtterance);
+  onUtterance.current = handleUtterance;
+
+  // Push-to-talk recognizer.
+  const rec = useRef<Recognizer | null>(null);
+  useEffect(() => {
+    rec.current = createRecognizer({
+      onInterim: setInterim,
+      onFinal: (alts) => {
+        setInterim("");
+        onUtterance.current(alts);
+      },
+      onState: setListening,
+      onError: (m) => caption("system", m),
+    });
+    return () => rec.current?.stop();
+  }, [caption]);
+
+  const startTalking = useCallback(() => {
+    cancelSpeech(); // never let TTS leak into the mic
+    rec.current?.start();
+  }, []);
+  const stopTalking = useCallback(() => rec.current?.stop(), []);
+
+  // Space bar = push-to-talk when not typing.
+  useEffect(() => {
+    const typing = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
+    const down = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !e.repeat && !typing(e.target)) {
+        e.preventDefault();
+        startTalking();
+      }
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !typing(e.target)) stopTalking();
+    };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
+  }, [startTalking, stopTalking]);
+
+  // Board drag: chess.js only pre-checks so illegal drops snap back; the POST is authoritative.
+  function onDrop(from: string, to: string): boolean {
+    if (!myTurn || busy) return false;
+    try {
+      const c = new Chess(fen);
+      const m = c.move({ from, to, promotion: "q" });
+      setFen(c.fen()); // optimistic; replaced by the server's current_fen
+      void submit({ uci: from + to + (m.promotion ?? "") });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function onText(e: FormEvent) {
+    e.preventDefault();
+    const t = text.trim();
+    if (!t) return;
+    setText("");
+    handleUtterance([t]);
+  }
+
+  if (!sess || !legal) return <p>{err ?? "Loading session…"}</p>;
+  const ev = last?.best_lines[0];
+
+  return (
+    <>
+      <h1>
+        {blindfold ? "Blindfold session" : "Guided session"} <span className="badge">{color}</span>
+      </h1>
+      <div className="grid">
+        <div>
+          {showBoard ? (
+            <Board fen={fen} orientation={color} interactive={!!myTurn && !busy} onDrop={onDrop} />
+          ) : (
+            <div className="blind" role="img" aria-label="Board hidden for blindfold play">
+              <div>
+                <p><strong>Board hidden</strong></p>
+                <p className="muted">Speak or type your move. Visualize the position.</p>
+              </div>
+            </div>
+          )}
+          <div className="row" style={{ marginTop: ".75rem" }}>
+            {blindfold && (
+              <button onClick={() => (revealed ? setRevealed(false) : void doReveal())} disabled={finished}>
+                {revealed ? "Hide board" : "Reveal board"}
+              </button>
+            )}
+            {blindfold && (
+              <span className="muted" aria-live="polite">
+                Reveals {legal.reveals_used}/{legal.reveals_budget} free · hints {legal.hints_used}
+              </span>
+            )}
+          </div>
+          {finished && <p><strong>Game over.</strong></p>}
+        </div>
+
+        <div>
+          <section className="card" aria-label="Voice controls">
+            <div className="row">
+              <button
+                className={`ptt ${listening ? "on" : ""}`}
+                disabled={!sttSupported || !myTurn}
+                onPointerDown={startTalking}
+                onPointerUp={stopTalking}
+                onPointerLeave={() => listening && stopTalking()}
+                onKeyDown={(e) => e.key === "Enter" && (listening ? stopTalking() : startTalking())}
+                aria-pressed={listening}
+              >
+                {listening ? "Listening… release to send" : "Hold to talk (or hold Space)"}
+              </button>
+              {!sttSupported && <span className="muted">Speech recognition isn't available in this browser — use the text box.</span>}
+            </div>
+            <form className="row" onSubmit={onText} style={{ marginTop: ".5rem" }}>
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={pending ? "first / second / the move" : "Type a move: Nf3, castle kingside…"}
+                aria-label="Type a move"
+                disabled={!myTurn || busy}
+                style={{ flex: 1 }}
+                autoComplete="off"
+              />
+              <button type="submit" disabled={!myTurn || busy || !text.trim()}>Send</button>
+            </form>
+            {pending && (
+              <div className="row" role="group" aria-label="Confirm move" style={{ marginTop: ".5rem" }}>
+                <span>Did you mean:</span>
+                {pending.map((m) => (
+                  <button key={m.uci} onClick={() => void submit({ san: m.san, uci: m.uci })}>{m.san}</button>
+                ))}
+                <button onClick={() => setPending(null)}>Cancel</button>
+              </div>
+            )}
+            <VoicePicker />
+          </section>
+
+          <h2>Live captions</h2>
+          <Captions interim={interim} />
+          {err && <p className="error" role="alert">{err}</p>}
+
+          {last && (
+            <section className="card" aria-label="Coach feedback">
+              <p>
+                Your move <strong>{last.played_san}</strong> <span className="badge">{last.classification}</span>
+                {last.opponent_move && <> · opponent replied <strong>{last.opponent_move.san}</strong> <span className="muted">({last.opponent_move.source_tier})</span></>}
+              </p>
+              <p>{last.coaching.spoken_summary}</p>
+              {last.coaching.correction_san && <p>Suggested: <strong>{last.coaching.correction_san}</strong></p>}
+              <p className="muted">
+                {/stockfish/i.test(last.engine_version) ? last.engine_version : `Stockfish ${last.engine_version}`} · depth {last.engine_depth} · eval (white) {fmtEval(last.eval_before_cp_white)} → {fmtEval(last.eval_after_cp_white)}
+                {ev && showBoard && <> · best line: {ev.pv_san.slice(0, 6).join(" ")}</>}
+              </p>
+            </section>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
