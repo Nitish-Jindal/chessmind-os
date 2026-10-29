@@ -1,6 +1,21 @@
 // Thin typed client over the real backend. No mocks: every call hits VITE_API_BASE_URL.
 
-export const API_BASE: string = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000").replace(/\/$/, "");
+/**
+ * Normalize the configured backend base URL. A full URL passes through (minus a
+ * trailing slash). A bare host — what a Render Blueprint `fromService ... property: host`
+ * reference yields — gets `https://`, and a dot-less Render service host gets
+ * `.onrender.com` appended. localhost stays on plain http.
+ */
+export function resolveApiBase(raw: string | undefined): string {
+  const value = (raw ?? "").trim().replace(/\/+$/, "");
+  if (!value) return "http://localhost:8000";
+  if (/^https?:\/\//i.test(value)) return value;
+  if (/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(value)) return `http://${value}`;
+  const host = value.includes(".") ? value : `${value}.onrender.com`;
+  return `https://${host}`;
+}
+
+export const API_BASE: string = resolveApiBase(import.meta.env.VITE_API_BASE_URL);
 
 const TOKEN_KEY = "chessmind.tokens";
 
