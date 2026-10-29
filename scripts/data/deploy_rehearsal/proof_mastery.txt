@@ -1,0 +1,11 @@
+played 1.g4 → classification=mistake swing=188cp
+  coach: g4 is a mistake — a +1.88-pawn swing against you. Better was e4, planning e4 e6 d4 d5.
+mastery after mistake: counts={'untested': 0, 'emerging': 1, 'competent': 0, 'mastered': 0, 'decayed': 0} due_now=1
+next drill due_now=True reps=0 interval=0.0 ease=2.5
+retrained with 1.e4 → classification=best swing=9cp
+mastery after retrain: counts={'untested': 0, 'emerging': 1, 'competent': 0, 'mastered': 0, 'decayed': 0} due_now=0
+  reps before=0  reps after=1
+  interval before=0.0  interval after=1.0
+  ease before=2.5  ease after=2.6
+  state before=emerging  state after=emerging
+transcript → /home/user/chessmind-os/scripts/data/proof_mastery.json

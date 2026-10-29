@@ -574,6 +574,28 @@ a "the opponent plays X" without them.
 - **Deploy flow:** push to `main` → GitHub Actions runs tests → Render
   auto-deploys from the merged commit.
 
+**As built (2026-10-29, `render.yaml`): deviates from the plan above.**
+
+- **API:** native Python runtime, not Docker. It runs as a free-plan web
+  service in `singapore`. `scripts/render_build.sh` downloads the pinned
+  official Stockfish build (`sf_17.1`, AVX2 with an SSE4.1 fallback) into
+  `engines/`, installs `./backend`, runs `alembic upgrade head` and seeds the
+  opening graph idempotently (`seed_games.py --skip-if-seeded`). The free
+  plan has no pre-deploy hook, so migrations and the seed run in the build.
+- **Frontend:** Render static site (`frontend/dist`) with an SPA rewrite.
+  `VITE_API_BASE_URL` comes from the API service's `host`.
+- **Postgres:** Neon (external), not Render-managed. The app accepts the
+  Neon URL as-is. `chessmind.config.normalize_database_url` adds the driver
+  prefix. For asyncpg it renames `sslmode`→`ssl` and drops
+  `channel_binding`. psycopg/Alembic keeps both.
+- **No worker, no Redis:** import jobs are in-process asyncio tasks. The
+  worker and Redis stay planned.
+- **Env:** `DATABASE_URL` (prompted, `sync: false`), `JWT_SECRET` (Render
+  generated; boot refuses the dev placeholder in production),
+  `STOCKFISH_PATH`, `CORS_ORIGINS` + `CORS_ORIGIN_REGEX`, `PYTHON_VERSION`.
+  There is no `REDIS_URL`, `GROK_API_KEY` or `SENTRY_DSN` yet.
+- **No GitHub Actions yet.** Render auto-deploys from the branch it tracks.
+
 ### 9.2 Local
 
 `docker compose up` brings up:

@@ -9,8 +9,8 @@ Flow:
   3. Play Italian mainline: 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5.
   4. On move 4 play 4.Qh5 (an unsound queen sortie) — expect inaccuracy
      or worse with a correction naming a stronger move + PV.
-  5. Play the engine's recommended move on the next turn (retrain in
-     place), confirm the label returns to best/playable.
+  5. Retrain in place: play the engine's top move for the position the
+     opponent's reply produced; confirm the label returns to best/playable.
   6. POST /sessions/{id}/finish; save transcript to scripts/data/.
 """
 
@@ -95,15 +95,19 @@ async def main(args: argparse.Namespace) -> int:
         pv = deviation["best_lines"][0]
         assert pv.get("pv_san"), "top line should carry a PV in SAN"
 
-        # Retrain: play the engine's correction if available; otherwise a solid move.
+        # Retrain: the correction names the better move for the position
+        # *before* the deviation; the opponent has replied since, so ask the
+        # engine (same depth the session grades at) for the current position
+        # and play its top move.
         legal = await legal_now()
-        correction = deviation["coaching"].get("correction_san")
-        if correction and correction in legal["legal_moves_san"]:
-            retrain = await post_move(correction, "retrain with engine correction")
-        else:
-            fallback = next((m for m in ["Nc3", "d3", "c3", "d4"] if m in legal["legal_moves_san"]),
-                            legal["legal_moves_san"][0])
-            retrain = await post_move(fallback, "retrain fallback")
+        r = await client.post("/analysis/position", headers=hdr, json={
+            "fen": legal["current_fen"], "depth": deviation["engine_depth"],
+            "multipv": deviation["engine_multipv"],
+        })
+        r.raise_for_status()
+        best_uci = r.json()["results"][0]["pv_uci"][0]
+        best_san = legal["legal_moves_san"][legal["legal_moves_uci"].index(best_uci)]
+        retrain = await post_move(best_san, "retrain with engine best move")
         assert retrain["classification"] in ("best", "playable", "inaccuracy"), \
             f"retrain should recover; got {retrain['classification']}"
 

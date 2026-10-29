@@ -1,0 +1,22 @@
+registered day1-c7c06115@chessmind.example.com
+logged in
+import job queued: 9a62b57c-6e31-40ad-acef-2281d9fd06a0 status=queued
+  status=running  progress=0/0
+  status=succeeded  progress=153/153
+import finished in 10.2s: {
+  "edges": 1725,
+  "games": 153,
+  "errors": [],
+  "repertoire_lines": 1725,
+  "positions_touched": 266
+}
+wrote proof artifact to /home/user/chessmind-os/scripts/data/day1_proof_tree.json
+
+=== GET /openings/tree?limit=10 ===
+root canonical: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
+total positions in graph: 995
+total edges in graph: 267
+
+move    games    W    L    D
+e4        216   72   78   66
+d4         90   28   34   28

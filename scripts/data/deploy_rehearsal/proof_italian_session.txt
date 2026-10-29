@@ -1,0 +1,9 @@
+session a3ec5ced-384a-4b3f-bfcf-8377deecb254 started; state: active
+  played e4     (italian 1) → best       swing=   9cp  cp_before=41 opp_move='e5' tier=opening_graph
+  played Nf3    (develop knight) → best       swing=   0cp  cp_before=27 opp_move='Nc6' tier=opening_graph
+  played g4     (deliberate sideline deviation (g4)) → mistake    swing= 187cp  cp_before=40 opp_move='d5' tier=engine_fallback
+     coach: g4 is a mistake — a +1.87-pawn swing against you. Better was Bb5, planning Bb5 a6 Ba4 Nf6.
+     correction: Bb5
+  played exd5   (retrain with engine best move) → best       swing=   3cp  cp_before=-132 opp_move='Qxd5' tier=engine_fallback
+finished at 2026-10-29T19:10:43.644804Z
+transcript → /home/user/chessmind-os/scripts/data/proof_italian.json

@@ -1,0 +1,43 @@
+ok intent selector offers repertoire / corpus / opponent
+repertoire-import-result succeeded 153 of 153 games imported · 266 positions · 1725 move edges · 1725 repertoire lines
+ok file upload POSTed /imports/pgn
+ok UI polled GET /imports/{id}
+ok result shows status, positions, edges and repertoire lines
+tree-root-e4-row ["e4","324","108 / 99 / 117"]
+FAIL: openings tree shows the uploaded games landed (1.e4 = 108 games)
+ok corpus intent reports no repertoire lines (graph only)
+opponent-import-result succeeded 120 of 120 games imported · 47 positions · 1200 move edges
+ok opponent import POSTed /imports/pgn with intent=opponent
+opponent-import-errors partial 0 of 1 games imported · 0 positions · 0 move edges
+
+1 error
+skipped: opponent not in game headers 'Somebody' vs 'Else'
+ok import errors from the job are shown in the UI
+mistake-feedback Your move g4 mistake · opponent replied e5 (engine_fallback)
+
+g4 is a mistake — a +1.88-pawn swing against you. Better was e4, planning e4 e6 d4 d5.
+
+Suggested: e4
+
+Stockfish 17.1 · depth 10 · eval (white) +0.41 → -1.47 · best line: e4 e6 d4 d5 Nc3 dxe4
+ok 1.g4 was graded as a mistake by Stockfish evidence
+ok Start due drill called POST /players/{id}/mastery/next
+drill-before [["State","emerging","—"],["Recall","62%","—"],["Understanding","62%","—"],["Visualization","100%","—"],["Speed","100%","—"],["Reps","0","—"],["Interval (days)","0","—"],["Ease","2.50","—"],["Next due","10/29/2026, 7:11:40 PM","—"]]
+ok drill opened on the due item (reps 0 after the mistake)
+drill-after [[["State",null],["emerging",null],["emerging","false"]],[["Recall",null],["62%",null],["80%","true"]],[["Understanding",null],["62%",null],["80%","true"]],[["Visualization",null],["100%",null],["100%","false"]],[["Speed",null],["100%",null],["100%","false"]],[["Reps",null],["0",null],["1","true"]],[["Interval (days)",null],["0",null],["1","true"]],[["Ease",null],["2.50",null],["2.60","true"]],[["Next due",null],["10/29/2026, 7:11:40 PM",null],["10/30/2026, 7:11:41 PM","true"]]]
+ok reps 0 -> 1 on screen
+ok next-due moved on screen
+ok recall score / state changed on screen
+drill-summary Recalled: reps 0 → 1, next due 10/30/2026, 7:11:41 PM.
+ok mastery dashboard now shows 0 due
+opponent-tree-root c4	40	100%	40 / 0 / 0
+ok opponent tree loaded from GET /opponents/{id}/tree
+twin-reply Your move d4 best · opponent replied Nf6 (opponent_profile)
+
+d4 is the top choice.
+
+Stockfish 17.1 · depth 10 · eval (white) +0.41 → +0.21 · best line: e4 e6 d4 d5 Nc3 dxe4
+ok twin replied Nf6 (the opponent's KID) from the opponent_profile tier
+settings-after-two-patches {"blindfold_free_reveals_per_session":3,"tts_voice":"voice-x"}
+ok PATCH /players/me merged settings_json
+api-calls ["POST /auth/register 201","POST /auth/login 200","GET /players/me 200","GET /opponents 200","GET /opponents 200","POST /imports/pgn 202","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /imports/dba6eef5-940c-4843-8627-e1d084825cdd 200","GET /openings/tree 200","GET /opponents 200","POST /imports/pgn 202","GET /imports/13c361ee-5cb4-4d98-955d-42faf8313a1a 200","POST /opponents 201","POST /imports/pgn 202","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","GET /imports/27758837-15c8-4bf2-befa-3ee9d844780b 200","POST /imports/pgn 202","GET /imports/f3cb4286-b286-4074-92fe-4bd3d5a7b281 200","GET /opponents 200","POST /sessions 201","GET /sessions/3d5d5969-db0e-43fb-a344-d83a43e15801/legal 200","GET /sessions/3d5d5969-db0e-43fb-a344-d83a43e15801 200","POST /sessions/3d5d5969-db0e-43fb-a344-d83a43e15801/move 200","GET /sessions/3d5d5969-db0e-43fb-a344-d83a43e15801 200","GET /sessions/3d5d5969-db0e-43fb-a344-d83a43e15801/legal 200","GET /players/fed0d792-3b19-4fc4-825e-de98105e16b3/mastery 200","POST /players/fed0d792-3b19-4fc4-825e-de98105e16b3/mastery/next 200","POST /sessions 201","GET /sessions/9fc7f57f-d09c-45fb-a685-4261cf1a521b/legal 200","GET /players/fed0d792-3b19-4fc4-825e-de98105e16b3/mastery/61695085-6a8c-4b49-925e-f2ca31e213fc 200","GET /sessions/9fc7f57f-d09c-45fb-a685-4261cf1a521b 200","POST /sessions/9fc7f57f-d09c-45fb-a685-4261cf1a521b/move 200","GET /players/fed0d792-3b19-4fc4-825e-de98105e16b3/mastery/61695085-6a8c-4b49-925e-f2ca31e213fc 200","GET /sessions/9fc7f57f-d09c-45fb-a685-4261cf1a521b 200","GET /sessions/9fc7f57f-d09c-45fb-a685-4261cf1a521b/legal 200","GET /players/fed0d792-3b19-4fc4-825e-de98105e16b3/mastery 200","GET /opponents 200","GET /opponents/c303c240-6130-40d9-a370-97c8dbac6bc7/tree 200","POST /sessions 201","GET /sessions/b28f1724-8d3e-4a53-b145-38c10c089303 200","GET /sessions/b28f1724-8d3e-4a53-b145-38c10c089303/legal 200","POST /sessions/b28f1724-8d3e-4a53-b145-38c10c089303/move 200","GET /sessions/b28f1724-8d3e-4a53-b145-38c10c089303/legal 200","GET /sessions/b28f1724-8d3e-4a53-b145-38c10c089303 200","PATCH /players/me 200","PATCH /players/me 200"]

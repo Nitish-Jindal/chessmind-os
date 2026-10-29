@@ -3,7 +3,7 @@
 A single-pane view of where the five-day MVP is. Update as items land; do
 not mark a phase complete until its proof condition is demonstrated.
 
-Last updated: 2026-10-29 — Day 1 complete; frontend import / mastery-drill / opponent-twin surfaces wired and proven in a real browser.
+Last updated: 2026-10-29 — Render Blueprint + deploy rehearsal, measured latency, ACCEPTANCE.md walk of the 13 scenarios.
 
 ## Phase 0 — Scaffold & plan
 
@@ -193,15 +193,31 @@ voice. Artifacts: `scripts/data/proof_ui_flows.json`, `ui_*.png`; fixtures
 ## Phase 5 — Day 5: Integration & deploy
 
 - [ ] End-to-end test suite exercising all 13 acceptance scenarios from the
-      handoff.
+      handoff. (Walked scenario by scenario in `ACCEPTANCE.md`: 7 pass,
+      6 thin, with direct MetaDb out of scope. Existing proof scripts
+      re-run against the deploy-shaped stack; logs in
+      `scripts/data/deploy_rehearsal/`.)
 - [ ] GitHub Actions: lint, type-check, backend tests, frontend tests,
-      container build.
-- [ ] Render deploy: web service, worker, managed Postgres, managed Redis,
-      env group wired; manual deploy script documented.
-- [ ] Observability: request logs with correlation id, Stockfish job
-      metrics, LLM token accounting.
-- [ ] Known Gaps section in `README.md` kept honest (free-tier cold start,
-      MetaDb vendor status, LLM latency notes).
+      container build. (Not started.)
+- [x] Render Blueprint: `render.yaml` (Python web service + static site,
+      Singapore, free plan), `scripts/render_build.sh` (Stockfish
+      download, pip, `alembic upgrade head`, idempotent seed). Neon URL
+      normalization (driver prefix, `sslmode`→`ssl`, `channel_binding`
+      dropped for asyncpg). Rehearsed locally against TLS + SCRAM Postgres.
+      As built there is no worker or Redis, and Postgres is Neon rather
+      than Render-managed (see ARCHITECTURE §9.1).
+- [ ] Live Render deploy wired (maintainer: connect repo, paste
+      `DATABASE_URL`).
+- [ ] Observability: request logs with correlation id (done), Stockfish
+      job metrics, LLM token accounting (not started).
+- [x] Known Gaps section in `README.md` kept honest.
+- [x] Measured p50/p95 for `POST /sessions/{id}/move` and
+      `POST /analysis/position` on the local stack (README "Measured
+      latency"; `scripts/measure_latency.py`, `scripts/data/latency.json`).
+
+Fixed while proving the deploy: SM-2 interval cap (500 after ~15
+correct reviews of one position), DB commit before response (stale reads
+right after a move), and the Italian proof's retrain step.
 
 **Proof:** deployed demo passes all 13 acceptance scenarios live.
 
