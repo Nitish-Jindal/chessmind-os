@@ -68,7 +68,23 @@ class EngineClient:
     def _start(self) -> None:
         with self._start_lock:
             if self._engine is not None:
-                return
+                # Validate the cached subprocess is actually alive; a prior
+                # external kill (pkill, container restart) leaves the Python
+                # side holding stale pipes that block forever on the next
+                # analyse().
+                try:
+                    pid = self._engine.transport.get_pid()
+                    os.kill(pid, 0)  # raises if dead
+                except (OSError, ProcessLookupError, AttributeError):
+                    logger.warning("stale stockfish subprocess; respawning")
+                    try:
+                        self._engine.close()
+                    except Exception:
+                        pass
+                    self._engine = None
+                    self._version = None
+                else:
+                    return
             path = get_settings().stockfish_path
             if not os.path.isabs(path):
                 # resolve relative to this file so uvicorn-cwd doesn't matter

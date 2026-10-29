@@ -62,6 +62,12 @@ def _schema() -> None:
 
 
 _TABLES_TO_TRUNCATE = [
+    "mastery_state",
+    "training_attempt",
+    "training_session",
+    "master_move_stat",
+    "opponent_position_move",
+    "opponent_profile",
     "engine_analysis",
     "repertoire_line",
     "move_edge",
