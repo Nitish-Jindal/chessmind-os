@@ -50,8 +50,9 @@ uvicorn chessmind.app:app --reload
 
 # 4. Frontend
 cd frontend
-pnpm install
-pnpm dev
+cp .env.example .env.local   # VITE_API_BASE_URL → the backend (default http://localhost:8000)
+npm install
+npm run dev                  # http://localhost:5173; `npm test` runs the voice-resolver tests
 
 # 5. Seed openings
 python scripts/seed_openings.py

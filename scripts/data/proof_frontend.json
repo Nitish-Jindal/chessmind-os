@@ -1,0 +1,202 @@
+{
+  "proof": "frontend_e2e",
+  "email": "fe-proof-1793294625932@chessmind.example.com",
+  "log": [
+    {
+      "k": "ok",
+      "v": "voice dropdown populated from getVoices() on voiceschanged (2 voices + default)"
+    },
+    {
+      "k": "ok",
+      "v": "choosing a voice PATCHes /players/me"
+    },
+    {
+      "k": "ok",
+      "v": "voice choice restored from settings_json.tts_voice after reload"
+    },
+    {
+      "k": "after-drag captions",
+      "v": "system: Session started. Make your move on the board, or by voice.\n\nopponent: Opponent plays pawn d5.\n\ncoach: d4 is playable — about +0.22 off the top line. Better was e4, planning e4 e5 Nf3 Nc6."
+    },
+    {
+      "k": "ok",
+      "v": "drag move went through POST /sessions/{id}/move"
+    },
+    {
+      "k": "ok",
+      "v": "TTS announced the opponent reply"
+    },
+    {
+      "k": "coach-feedback",
+      "v": "Your move Nf3 best · opponent replied c6 (engine_fallback)\n\nNf3 is the top choice.\n\nStockfish 16 · depth 10 · eval (white) +0.22 → +0.20 · best line: c4 e6 e3 Nf6 Nf3 Be7"
+    },
+    {
+      "k": "ok",
+      "v": "coach card shows Stockfish engine evidence"
+    },
+    {
+      "k": "ok",
+      "v": "TTS announced the coach feedback"
+    },
+    {
+      "k": "ok",
+      "v": "ambiguous utterance shows confirmation choices"
+    },
+    {
+      "k": "ok",
+      "v": "TTS asked 'Did you mean A or B?'"
+    },
+    {
+      "k": "ok",
+      "v": "confirmation resolved to exactly one POST /move"
+    },
+    {
+      "k": "ok",
+      "v": "text-input fallback accepted a move"
+    },
+    {
+      "k": "session1-captions",
+      "v": "system: Session started. Make your move on the board, or by voice.\n\nopponent: Opponent plays pawn d5.\n\ncoach: d4 is playable — about +0.22 off the top line. Better was e4, planning e4 e5 Nf3 Nc6.\n\nyou: knight f3\n\nopponent: Opponent plays pawn c6.\n\ncoach: Nf3 is the top choice.\n\nyou: knight d2\n\nsystem: More than one move fits. Did you mean knight from f, d2, or knight from b, d2?\n\nyou: second\n\nopponent: Opponent plays bishop f5.\n\ncoach: Nbd2 is playable — about +0.35 off the top line. Better was c4, planning c4 dxc4 e4 b5.\n\nyou: e3\n\nopponent: Opponent plays knight f6.\n\ncoach: e3 is the top choice."
+    },
+    {
+      "k": "ok",
+      "v": "blindfold: no board squares in the DOM"
+    },
+    {
+      "k": "ok",
+      "v": "blindfold: board still hidden after the opponent replied"
+    },
+    {
+      "k": "ok",
+      "v": "blindfold: opponent reply announced by voice"
+    },
+    {
+      "k": "blindfold-captions",
+      "v": "system: Blindfold session. The board is hidden. Hold the talk button and say your move.\n\nyou: e four\n\nopponent: Opponent plays pawn e5.\n\ncoach: e4 is the top choice."
+    },
+    {
+      "k": "reveal-response",
+      "v": {
+        "session_id": "8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342",
+        "reveals_used": 1,
+        "reveals_budget": 2,
+        "hints_used": 0,
+        "current_fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+        "was_free": true
+      }
+    },
+    {
+      "k": "ok",
+      "v": "reveal hit POST /sessions/{id}/reveal (free reveal #1)"
+    },
+    {
+      "k": "ok",
+      "v": "reveal counter updated in the UI"
+    },
+    {
+      "k": "ok",
+      "v": "board shows the position after reveal (32 pieces)"
+    },
+    {
+      "k": "ok",
+      "v": "voice 'reveal' used the second free reveal"
+    },
+    {
+      "k": "ok",
+      "v": "openings page rendered tree edges from /openings/tree"
+    },
+    {
+      "k": "api-calls",
+      "v": [
+        "POST /auth/register 201",
+        "POST /auth/login 200",
+        "GET /players/me 200",
+        "GET /opponents 200",
+        "GET /opponents 200",
+        "PATCH /players/me 200",
+        "GET /players/me 200",
+        "GET /players/me 200",
+        "GET /opponents 200",
+        "GET /opponents 200",
+        "POST /sessions 201",
+        "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357 200",
+        "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/legal 200",
+        "POST /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/move 200",
+        "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357 200",
+        "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/legal 200",
+        "POST /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/move 200",
+        "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357 200",
+        "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/legal 200",
+        "POST /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/move 200",
+        "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357 200",
+        "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/legal 200",
+        "POST /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/move 200",
+        "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/legal 200",
+        "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357 200",
+        "GET /opponents 200",
+        "GET /opponents 200",
+        "POST /sessions 201",
+        "GET /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342/legal 200",
+        "GET /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342 200",
+        "POST /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342/move 200",
+        "GET /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342 200",
+        "GET /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342/legal 200",
+        "POST /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342/reveal 200",
+        "POST /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342/reveal 200",
+        "GET /openings/tree 200",
+        "GET /openings/tree 200",
+        "GET /players/c53fed48-512d-40c7-9327-8946766f1a7c/mastery 200",
+        "GET /players/c53fed48-512d-40c7-9327-8946766f1a7c/mastery 200",
+        "GET /opponents 200",
+        "GET /opponents 200",
+        "GET /openings/tree 200",
+        "GET /openings/tree 200"
+      ]
+    }
+  ],
+  "apiCalls": [
+    "POST /auth/register 201",
+    "POST /auth/login 200",
+    "GET /players/me 200",
+    "GET /opponents 200",
+    "GET /opponents 200",
+    "PATCH /players/me 200",
+    "GET /players/me 200",
+    "GET /players/me 200",
+    "GET /opponents 200",
+    "GET /opponents 200",
+    "POST /sessions 201",
+    "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357 200",
+    "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/legal 200",
+    "POST /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/move 200",
+    "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357 200",
+    "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/legal 200",
+    "POST /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/move 200",
+    "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357 200",
+    "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/legal 200",
+    "POST /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/move 200",
+    "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357 200",
+    "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/legal 200",
+    "POST /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/move 200",
+    "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357/legal 200",
+    "GET /sessions/fda8aa12-5c1c-4cd2-9df4-6b1532b3c357 200",
+    "GET /opponents 200",
+    "GET /opponents 200",
+    "POST /sessions 201",
+    "GET /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342/legal 200",
+    "GET /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342 200",
+    "POST /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342/move 200",
+    "GET /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342 200",
+    "GET /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342/legal 200",
+    "POST /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342/reveal 200",
+    "POST /sessions/8952c1ae-60b6-4c16-9d9a-e3aa6b0d2342/reveal 200",
+    "GET /openings/tree 200",
+    "GET /openings/tree 200",
+    "GET /players/c53fed48-512d-40c7-9327-8946766f1a7c/mastery 200",
+    "GET /players/c53fed48-512d-40c7-9327-8946766f1a7c/mastery 200",
+    "GET /opponents 200",
+    "GET /opponents 200",
+    "GET /openings/tree 200",
+    "GET /openings/tree 200"
+  ]
+}

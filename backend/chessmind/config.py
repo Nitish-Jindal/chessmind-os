@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     stockfish_default_depth: int = 18
     stockfish_default_multipv: int = 3
     environment: str = Field(default="dev")
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173",
+        description="Comma-separated browser origins allowed to call the API (the Vite frontend).",
+    )
 
 
 @lru_cache
