@@ -402,16 +402,20 @@ Wraps `python-chess`:
 Every rules call returns rich errors; the API never swallows a parser
 exception and returns 200.
 
-### 6.2 Stockfish worker (`chessmind.chess.engine`)
+### 6.2 Stockfish worker (`chessmind.services.engine`)
 
 **Resolved shape — long-lived singleton per worker process, lock-guarded.**
 
-- One UCI subprocess is spawned when the worker process starts (`uci`,
-  `isready`, options set once).
-- All callers go through a single `EngineClient` with an `asyncio.Lock`.
-  Only one `position` + `go` sequence runs at a time per worker; parallel
-  demand is served by scaling worker replicas, not by multiplexing one
-  engine.
+- One UCI subprocess is spawned on first use and reused for the process
+  lifetime (`uci`, `isready`, options set once).
+- All callers go through a single `EngineClient` with a `threading.Lock`.
+  (Day-1 implementation note: python-chess's `SimpleEngine` is a sync
+  wrapper over subprocess pipes with its own internal event loop on a
+  background thread, so a threading lock is the right level — pytest's
+  per-test event loops have no affinity issues. The async surface stays
+  clean via `asyncio.to_thread`.) Only one `position` + `go` sequence
+  runs at a time per worker; parallel demand is served by scaling
+  worker replicas, not by multiplexing one engine.
 - The **cache (`engine_analysis` table) is the primary path**. The engine
   is called only when no row at the requested depth or deeper exists for
   this `canonical_key` + engine version.
