@@ -217,3 +217,69 @@ async def test_pgn_import_endpoint_async(client, player):
         await asyncio.sleep(0.1)
     assert body["status"] == "succeeded", body
     assert body["artifacts_json"]["games"] == 1
+
+
+async def _run_import(client, headers, body):
+    import asyncio
+
+    r = await client.post("/imports/pgn", headers=headers, json=body)
+    assert r.status_code == 202, r.text
+    job_id = r.json()["id"]
+    for _ in range(60):
+        r = await client.get(f"/imports/{job_id}", headers=headers)
+        if r.json()["status"] in ("succeeded", "failed", "partial"):
+            break
+        await asyncio.sleep(0.1)
+    return r.json()
+
+
+async def test_corpus_intent_feeds_graph_but_not_repertoire(db, client, player):
+    from chessmind.security import create_access_token
+
+    headers = {"Authorization": f"Bearer {create_access_token(player.id)}"}
+    job = await _run_import(client, headers, {"pgn": ITALIAN_PGN, "intent": "corpus"})
+    assert job["status"] == "succeeded", job
+    assert job["kind"] == "corpus_pgn"
+    assert job["artifacts_json"]["games"] == 1
+    assert job["artifacts_json"]["repertoire_lines"] == 0
+    assert (await db.execute(select(func.count()).select_from(MoveEdge))).scalar_one() > 0
+    assert (await db.execute(select(func.count()).select_from(RepertoireLine))).scalar_one() == 0
+
+
+async def test_repertoire_intent_creates_repertoire_lines(db, client, player):
+    from chessmind.security import create_access_token
+
+    headers = {"Authorization": f"Bearer {create_access_token(player.id)}"}
+    job = await _run_import(client, headers, {"pgn": ITALIAN_PGN, "intent": "repertoire"})
+    assert job["status"] == "succeeded", job
+    assert job["kind"] == "player_pgn"
+    assert (await db.execute(select(func.count()).select_from(RepertoireLine))).scalar_one() > 0
+
+
+async def test_opponent_intent_routes_to_opponent_profile(db, client, player):
+    from chessmind.models import OpponentPositionMove, OpponentProfile
+    from chessmind.security import create_access_token
+
+    headers = {"Authorization": f"Bearer {create_access_token(player.id)}"}
+    body = {"pgn": ITALIAN_PGN, "intent": "opponent"}
+
+    r = await client.post("/imports/pgn", headers=headers, json=body)
+    assert r.status_code == 422  # opponent_profile_id is required
+    r = await client.post(
+        "/imports/pgn", headers=headers, json={**body, "opponent_profile_id": str(uuid4())}
+    )
+    assert r.status_code == 404
+
+    r = await client.post("/opponents", headers=headers, json={"display_name": "A"})
+    assert r.status_code == 201, r.text
+    opp_id = r.json()["id"]
+    job = await _run_import(client, headers, {**body, "opponent_profile_id": opp_id})
+    assert job["kind"] == "opponent_pgn"
+    assert job["status"] == "succeeded", job
+    assert (await db.execute(select(func.count()).select_from(RepertoireLine))).scalar_one() == 0
+    profile = await db.get(OpponentProfile, opp_id)
+    await db.refresh(profile)
+    assert profile.games_imported == 1
+    assert (
+        await db.execute(select(func.count()).select_from(OpponentPositionMove))
+    ).scalar_one() > 0

@@ -1,0 +1,483 @@
+{
+  "proof": "ui_flows_e2e",
+  "email": "ui-proof-1793298696795@chessmind.example.com",
+  "log": [
+    {
+      "k": "ok",
+      "v": "intent selector offers repertoire / corpus / opponent"
+    },
+    {
+      "k": "repertoire-import-result",
+      "v": "succeeded 153 of 153 games imported · 266 positions · 1725 move edges · 1725 repertoire lines"
+    },
+    {
+      "k": "ok",
+      "v": "file upload POSTed /imports/pgn"
+    },
+    {
+      "k": "ok",
+      "v": "UI polled GET /imports/{id}"
+    },
+    {
+      "k": "ok",
+      "v": "result shows status, positions, edges and repertoire lines"
+    },
+    {
+      "k": "tree-root-e4-row",
+      "v": [
+        "e4",
+        "108",
+        "36 / 33 / 39"
+      ]
+    },
+    {
+      "k": "ok",
+      "v": "openings tree shows the uploaded games landed (1.e4 = 108 games)"
+    },
+    {
+      "k": "ok",
+      "v": "corpus intent reports no repertoire lines (graph only)"
+    },
+    {
+      "k": "opponent-import-result",
+      "v": "succeeded 120 of 120 games imported · 47 positions · 1200 move edges"
+    },
+    {
+      "k": "ok",
+      "v": "opponent import POSTed /imports/pgn with intent=opponent"
+    },
+    {
+      "k": "opponent-import-errors",
+      "v": "partial 0 of 1 games imported · 0 positions · 0 move edges\n\n1 error\nskipped: opponent not in game headers 'Somebody' vs 'Else'"
+    },
+    {
+      "k": "ok",
+      "v": "import errors from the job are shown in the UI"
+    },
+    {
+      "k": "mistake-feedback",
+      "v": "Your move g4 mistake · opponent replied Nc6 (engine_fallback)\n\ng4 is a mistake — a +1.66-pawn swing against you. Better was e4, planning e4 e5 Nf3 Nc6.\n\nSuggested: e4\n\nStockfish 16 · depth 10 · eval (white) +0.36 → -1.30 · best line: e4 e5 Nf3 Nc6 Bb5 Nf6"
+    },
+    {
+      "k": "ok",
+      "v": "1.g4 was graded as a mistake by Stockfish evidence"
+    },
+    {
+      "k": "ok",
+      "v": "Start due drill called POST /players/{id}/mastery/next"
+    },
+    {
+      "k": "drill-before",
+      "v": [
+        [
+          "State",
+          "emerging",
+          "—"
+        ],
+        [
+          "Recall",
+          "67%",
+          "—"
+        ],
+        [
+          "Understanding",
+          "67%",
+          "—"
+        ],
+        [
+          "Visualization",
+          "100%",
+          "—"
+        ],
+        [
+          "Speed",
+          "100%",
+          "—"
+        ],
+        [
+          "Reps",
+          "0",
+          "—"
+        ],
+        [
+          "Interval (days)",
+          "0",
+          "—"
+        ],
+        [
+          "Ease",
+          "2.50",
+          "—"
+        ],
+        [
+          "Next due",
+          "10/29/2026, 6:31:59 PM",
+          "—"
+        ]
+      ]
+    },
+    {
+      "k": "ok",
+      "v": "drill opened on the due item (reps 0 after the mistake)"
+    },
+    {
+      "k": "drill-after",
+      "v": [
+        [
+          [
+            "State",
+            null
+          ],
+          [
+            "emerging",
+            null
+          ],
+          [
+            "emerging",
+            "false"
+          ]
+        ],
+        [
+          [
+            "Recall",
+            null
+          ],
+          [
+            "67%",
+            null
+          ],
+          [
+            "83%",
+            "true"
+          ]
+        ],
+        [
+          [
+            "Understanding",
+            null
+          ],
+          [
+            "67%",
+            null
+          ],
+          [
+            "83%",
+            "true"
+          ]
+        ],
+        [
+          [
+            "Visualization",
+            null
+          ],
+          [
+            "100%",
+            null
+          ],
+          [
+            "100%",
+            "false"
+          ]
+        ],
+        [
+          [
+            "Speed",
+            null
+          ],
+          [
+            "100%",
+            null
+          ],
+          [
+            "100%",
+            "false"
+          ]
+        ],
+        [
+          [
+            "Reps",
+            null
+          ],
+          [
+            "0",
+            null
+          ],
+          [
+            "1",
+            "true"
+          ]
+        ],
+        [
+          [
+            "Interval (days)",
+            null
+          ],
+          [
+            "0",
+            null
+          ],
+          [
+            "1",
+            "true"
+          ]
+        ],
+        [
+          [
+            "Ease",
+            null
+          ],
+          [
+            "2.50",
+            null
+          ],
+          [
+            "2.60",
+            "true"
+          ]
+        ],
+        [
+          [
+            "Next due",
+            null
+          ],
+          [
+            "10/29/2026, 6:31:59 PM",
+            null
+          ],
+          [
+            "10/30/2026, 6:32:00 PM",
+            "true"
+          ]
+        ]
+      ]
+    },
+    {
+      "k": "ok",
+      "v": "reps 0 -> 1 on screen"
+    },
+    {
+      "k": "ok",
+      "v": "next-due moved on screen"
+    },
+    {
+      "k": "ok",
+      "v": "recall score / state changed on screen"
+    },
+    {
+      "k": "drill-summary",
+      "v": "Recalled: reps 0 → 1, next due 10/30/2026, 6:32:00 PM."
+    },
+    {
+      "k": "ok",
+      "v": "mastery dashboard now shows 0 due"
+    },
+    {
+      "k": "opponent-tree-root",
+      "v": "c4\t40\t100%\t40 / 0 / 0"
+    },
+    {
+      "k": "ok",
+      "v": "opponent tree loaded from GET /opponents/{id}/tree"
+    },
+    {
+      "k": "twin-reply",
+      "v": "Your move d4 best · opponent replied Nf6 (opponent_profile)\n\nd4 is the top choice.\n\nStockfish 16 · depth 10 · eval (white) +0.36 → +0.23 · best line: e4 e5 Nf3 Nc6 Bb5 Nf6"
+    },
+    {
+      "k": "ok",
+      "v": "twin replied Nf6 (the opponent's KID) from the opponent_profile tier"
+    },
+    {
+      "k": "settings-after-two-patches",
+      "v": {
+        "blindfold_free_reveals_per_session": 3,
+        "tts_voice": "voice-x"
+      }
+    },
+    {
+      "k": "ok",
+      "v": "PATCH /players/me merged settings_json"
+    },
+    {
+      "k": "api-calls",
+      "v": [
+        "POST /auth/register 201",
+        "POST /auth/login 200",
+        "GET /players/me 200",
+        "GET /opponents 200",
+        "GET /opponents 200",
+        "GET /opponents 200",
+        "GET /opponents 200",
+        "POST /imports/pgn 202",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+        "GET /openings/tree 200",
+        "GET /openings/tree 200",
+        "GET /opponents 200",
+        "GET /opponents 200",
+        "POST /imports/pgn 202",
+        "GET /imports/8a60d4ae-ff28-4bd1-8095-e0d8d354368c 200",
+        "POST /opponents 201",
+        "POST /imports/pgn 202",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+        "POST /imports/pgn 202",
+        "GET /imports/021d1207-1cf0-46d3-bfaa-73f27dd54606 200",
+        "GET /opponents 200",
+        "GET /opponents 200",
+        "POST /sessions 201",
+        "GET /sessions/6814ca99-c6d8-4e0b-bffc-7f8c6530280b/legal 200",
+        "GET /sessions/6814ca99-c6d8-4e0b-bffc-7f8c6530280b 200",
+        "POST /sessions/6814ca99-c6d8-4e0b-bffc-7f8c6530280b/move 200",
+        "GET /sessions/6814ca99-c6d8-4e0b-bffc-7f8c6530280b/legal 200",
+        "GET /sessions/6814ca99-c6d8-4e0b-bffc-7f8c6530280b 200",
+        "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery 200",
+        "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery 200",
+        "POST /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery/next 200",
+        "POST /sessions 201",
+        "GET /sessions/d9b4a57f-4b11-44a6-b368-662543787eb0/legal 200",
+        "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery/413efe0f-013d-4328-94de-2cb74ae4cfd0 200",
+        "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery/413efe0f-013d-4328-94de-2cb74ae4cfd0 200",
+        "GET /sessions/d9b4a57f-4b11-44a6-b368-662543787eb0 200",
+        "POST /sessions/d9b4a57f-4b11-44a6-b368-662543787eb0/move 200",
+        "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery/413efe0f-013d-4328-94de-2cb74ae4cfd0 200",
+        "GET /sessions/d9b4a57f-4b11-44a6-b368-662543787eb0/legal 200",
+        "GET /sessions/d9b4a57f-4b11-44a6-b368-662543787eb0 200",
+        "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery 200",
+        "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery 200",
+        "GET /opponents 200",
+        "GET /opponents 200",
+        "GET /opponents/81365e32-724b-4d62-98ed-f529b48f9d04/tree 200",
+        "GET /opponents/81365e32-724b-4d62-98ed-f529b48f9d04/tree 200",
+        "POST /sessions 201",
+        "GET /sessions/46c2cb45-b8da-416d-9134-0b9160ebc85f 200",
+        "GET /sessions/46c2cb45-b8da-416d-9134-0b9160ebc85f/legal 200",
+        "POST /sessions/46c2cb45-b8da-416d-9134-0b9160ebc85f/move 200",
+        "GET /sessions/46c2cb45-b8da-416d-9134-0b9160ebc85f 200",
+        "GET /sessions/46c2cb45-b8da-416d-9134-0b9160ebc85f/legal 200",
+        "PATCH /players/me 200",
+        "PATCH /players/me 200"
+      ]
+    }
+  ],
+  "apiCalls": [
+    "POST /auth/register 201",
+    "POST /auth/login 200",
+    "GET /players/me 200",
+    "GET /opponents 200",
+    "GET /opponents 200",
+    "GET /opponents 200",
+    "GET /opponents 200",
+    "POST /imports/pgn 202",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /imports/f927ba59-45f6-4151-b28e-4e24cb03efc5 200",
+    "GET /openings/tree 200",
+    "GET /openings/tree 200",
+    "GET /opponents 200",
+    "GET /opponents 200",
+    "POST /imports/pgn 202",
+    "GET /imports/8a60d4ae-ff28-4bd1-8095-e0d8d354368c 200",
+    "POST /opponents 201",
+    "POST /imports/pgn 202",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "GET /imports/e4c30dd0-302f-4ae8-bb62-2f4d356319f2 200",
+    "POST /imports/pgn 202",
+    "GET /imports/021d1207-1cf0-46d3-bfaa-73f27dd54606 200",
+    "GET /opponents 200",
+    "GET /opponents 200",
+    "POST /sessions 201",
+    "GET /sessions/6814ca99-c6d8-4e0b-bffc-7f8c6530280b/legal 200",
+    "GET /sessions/6814ca99-c6d8-4e0b-bffc-7f8c6530280b 200",
+    "POST /sessions/6814ca99-c6d8-4e0b-bffc-7f8c6530280b/move 200",
+    "GET /sessions/6814ca99-c6d8-4e0b-bffc-7f8c6530280b/legal 200",
+    "GET /sessions/6814ca99-c6d8-4e0b-bffc-7f8c6530280b 200",
+    "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery 200",
+    "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery 200",
+    "POST /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery/next 200",
+    "POST /sessions 201",
+    "GET /sessions/d9b4a57f-4b11-44a6-b368-662543787eb0/legal 200",
+    "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery/413efe0f-013d-4328-94de-2cb74ae4cfd0 200",
+    "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery/413efe0f-013d-4328-94de-2cb74ae4cfd0 200",
+    "GET /sessions/d9b4a57f-4b11-44a6-b368-662543787eb0 200",
+    "POST /sessions/d9b4a57f-4b11-44a6-b368-662543787eb0/move 200",
+    "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery/413efe0f-013d-4328-94de-2cb74ae4cfd0 200",
+    "GET /sessions/d9b4a57f-4b11-44a6-b368-662543787eb0/legal 200",
+    "GET /sessions/d9b4a57f-4b11-44a6-b368-662543787eb0 200",
+    "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery 200",
+    "GET /players/b8a86cbb-aeef-4c83-a2db-893f62e1b74f/mastery 200",
+    "GET /opponents 200",
+    "GET /opponents 200",
+    "GET /opponents/81365e32-724b-4d62-98ed-f529b48f9d04/tree 200",
+    "GET /opponents/81365e32-724b-4d62-98ed-f529b48f9d04/tree 200",
+    "POST /sessions 201",
+    "GET /sessions/46c2cb45-b8da-416d-9134-0b9160ebc85f 200",
+    "GET /sessions/46c2cb45-b8da-416d-9134-0b9160ebc85f/legal 200",
+    "POST /sessions/46c2cb45-b8da-416d-9134-0b9160ebc85f/move 200",
+    "GET /sessions/46c2cb45-b8da-416d-9134-0b9160ebc85f 200",
+    "GET /sessions/46c2cb45-b8da-416d-9134-0b9160ebc85f/legal 200",
+    "PATCH /players/me 200",
+    "PATCH /players/me 200"
+  ]
+}

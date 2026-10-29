@@ -91,7 +91,7 @@ export interface Player {
   settings_json: Record<string, unknown>;
 }
 
-export type SessionMode = "guided" | "blindfold";
+export type SessionMode = "guided" | "blindfold" | "opponent";
 export type SamplerMode = "mainline" | "mix" | "surprise" | "opponent_twin";
 
 export interface SessionState {
@@ -183,6 +183,7 @@ export interface OpeningTree {
 
 export interface MasteryRow {
   position_id: string;
+  canonical_key: string;
   fen: string;
   opening_name: string | null;
   state: string;
@@ -191,7 +192,16 @@ export interface MasteryRow {
   visualization_score: number;
   speed_score: number;
   due_at: string;
+  last_tested_at: string | null;
+  ease_factor: number;
+  interval_days: number;
   reps: number;
+}
+
+export interface NextDrill {
+  due_now: boolean;
+  row: MasteryRow | null;
+  reason: string;
 }
 
 export interface MasteryDashboard {
@@ -225,11 +235,22 @@ export interface OpponentTree {
   }[];
 }
 
+export type ImportIntent = "repertoire" | "opponent" | "corpus";
+
 export interface ImportJob {
   id: string;
+  kind: string;
   status: string;
   progress_games: number;
   total_games: number;
+  error: string | null;
+  artifacts_json: {
+    games?: number;
+    positions_touched?: number;
+    edges?: number;
+    repertoire_lines?: number;
+    errors?: string[];
+  };
 }
 
 // ---- endpoints ----
@@ -247,6 +268,8 @@ export const api = {
     player_color: "white" | "black";
     sampler_mode: SamplerMode;
     opponent_profile_id?: string | null;
+    starting_fen?: string;
+    novelty_prob?: number;
     seed?: number;
   }) => request<SessionState>("POST", "/sessions", body),
   getSession: (id: string) => request<SessionState>("GET", `/sessions/${id}`),
@@ -259,11 +282,15 @@ export const api = {
   openingTree: (fen?: string) =>
     request<OpeningTree>("GET", `/openings/tree?limit=20${fen ? `&fen=${encodeURIComponent(fen)}` : ""}`),
   mastery: (playerId: string) => request<MasteryDashboard>("GET", `/players/${playerId}/mastery`),
+  masteryRow: (playerId: string, positionId: string) =>
+    request<MasteryRow>("GET", `/players/${playerId}/mastery/${positionId}`),
+  nextDrill: (playerId: string) => request<NextDrill>("POST", `/players/${playerId}/mastery/next`),
+
+  importPgn: (pgn: string, intent: ImportIntent, opponent_profile_id?: string, source = "upload") =>
+    request<ImportJob>("POST", "/imports/pgn", { pgn, intent, opponent_profile_id, source }),
 
   opponents: () => request<Opponent[]>("GET", "/opponents"),
   createOpponent: (display_name: string) => request<Opponent>("POST", "/opponents", { display_name }),
-  importOpponentPgn: (id: string, pgn: string) =>
-    request<ImportJob>("POST", `/opponents/${id}/import`, { pgn, source: "upload" }),
   importJob: (id: string) => request<ImportJob>("GET", `/imports/${id}`),
   opponentTree: (id: string, fen?: string) =>
     request<OpponentTree>("GET", `/opponents/${id}/tree${fen ? `?fen=${encodeURIComponent(fen)}` : ""}`),

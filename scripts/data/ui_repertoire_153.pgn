@@ -1,0 +1,1858 @@
+[Event "ChessMind Seed #001"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "1"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C50"]
+[Opening "Italian Giuoco Pianissimo"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. d3 Nf6 5. O-O d6 6. c3 O-O 1/2-1/2
+
+[Event "ChessMind Seed #002"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "2"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C50"]
+[Opening "Italian Giuoco Piano"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. cxd4 Bb4+ 1-0
+
+[Event "ChessMind Seed #003"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "3"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C50"]
+[Opening "Italian Giuoco Piano"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 a6 6. Bb3 d6 0-1
+
+[Event "ChessMind Seed #004"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "4"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C53"]
+[Opening "Italian Classical"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Qe7 5. d4 Bb6 1-0
+
+[Event "ChessMind Seed #005"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "5"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C52"]
+[Opening "Evans Gambit Accepted"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 exd4 7. O-O 1-0
+
+[Event "ChessMind Seed #006"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "6"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C51"]
+[Opening "Evans Gambit Declined"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bb6 5. a4 a6 0-1
+
+[Event "ChessMind Seed #007"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "7"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C55"]
+[Opening "Two Knights Defense"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Bc5 5. c3 d6 1/2-1/2
+
+[Event "ChessMind Seed #008"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "8"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C57"]
+[Opening "Two Knights Ng5 d5"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5 6. Bb5+ c6 0-1
+
+[Event "ChessMind Seed #009"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "9"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C57"]
+[Opening "Fried Liver Attack"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7 Kxf7 7. Qf3+ 1-0
+
+[Event "ChessMind Seed #010"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "10"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C50"]
+[Opening "Hungarian Defense"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Be7 4. d4 d6 5. dxe5 dxe5 6. Qxd8+ Bxd8 1/2-1/2
+
+[Event "ChessMind Seed #011"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "11"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C50"]
+[Opening "Italian Giuoco Pianissimo"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. d3 Nf6 5. O-O d6 6. c3 O-O 1-0
+
+[Event "ChessMind Seed #012"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "12"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C50"]
+[Opening "Italian Giuoco Piano"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. cxd4 Bb4+ 0-1
+
+[Event "ChessMind Seed #013"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "13"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C50"]
+[Opening "Italian Giuoco Piano"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 a6 6. Bb3 d6 1/2-1/2
+
+[Event "ChessMind Seed #014"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "14"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C53"]
+[Opening "Italian Classical"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Qe7 5. d4 Bb6 0-1
+
+[Event "ChessMind Seed #015"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "15"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C52"]
+[Opening "Evans Gambit Accepted"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 exd4 7. O-O 0-1
+
+[Event "ChessMind Seed #016"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "16"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C51"]
+[Opening "Evans Gambit Declined"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bb6 5. a4 a6 1/2-1/2
+
+[Event "ChessMind Seed #017"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "17"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C55"]
+[Opening "Two Knights Defense"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Bc5 5. c3 d6 1-0
+
+[Event "ChessMind Seed #018"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "18"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C57"]
+[Opening "Two Knights Ng5 d5"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5 6. Bb5+ c6 1/2-1/2
+
+[Event "ChessMind Seed #019"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "19"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C57"]
+[Opening "Fried Liver Attack"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7 Kxf7 7. Qf3+ 0-1
+
+[Event "ChessMind Seed #020"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "20"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C50"]
+[Opening "Hungarian Defense"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Be7 4. d4 d6 5. dxe5 dxe5 6. Qxd8+ Bxd8 1-0
+
+[Event "ChessMind Seed #021"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "21"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C50"]
+[Opening "Italian Giuoco Pianissimo"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. d3 Nf6 5. O-O d6 6. c3 O-O 1-0
+
+[Event "ChessMind Seed #022"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "22"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C50"]
+[Opening "Italian Giuoco Piano"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. cxd4 Bb4+ 0-1
+
+[Event "ChessMind Seed #023"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "23"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C50"]
+[Opening "Italian Giuoco Piano"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 a6 6. Bb3 d6 1/2-1/2
+
+[Event "ChessMind Seed #024"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "24"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C53"]
+[Opening "Italian Classical"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Qe7 5. d4 Bb6 0-1
+
+[Event "ChessMind Seed #025"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "25"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C52"]
+[Opening "Evans Gambit Accepted"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 exd4 7. O-O 0-1
+
+[Event "ChessMind Seed #026"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "26"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C51"]
+[Opening "Evans Gambit Declined"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bb6 5. a4 a6 1/2-1/2
+
+[Event "ChessMind Seed #027"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "27"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C55"]
+[Opening "Two Knights Defense"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Bc5 5. c3 d6 1-0
+
+[Event "ChessMind Seed #028"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "28"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C57"]
+[Opening "Two Knights Ng5 d5"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5 6. Bb5+ c6 1/2-1/2
+
+[Event "ChessMind Seed #029"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "29"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C57"]
+[Opening "Fried Liver Attack"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7 Kxf7 7. Qf3+ 0-1
+
+[Event "ChessMind Seed #030"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "30"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C50"]
+[Opening "Hungarian Defense"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Be7 4. d4 d6 5. dxe5 dxe5 6. Qxd8+ Bxd8 1-0
+
+[Event "ChessMind Seed #031"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "31"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C65"]
+[Opening "Ruy Lopez Berlin"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5
+1/2-1/2
+
+[Event "ChessMind Seed #032"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "32"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C67"]
+[Opening "Ruy Lopez Berlin Wall"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5
+8. Qxd8+ Kxd8 1/2-1/2
+
+[Event "ChessMind Seed #033"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "33"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C84"]
+[Opening "Ruy Lopez Morphy Closed"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3
+O-O 1/2-1/2
+
+[Event "ChessMind Seed #034"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "34"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C80"]
+[Opening "Ruy Lopez Open"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Nxe4 6. d4 b5 7. Bb3 d5 1-0
+
+[Event "ChessMind Seed #035"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "35"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C68"]
+[Opening "Ruy Lopez Exchange"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Bxc6 dxc6 5. O-O f6 6. d4 exd4 7. Nxd4 0-1
+
+[Event "ChessMind Seed #036"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "36"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C89"]
+[Opening "Ruy Lopez Marshall"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 O-O 8. c3
+d5 1-0
+
+[Event "ChessMind Seed #037"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "37"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C79"]
+[Opening "Ruy Lopez Steinitz Deferred"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O d6 0-1
+
+[Event "ChessMind Seed #038"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "38"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C63"]
+[Opening "Ruy Lopez Schliemann"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 f5 4. Nc3 fxe4 5. Nxe4 Nf6 0-1
+
+[Event "ChessMind Seed #039"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "39"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C64"]
+[Opening "Ruy Lopez Classical"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Bc5 4. c3 f5 1-0
+
+[Event "ChessMind Seed #040"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "40"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C61"]
+[Opening "Ruy Lopez Bird"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nd4 4. Nxd4 exd4 5. O-O 1/2-1/2
+
+[Event "ChessMind Seed #041"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "41"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C60"]
+[Opening "Ruy Lopez Cozio"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nge7 4. c3 a6 5. Ba4 b5 0-1
+
+[Event "ChessMind Seed #042"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "42"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C65"]
+[Opening "Ruy Lopez Berlin"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5
+1-0
+
+[Event "ChessMind Seed #043"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "43"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C67"]
+[Opening "Ruy Lopez Berlin Wall"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5
+8. Qxd8+ Kxd8 1-0
+
+[Event "ChessMind Seed #044"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "44"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C84"]
+[Opening "Ruy Lopez Morphy Closed"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3
+O-O 1-0
+
+[Event "ChessMind Seed #045"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "45"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C80"]
+[Opening "Ruy Lopez Open"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Nxe4 6. d4 b5 7. Bb3 d5 0-1
+
+[Event "ChessMind Seed #046"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "46"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C68"]
+[Opening "Ruy Lopez Exchange"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Bxc6 dxc6 5. O-O f6 6. d4 exd4 7. Nxd4 1/2-1/2
+
+[Event "ChessMind Seed #047"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "47"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C89"]
+[Opening "Ruy Lopez Marshall"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 O-O 8. c3
+d5 0-1
+
+[Event "ChessMind Seed #048"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "48"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C79"]
+[Opening "Ruy Lopez Steinitz Deferred"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O d6 1/2-1/2
+
+[Event "ChessMind Seed #049"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "49"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C63"]
+[Opening "Ruy Lopez Schliemann"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 f5 4. Nc3 fxe4 5. Nxe4 Nf6 1/2-1/2
+
+[Event "ChessMind Seed #050"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "50"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C64"]
+[Opening "Ruy Lopez Classical"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Bc5 4. c3 f5 0-1
+
+[Event "ChessMind Seed #051"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "51"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C61"]
+[Opening "Ruy Lopez Bird"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nd4 4. Nxd4 exd4 5. O-O 1-0
+
+[Event "ChessMind Seed #052"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "52"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C60"]
+[Opening "Ruy Lopez Cozio"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nge7 4. c3 a6 5. Ba4 b5 1/2-1/2
+
+[Event "ChessMind Seed #053"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "53"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C65"]
+[Opening "Ruy Lopez Berlin"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5
+1-0
+
+[Event "ChessMind Seed #054"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "54"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C67"]
+[Opening "Ruy Lopez Berlin Wall"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4 5. d4 Nd6 6. Bxc6 dxc6 7. dxe5 Nf5
+8. Qxd8+ Kxd8 1-0
+
+[Event "ChessMind Seed #055"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "55"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C84"]
+[Opening "Ruy Lopez Morphy Closed"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3
+O-O 1-0
+
+[Event "ChessMind Seed #056"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "56"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C80"]
+[Opening "Ruy Lopez Open"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Nxe4 6. d4 b5 7. Bb3 d5 0-1
+
+[Event "ChessMind Seed #057"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "57"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C68"]
+[Opening "Ruy Lopez Exchange"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Bxc6 dxc6 5. O-O f6 6. d4 exd4 7. Nxd4 1/2-1/2
+
+[Event "ChessMind Seed #058"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "58"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C89"]
+[Opening "Ruy Lopez Marshall"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 O-O 8. c3
+d5 0-1
+
+[Event "ChessMind Seed #059"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "59"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C79"]
+[Opening "Ruy Lopez Steinitz Deferred"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O d6 1/2-1/2
+
+[Event "ChessMind Seed #060"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "60"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C63"]
+[Opening "Ruy Lopez Schliemann"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 f5 4. Nc3 fxe4 5. Nxe4 Nf6 1/2-1/2
+
+[Event "ChessMind Seed #061"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "61"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "C64"]
+[Opening "Ruy Lopez Classical"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Bc5 4. c3 f5 0-1
+
+[Event "ChessMind Seed #062"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "62"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "C61"]
+[Opening "Ruy Lopez Bird"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nd4 4. Nxd4 exd4 5. O-O 1-0
+
+[Event "ChessMind Seed #063"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "63"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "C60"]
+[Opening "Ruy Lopez Cozio"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 Nge7 4. c3 a6 5. Ba4 b5 1/2-1/2
+
+[Event "ChessMind Seed #064"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "64"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B90"]
+[Opening "Sicilian Najdorf"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 1-0
+
+[Event "ChessMind Seed #065"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "65"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B90"]
+[Opening "Sicilian Najdorf English Attack"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be3 e5 7. Nb3 Be6 8. f3
+0-1
+
+[Event "ChessMind Seed #066"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "66"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B96"]
+[Opening "Sicilian Najdorf Bg5"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Bg5 e6 7. f4 Be7 1-0
+
+[Event "ChessMind Seed #067"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "67"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B70"]
+[Opening "Sicilian Dragon"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 g6 1/2-1/2
+
+[Event "ChessMind Seed #068"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "68"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B78"]
+[Opening "Sicilian Yugoslav Attack"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 g6 6. Be3 Bg7 7. f3 O-O 8. Qd2
+Nc6 1-0
+
+[Event "ChessMind Seed #069"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "69"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B80"]
+[Opening "Sicilian Scheveningen"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 e6 1/2-1/2
+
+[Event "ChessMind Seed #070"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "70"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B60"]
+[Opening "Sicilian Classical Richter-Rauzer"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 Nc6 6. Bg5 e6 7. Qd2 a6 0-1
+
+[Event "ChessMind Seed #071"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "71"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B33"]
+[Opening "Sicilian Sveshnikov"]
+
+1. e4 c5 2. Nf3 Nc6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 e5 6. Ndb5 d6 7. Bg5 a6 8.
+Na3 b5 0-1
+
+[Event "ChessMind Seed #072"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "72"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B40"]
+[Opening "Sicilian Taimanov"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 1-0
+
+[Event "ChessMind Seed #073"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "73"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B41"]
+[Opening "Sicilian Kan"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 a6 1/2-1/2
+
+[Event "ChessMind Seed #074"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "74"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B30"]
+[Opening "Sicilian Rossolimo"]
+
+1. e4 c5 2. Nf3 Nc6 3. Bb5 g6 4. O-O Bg7 5. Re1 e5 1-0
+
+[Event "ChessMind Seed #075"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "75"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B22"]
+[Opening "Sicilian Alapin"]
+
+1. e4 c5 2. c3 Nf6 3. e5 Nd5 4. d4 cxd4 5. Nf3 0-1
+
+[Event "ChessMind Seed #076"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "76"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B23"]
+[Opening "Sicilian Closed"]
+
+1. e4 c5 2. Nc3 Nc6 3. g3 g6 4. Bg2 Bg7 5. d3 d6 1/2-1/2
+
+[Event "ChessMind Seed #077"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "77"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B23"]
+[Opening "Sicilian Grand Prix Attack"]
+
+1. e4 c5 2. Nc3 Nc6 3. f4 g6 4. Nf3 Bg7 1-0
+
+[Event "ChessMind Seed #078"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "78"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B21"]
+[Opening "Sicilian Smith-Morra Gambit"]
+
+1. e4 c5 2. d4 cxd4 3. c3 dxc3 4. Nxc3 Nc6 1-0
+
+[Event "ChessMind Seed #079"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "79"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B90"]
+[Opening "Sicilian Najdorf"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 0-1
+
+[Event "ChessMind Seed #080"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "80"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B90"]
+[Opening "Sicilian Najdorf English Attack"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be3 e5 7. Nb3 Be6 8. f3
+1/2-1/2
+
+[Event "ChessMind Seed #081"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "81"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B96"]
+[Opening "Sicilian Najdorf Bg5"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Bg5 e6 7. f4 Be7 0-1
+
+[Event "ChessMind Seed #082"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "82"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B70"]
+[Opening "Sicilian Dragon"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 g6 1-0
+
+[Event "ChessMind Seed #083"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "83"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B78"]
+[Opening "Sicilian Yugoslav Attack"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 g6 6. Be3 Bg7 7. f3 O-O 8. Qd2
+Nc6 0-1
+
+[Event "ChessMind Seed #084"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "84"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B80"]
+[Opening "Sicilian Scheveningen"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 e6 1-0
+
+[Event "ChessMind Seed #085"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "85"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B60"]
+[Opening "Sicilian Classical Richter-Rauzer"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 Nc6 6. Bg5 e6 7. Qd2 a6
+1/2-1/2
+
+[Event "ChessMind Seed #086"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "86"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B33"]
+[Opening "Sicilian Sveshnikov"]
+
+1. e4 c5 2. Nf3 Nc6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 e5 6. Ndb5 d6 7. Bg5 a6 8.
+Na3 b5 1/2-1/2
+
+[Event "ChessMind Seed #087"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "87"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B40"]
+[Opening "Sicilian Taimanov"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 0-1
+
+[Event "ChessMind Seed #088"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "88"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B41"]
+[Opening "Sicilian Kan"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 a6 1-0
+
+[Event "ChessMind Seed #089"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "89"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B30"]
+[Opening "Sicilian Rossolimo"]
+
+1. e4 c5 2. Nf3 Nc6 3. Bb5 g6 4. O-O Bg7 5. Re1 e5 0-1
+
+[Event "ChessMind Seed #090"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "90"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B22"]
+[Opening "Sicilian Alapin"]
+
+1. e4 c5 2. c3 Nf6 3. e5 Nd5 4. d4 cxd4 5. Nf3 1/2-1/2
+
+[Event "ChessMind Seed #091"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "91"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B23"]
+[Opening "Sicilian Closed"]
+
+1. e4 c5 2. Nc3 Nc6 3. g3 g6 4. Bg2 Bg7 5. d3 d6 1-0
+
+[Event "ChessMind Seed #092"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "92"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B23"]
+[Opening "Sicilian Grand Prix Attack"]
+
+1. e4 c5 2. Nc3 Nc6 3. f4 g6 4. Nf3 Bg7 0-1
+
+[Event "ChessMind Seed #093"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "93"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B21"]
+[Opening "Sicilian Smith-Morra Gambit"]
+
+1. e4 c5 2. d4 cxd4 3. c3 dxc3 4. Nxc3 Nc6 0-1
+
+[Event "ChessMind Seed #094"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "94"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B90"]
+[Opening "Sicilian Najdorf"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 0-1
+
+[Event "ChessMind Seed #095"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "95"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B90"]
+[Opening "Sicilian Najdorf English Attack"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be3 e5 7. Nb3 Be6 8. f3
+1/2-1/2
+
+[Event "ChessMind Seed #096"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "96"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B96"]
+[Opening "Sicilian Najdorf Bg5"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Bg5 e6 7. f4 Be7 0-1
+
+[Event "ChessMind Seed #097"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "97"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B70"]
+[Opening "Sicilian Dragon"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 g6 1-0
+
+[Event "ChessMind Seed #098"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "98"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B78"]
+[Opening "Sicilian Yugoslav Attack"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 g6 6. Be3 Bg7 7. f3 O-O 8. Qd2
+Nc6 0-1
+
+[Event "ChessMind Seed #099"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "99"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B80"]
+[Opening "Sicilian Scheveningen"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 e6 1-0
+
+[Event "ChessMind Seed #100"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "100"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B60"]
+[Opening "Sicilian Classical Richter-Rauzer"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 Nc6 6. Bg5 e6 7. Qd2 a6
+1/2-1/2
+
+[Event "ChessMind Seed #101"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "101"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B33"]
+[Opening "Sicilian Sveshnikov"]
+
+1. e4 c5 2. Nf3 Nc6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 e5 6. Ndb5 d6 7. Bg5 a6 8.
+Na3 b5 1/2-1/2
+
+[Event "ChessMind Seed #102"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "102"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B40"]
+[Opening "Sicilian Taimanov"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 Nc6 5. Nc3 Qc7 0-1
+
+[Event "ChessMind Seed #103"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "103"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B41"]
+[Opening "Sicilian Kan"]
+
+1. e4 c5 2. Nf3 e6 3. d4 cxd4 4. Nxd4 a6 1-0
+
+[Event "ChessMind Seed #104"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "104"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B30"]
+[Opening "Sicilian Rossolimo"]
+
+1. e4 c5 2. Nf3 Nc6 3. Bb5 g6 4. O-O Bg7 5. Re1 e5 0-1
+
+[Event "ChessMind Seed #105"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "105"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "B22"]
+[Opening "Sicilian Alapin"]
+
+1. e4 c5 2. c3 Nf6 3. e5 Nd5 4. d4 cxd4 5. Nf3 1/2-1/2
+
+[Event "ChessMind Seed #106"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "106"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "B23"]
+[Opening "Sicilian Closed"]
+
+1. e4 c5 2. Nc3 Nc6 3. g3 g6 4. Bg2 Bg7 5. d3 d6 1-0
+
+[Event "ChessMind Seed #107"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "107"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B23"]
+[Opening "Sicilian Grand Prix Attack"]
+
+1. e4 c5 2. Nc3 Nc6 3. f4 g6 4. Nf3 Bg7 0-1
+
+[Event "ChessMind Seed #108"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "108"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "B21"]
+[Opening "Sicilian Smith-Morra Gambit"]
+
+1. e4 c5 2. d4 cxd4 3. c3 dxc3 4. Nxc3 Nc6 0-1
+
+[Event "ChessMind Seed #109"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "109"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D63"]
+[Opening "QGD Orthodox"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 1/2-1/2
+
+[Event "ChessMind Seed #110"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "110"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D35"]
+[Opening "QGD Exchange"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. cxd5 exd5 5. Bg5 1-0
+
+[Event "ChessMind Seed #111"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "111"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D56"]
+[Opening "QGD Lasker"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 h6 7. Bh4 Ne4 0-1
+
+[Event "ChessMind Seed #112"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "112"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D58"]
+[Opening "QGD Tartakower"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 h6 7. Bh4 b6 1-0
+
+[Event "ChessMind Seed #113"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "113"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D27"]
+[Opening "QGA Classical"]
+
+1. d4 d5 2. c4 dxc4 3. Nf3 Nf6 4. e3 e6 5. Bxc4 c5 1/2-1/2
+
+[Event "ChessMind Seed #114"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "114"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D11"]
+[Opening "Slav Defense"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 dxc4 5. a4 0-1
+
+[Event "ChessMind Seed #115"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "115"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D47"]
+[Opening "Semi-Slav Meran"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 e6 5. e3 Nbd7 6. Bd3 dxc4 7. Bxc4 1-0
+
+[Event "ChessMind Seed #116"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "116"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D43"]
+[Opening "Semi-Slav Moscow"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 e6 5. Bg5 h6 6. Bxf6 Qxf6 1/2-1/2
+
+[Event "ChessMind Seed #117"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "117"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D15"]
+[Opening "Chebanenko Slav"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 a6 0-1
+
+[Event "ChessMind Seed #118"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "118"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D32"]
+[Opening "Tarrasch Defense"]
+
+1. d4 d5 2. c4 e6 3. Nc3 c5 4. cxd5 exd5 5. Nf3 1-0
+
+[Event "ChessMind Seed #119"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "119"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D08"]
+[Opening "Albin Counter-Gambit"]
+
+1. d4 d5 2. c4 e5 3. dxe5 d4 4. Nf3 Nc6 0-1
+
+[Event "ChessMind Seed #120"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "120"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D52"]
+[Opening "QGD Cambridge Springs"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. Nf3 c6 6. e3 Qa5 1-0
+
+[Event "ChessMind Seed #121"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "121"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "E04"]
+[Opening "Catalan Open"]
+
+1. d4 Nf6 2. c4 e6 3. g3 d5 4. Bg2 dxc4 1/2-1/2
+
+[Event "ChessMind Seed #122"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "122"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "E07"]
+[Opening "Catalan Closed"]
+
+1. d4 Nf6 2. c4 e6 3. g3 d5 4. Bg2 Be7 5. Nf3 O-O 1-0
+
+[Event "ChessMind Seed #123"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "123"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "E41"]
+[Opening "Nimzo-Indian Rubinstein"]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 c5 5. Nf3 0-1
+
+[Event "ChessMind Seed #124"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "124"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D63"]
+[Opening "QGD Orthodox"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 1-0
+
+[Event "ChessMind Seed #125"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "125"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D35"]
+[Opening "QGD Exchange"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. cxd5 exd5 5. Bg5 0-1
+
+[Event "ChessMind Seed #126"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "126"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D56"]
+[Opening "QGD Lasker"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 h6 7. Bh4 Ne4 1/2-1/2
+
+[Event "ChessMind Seed #127"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "127"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D58"]
+[Opening "QGD Tartakower"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 h6 7. Bh4 b6 0-1
+
+[Event "ChessMind Seed #128"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "128"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D27"]
+[Opening "QGA Classical"]
+
+1. d4 d5 2. c4 dxc4 3. Nf3 Nf6 4. e3 e6 5. Bxc4 c5 1-0
+
+[Event "ChessMind Seed #129"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "129"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D11"]
+[Opening "Slav Defense"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 dxc4 5. a4 1/2-1/2
+
+[Event "ChessMind Seed #130"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "130"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D47"]
+[Opening "Semi-Slav Meran"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 e6 5. e3 Nbd7 6. Bd3 dxc4 7. Bxc4 0-1
+
+[Event "ChessMind Seed #131"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "131"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D43"]
+[Opening "Semi-Slav Moscow"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 e6 5. Bg5 h6 6. Bxf6 Qxf6 1-0
+
+[Event "ChessMind Seed #132"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "132"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D15"]
+[Opening "Chebanenko Slav"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 a6 1/2-1/2
+
+[Event "ChessMind Seed #133"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "133"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D32"]
+[Opening "Tarrasch Defense"]
+
+1. d4 d5 2. c4 e6 3. Nc3 c5 4. cxd5 exd5 5. Nf3 0-1
+
+[Event "ChessMind Seed #134"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "134"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D08"]
+[Opening "Albin Counter-Gambit"]
+
+1. d4 d5 2. c4 e5 3. dxe5 d4 4. Nf3 Nc6 1/2-1/2
+
+[Event "ChessMind Seed #135"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "135"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D52"]
+[Opening "QGD Cambridge Springs"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. Nf3 c6 6. e3 Qa5 0-1
+
+[Event "ChessMind Seed #136"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "136"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "E04"]
+[Opening "Catalan Open"]
+
+1. d4 Nf6 2. c4 e6 3. g3 d5 4. Bg2 dxc4 1-0
+
+[Event "ChessMind Seed #137"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "137"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "E07"]
+[Opening "Catalan Closed"]
+
+1. d4 Nf6 2. c4 e6 3. g3 d5 4. Bg2 Be7 5. Nf3 O-O 0-1
+
+[Event "ChessMind Seed #138"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "138"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "E41"]
+[Opening "Nimzo-Indian Rubinstein"]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 c5 5. Nf3 1/2-1/2
+
+[Event "ChessMind Seed #139"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "139"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D63"]
+[Opening "QGD Orthodox"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 1-0
+
+[Event "ChessMind Seed #140"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "140"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D35"]
+[Opening "QGD Exchange"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. cxd5 exd5 5. Bg5 0-1
+
+[Event "ChessMind Seed #141"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "141"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D56"]
+[Opening "QGD Lasker"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 h6 7. Bh4 Ne4 1/2-1/2
+
+[Event "ChessMind Seed #142"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "142"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D58"]
+[Opening "QGD Tartakower"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Be7 5. e3 O-O 6. Nf3 h6 7. Bh4 b6 0-1
+
+[Event "ChessMind Seed #143"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "143"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D27"]
+[Opening "QGA Classical"]
+
+1. d4 d5 2. c4 dxc4 3. Nf3 Nf6 4. e3 e6 5. Bxc4 c5 1-0
+
+[Event "ChessMind Seed #144"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "144"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D11"]
+[Opening "Slav Defense"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 dxc4 5. a4 1/2-1/2
+
+[Event "ChessMind Seed #145"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "145"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D47"]
+[Opening "Semi-Slav Meran"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 e6 5. e3 Nbd7 6. Bd3 dxc4 7. Bxc4 0-1
+
+[Event "ChessMind Seed #146"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "146"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "D43"]
+[Opening "Semi-Slav Moscow"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 e6 5. Bg5 h6 6. Bxf6 Qxf6 1-0
+
+[Event "ChessMind Seed #147"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "147"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D15"]
+[Opening "Chebanenko Slav"]
+
+1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 a6 1/2-1/2
+
+[Event "ChessMind Seed #148"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "148"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D32"]
+[Opening "Tarrasch Defense"]
+
+1. d4 d5 2. c4 e6 3. Nc3 c5 4. cxd5 exd5 5. Nf3 0-1
+
+[Event "ChessMind Seed #149"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "149"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "D08"]
+[Opening "Albin Counter-Gambit"]
+
+1. d4 d5 2. c4 e5 3. dxe5 d4 4. Nf3 Nc6 1/2-1/2
+
+[Event "ChessMind Seed #150"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "150"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "D52"]
+[Opening "QGD Cambridge Springs"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. Nf3 c6 6. e3 Qa5 0-1
+
+[Event "ChessMind Seed #151"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "151"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1-0"]
+[ECO "E04"]
+[Opening "Catalan Open"]
+
+1. d4 Nf6 2. c4 e6 3. g3 d5 4. Bg2 dxc4 1-0
+
+[Event "ChessMind Seed #152"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "152"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "0-1"]
+[ECO "E07"]
+[Opening "Catalan Closed"]
+
+1. d4 Nf6 2. c4 e6 3. g3 d5 4. Bg2 Be7 5. Nf3 O-O 0-1
+
+[Event "ChessMind Seed #153"]
+[Site "chessmind-seed"]
+[Date "2026.10.29"]
+[Round "153"]
+[White "Seed-W"]
+[Black "Seed-B"]
+[Result "1/2-1/2"]
+[ECO "E41"]
+[Opening "Nimzo-Indian Rubinstein"]
+
+1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. e3 c5 5. Nf3 1/2-1/2
