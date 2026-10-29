@@ -1,0 +1,59 @@
+{
+  "measured_at": "2026-10-29T19:09:54Z",
+  "base_url": "http://localhost:8000",
+  "host": {
+    "platform": "Linux-6.18.44-fc-v185-x86_64-with-glibc2.39",
+    "cpus": 4,
+    "python": "3.12.3"
+  },
+  "seed_base": 943235,
+  "sessions": 20,
+  "plies_per_session": 6,
+  "move": {
+    "engine": {
+      "depth": 10,
+      "multipv": 3,
+      "engine_version": "17.1"
+    },
+    "cold": {
+      "n": 120,
+      "p50_ms": 66.4,
+      "p95_ms": 104.0,
+      "mean_ms": 63.9,
+      "max_ms": 118.7
+    },
+    "warm": {
+      "n": 120,
+      "p50_ms": 22.7,
+      "p95_ms": 28.6,
+      "mean_ms": 23.0,
+      "max_ms": 32.6
+    }
+  },
+  "analysis": {
+    "engine": {
+      "depth": 18,
+      "multipv": 3,
+      "engine_version": "17.1"
+    },
+    "positions": 60,
+    "cold": {
+      "n": 60,
+      "p50_ms": 850.3,
+      "p95_ms": 1655.3,
+      "mean_ms": 924.1,
+      "max_ms": 2204.3,
+      "cache_hits": 1,
+      "engine_time_p50_ms": 856.0,
+      "engine_time_p95_ms": 1637.0
+    },
+    "warm": {
+      "n": 60,
+      "p50_ms": 9.3,
+      "p95_ms": 13.2,
+      "mean_ms": 9.7,
+      "max_ms": 14.5,
+      "cache_hits": 60
+    }
+  }
+}

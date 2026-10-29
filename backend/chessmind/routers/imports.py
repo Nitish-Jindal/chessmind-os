@@ -25,7 +25,7 @@ router = APIRouter(prefix="/imports", tags=["imports"])
 async def create_pgn_import(
     payload: ImportPgnRequest,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> ImportJob:
     profile_id = None
     if payload.intent == "opponent":
@@ -64,7 +64,7 @@ async def create_pgn_import(
 async def get_import(
     import_id: UUID,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> ImportJob:
     job = await session.get(ImportJob, import_id)
     if job is None or job.player_id != player.id:

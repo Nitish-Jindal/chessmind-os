@@ -26,6 +26,11 @@ from typing import Literal
 
 from chessmind.services.labeler import Classification
 
+# Upper bound on the review interval. Uncapped SM-2 grows geometrically, so a
+# position reviewed correctly every session (the start position is reviewed in
+# every session) overflowed datetime after ~15 reviews.
+MAX_INTERVAL_DAYS = 365.0
+
 
 @dataclass
 class SM2State:
@@ -85,7 +90,7 @@ def apply_review(
         elif reps == 2:
             interval = 6.0
         else:
-            interval = max(1.0, prev.interval_days * prev.ease_factor)
+            interval = min(MAX_INTERVAL_DAYS, max(1.0, prev.interval_days * prev.ease_factor))
         delta = 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
         ease = max(1.3, prev.ease_factor + delta)
 

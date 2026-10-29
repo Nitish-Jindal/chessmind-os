@@ -116,3 +116,60 @@ class FinishResponse(BaseModel):
     session_id: UUID
     status: SessionStatus
     ended_at: datetime | None
+
+
+# --------------------------------------------------------------------------- #
+# Position questions (handoff §3.3 voice questions)
+# --------------------------------------------------------------------------- #
+
+QuestionKindLit = Literal["piece_location", "square_content", "hanging_pieces", "side_to_move", "evaluation"]
+
+
+class UtteranceRequest(BaseModel):
+    """What the player said or typed. ``alternatives`` are extra STT hypotheses, best first."""
+
+    text: str = Field(min_length=1, max_length=500)
+    alternatives: list[str] = Field(default_factory=list, max_length=10)
+
+    def all_texts(self) -> list[str]:
+        return [self.text, *[a for a in self.alternatives if a and a != self.text]]
+
+
+class QuestionTally(BaseModel):
+    asked: int
+    quizzed: int
+    answered: int
+    correct: int
+    mean_score: float | None
+
+
+class AskResponse(BaseModel):
+    session_id: UUID
+    understood: bool
+    question_id: UUID | None
+    kind: QuestionKindLit | None
+    answer_text: str
+    facts: dict[str, Any]
+    questions_asked: int
+
+
+class QuizRequest(BaseModel):
+    kind: QuestionKindLit | None = Field(default=None, description="Omit for a seeded random kind.")
+
+
+class QuizQuestion(BaseModel):
+    session_id: UUID
+    question_id: UUID
+    kind: QuestionKindLit
+    prompt: str
+
+
+class QuizAnswerResponse(BaseModel):
+    session_id: UUID
+    question_id: UUID
+    understood: bool
+    correct: bool
+    score: float | None
+    expected_text: str | None
+    feedback: str
+    tally: QuestionTally

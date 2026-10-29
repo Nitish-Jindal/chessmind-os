@@ -1,0 +1,6 @@
+composed 120 opponent games
+import succeeded in 7.1s: {'edges': 1200, 'games': 120, 'errors': [], 'positions_touched': 47}
+opponent tree after 1.d4: 1 edges
+  Nf6   games= 60  bucket=large  conf=1.0
+opponent played 'Nf6' tier=opponent_profile confidence=1.0 sample_size=60
+transcript → /home/user/chessmind-os/scripts/data/proof_opponent.json

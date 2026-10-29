@@ -8,6 +8,7 @@ Usage:
     python scripts/seed_games.py                 # seeds the default player
     python scripts/seed_games.py --email you@... # seeds the player with that email
     python scripts/seed_games.py --pgn-out seed_games.pgn --dry-run  # write-only
+    python scripts/seed_games.py --skip-if-seeded  # deploy hook: no-op once seeded
 
 Each entry is a real opening line (not generated nonsense); the result field
 is varied so GET /openings/tree surfaces meaningful aggregates.
@@ -19,6 +20,7 @@ import argparse
 import asyncio
 import io
 import os
+import secrets
 import sys
 from dataclasses import dataclass
 from datetime import date
@@ -29,11 +31,11 @@ import chess.pgn
 BACKEND = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend")
 sys.path.insert(0, os.path.abspath(BACKEND))
 
-from sqlalchemy import select  # noqa: E402
+from sqlalchemy import func, select  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
 
 from chessmind.db import AsyncSessionLocal  # noqa: E402
-from chessmind.models import Player  # noqa: E402
+from chessmind.models import Game, Player  # noqa: E402
 from chessmind.security import hash_password  # noqa: E402
 from chessmind.services.pgn_import import import_pgn_sync  # noqa: E402
 
@@ -283,7 +285,9 @@ async def _ensure_player(session: AsyncSession, email: str) -> Player:
         return row
     player = Player(
         email=email,
-        password_hash=hash_password("seedseedseed"),
+        # The seed player only owns the seeded graph rows; nobody needs to log in
+        # as it, so on a public deploy it gets an unguessable password.
+        password_hash=hash_password(os.environ.get("SEED_PLAYER_PASSWORD") or secrets.token_urlsafe(32)),
         display_name="Seed Player",
         preferred_color="either",
         settings_json={},
@@ -312,6 +316,13 @@ async def main(args: argparse.Namespace) -> int:
 
     async with AsyncSessionLocal() as session:
         player = await _ensure_player(session, args.email)
+        if args.skip_if_seeded:
+            existing = (
+                await session.execute(select(func.count(Game.id)).where(Game.player_id == player.id))
+            ).scalar_one()
+            if existing:
+                print(f"already seeded: {existing} games for player={args.email}; skipping")
+                return 0
         stats = await import_pgn_sync(session, player_id=player.id, pgn_text=pgn_text)
         await session.commit()
 
@@ -332,6 +343,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--pgn-out", default=None, help="If set, also write the composed PGN to this file.")
     p.add_argument("--dry-run", action="store_true", help="Compose but don't import.")
     p.add_argument("--limit", type=int, default=0, help="Cap number of games (default: all).")
+    p.add_argument(
+        "--skip-if-seeded",
+        action="store_true",
+        help="Exit 0 without importing if the seed player already has games (idempotent deploys).",
+    )
     return p.parse_args()
 
 

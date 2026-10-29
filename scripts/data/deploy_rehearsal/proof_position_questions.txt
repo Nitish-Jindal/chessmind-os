@@ -1,0 +1,153 @@
+ok blindfold: board hidden while asking questions
+position r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3
+ok voice 'where is my knight' parsed as a piece-location question
+ok knight squares b1,f3 match chess.js b1,f3
+ok answer captioned
+ok answer spoken by TTS: "Your knights are on b1 and f3."
+ok opponent bishops c8,f8 match chess.js
+ok typed 'what's on e4' -> e4: white pawn (your).
+ok spoken 'see six' -> c6: black knight (the opponent's).
+ok 'anything hanging' -> [] matches chess.js []
+ok 'are your pieces hanging' -> [] matches chess.js []
+ok 'whose move' -> White to move — you.
+ok eval Stockfish 17.1 at depth 10: +0.45 for White, roughly equal (+0.45 from your side). matches the engine_analysis row (cp 45, cached=true)
+ok eval answer names engine + depth
+ok non-question utterance is not sent to /ask (handled as a move attempt)
+ok quiz 1 (hanging_pieces): "Which of your opponent's pieces are hanging? Name the squares, or say none."
+quiz-1 {"said":"none","correct":true,"score":1,"feedback":"Correct: none."}
+ok spoken answer "none" scored correct
+ok quiz 2 (piece_location): "Name every square holding your bishops."
+quiz-2 {"said":"c one and f one","correct":true,"score":1,"feedback":"Correct: c1 and f1."}
+ok spoken answer "c one and f one" scored correct
+ok quiz 3 (side_to_move): "Whose move is it: White or Black?"
+quiz-3 {"said":"white","correct":true,"score":1,"feedback":"Correct: White."}
+ok spoken answer "white" scored correct
+ok quiz 4 (evaluation): "Roughly, who is better here: White, Black, or equal?"
+quiz-4 {"said":"about equal","correct":true,"score":1,"feedback":"Correct: equal (Stockfish +0.45 at depth 10)."}
+ok spoken answer "about equal" scored correct
+ok quiz 5 (square_content): "What is on h8? Say the colour and piece, or empty."
+quiz-5 {"said":"black rook","correct":true,"score":1,"feedback":"Correct: black rook."}
+ok spoken answer "black rook" scored correct
+ok quiz 6 (piece_location): "Name every square holding your opponent's knights."
+quiz-6 {"said":"c six and g eight","correct":true,"score":1,"feedback":"Correct: c6 and g8."}
+ok spoken answer "c six and g eight" scored correct
+ok quiz 7 (evaluation): "Roughly, who is better here: White, Black, or equal?"
+quiz-7 {"said":"about equal","correct":true,"score":1,"feedback":"Correct: equal (Stockfish +0.45 at depth 10)."}
+ok spoken answer "about equal" scored correct
+ok quiz 8 (square_content): "What is on e5? Say the colour and piece, or empty."
+quiz-8 {"said":"black pawn","correct":true,"score":1,"feedback":"Correct: black pawn."}
+ok spoken answer "black pawn" scored correct
+ok quiz 9 (evaluation): "Roughly, who is better here: White, Black, or equal?"
+quiz-9 {"said":"about equal","correct":true,"score":1,"feedback":"Correct: equal (Stockfish +0.45 at depth 10)."}
+ok spoken answer "about equal" scored correct
+ok quiz 10 (hanging_pieces): "Which of your pieces are hanging? Name the squares, or say none."
+quiz-10 {"said":"h five","correct":false,"score":0,"feedback":"Not quite. The answer is none."}
+ok deliberately wrong answer "h five" scored 0
+ok quiz covered 5 question kinds: hanging_pieces, piece_location, side_to_move, evaluation, square_content
+ok UI tally shows 9/10
+tally {"asked":8,"quizzed":10,"answered":10,"correct":9,"mean_score":0.9}
+ok answers persisted and scored in position_question
+ok blindfold: board never revealed during questions
+session-captions coach: White to move — you.
+
+you: what's the eval
+
+coach: Stockfish 17.1 at depth 10: +0.45 for White, roughly equal (+0.45 from your side).
+
+you: blah blah
+
+system: I didn't find a legal move for "blah blah". Try again.
+
+coach: Which of your opponent's pieces are hanging? Name the squares, or say none.
+
+you: none
+
+coach: Correct: none.
+
+you: quiz me
+
+coach: Name every square holding your bishops.
+
+you: c one and f one
+
+coach: Correct: c1 and f1.
+
+coach: Whose move is it: White or Black?
+
+you: white
+
+coach: Correct: White.
+
+you: quiz me
+
+coach: Roughly, who is better here: White, Black, or equal?
+
+you: about equal
+
+coach: Correct: equal (Stockfish +0.45 at depth 10).
+
+coach: What is on h8? Say the colour and piece, or empty.
+
+you: black rook
+
+coach: Correct: black rook.
+
+you: quiz me
+
+coach: Name every square holding your opponent's knights.
+
+you: c six and g eight
+
+coach: Correct: c6 and g8.
+
+coach: Roughly, who is better here: White, Black, or equal?
+
+you: about equal
+
+coach: Correct: equal (Stockfish +0.45 at depth 10).
+
+you: quiz me
+
+coach: What is on e5? Say the colour and piece, or empty.
+
+you: black pawn
+
+coach: Correct: black pawn.
+
+coach: Roughly, who is better here: White, Black, or equal?
+
+you: about equal
+
+coach: Correct: equal (Stockfish +0.45 at depth 10).
+
+you: quiz me
+
+coach: Which of your pieces are hanging? Name the squares, or say none.
+
+you: h five
+
+coach: Not quite. The answer is none.
+masters-down Master games unavailable
+
+Master statistics are unavailable right now (explorer recently unreachable; retrying shortly). Showing local counts only.
+
+Source: Lichess Masters database · lichess.org opening explorer · open on lichess.org
+ok explorer unreachable -> masters panel says so and falls back to local counts
+ok local counts still shown
+masters-up Master games fetched just now
+
+3,000 master games from this position
+
+Move	Games	White / Draw / Black	Avg rating
+d4	1,250	33% / 45% / 22%	2414
+e4	1,230	34% / 41% / 24%	2410
+Nf3	350	31% / 46% / 23%	2420
+c4	170	35% / 41% / 24%	2418
+
+Source: Lichess Masters database · lichess.org opening explorer · fetched 10/29/2026, 7:39:34 PM · open on lichess.org
+ok sample size shown from the explorer payload
+ok source attribution + lichess.org link shown
+ok illegal move in the payload was dropped by python-chess validation
+ok backend fetched the explorer once: /masters?fen=rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+ok reload served from master_explorer_cache (no second upstream call)
+PROOF PASSED

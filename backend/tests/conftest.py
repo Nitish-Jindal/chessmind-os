@@ -24,6 +24,8 @@ os.environ.setdefault(
     "DATABASE_URL_SYNC",
     "postgresql+psycopg://chessmind:chessmind@localhost:5432/chessmind_test",
 )
+# Tests never reach Lichess; explorer tests inject a transport serving tests/fixtures/.
+os.environ.setdefault("LICHESS_EXPLORER_ENABLED", "false")
 os.environ.setdefault("STOCKFISH_PATH", os.path.abspath("../engines/stockfish-bin"))
 
 from chessmind.app import app  # noqa: E402
@@ -63,6 +65,8 @@ def _schema() -> None:
 
 
 _TABLES_TO_TRUNCATE = [
+    "position_question",
+    "master_explorer_cache",
     "mastery_state",
     "training_attempt",
     "training_session",

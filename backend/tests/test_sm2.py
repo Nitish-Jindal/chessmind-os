@@ -8,6 +8,7 @@ import pytest
 
 from chessmind.services.labeler import Classification
 from chessmind.services.sm2 import (
+    MAX_INTERVAL_DAYS,
     SM2State,
     apply_review,
     classification_to_quality,
@@ -47,6 +48,15 @@ def test_third_review_scales_by_ease():
     assert out.reps == 3
     # 6 * 2.6 = 15.6, then round
     assert abs(out.interval_days - 15.6) < 0.1
+
+
+def test_interval_is_capped_over_many_correct_reviews():
+    state = SM2State()
+    for _ in range(100):
+        out = apply_review(state, quality=5, now=NOW)
+        state = SM2State(ease_factor=out.ease_factor, interval_days=out.interval_days, reps=out.reps)
+    assert out.interval_days == MAX_INTERVAL_DAYS
+    assert out.due_at == NOW + timedelta(days=MAX_INTERVAL_DAYS)
 
 
 def test_blunder_resets_reps_and_interval():

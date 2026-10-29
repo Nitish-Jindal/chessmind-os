@@ -1,6 +1,21 @@
 // Thin typed client over the real backend. No mocks: every call hits VITE_API_BASE_URL.
 
-export const API_BASE: string = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000").replace(/\/$/, "");
+/**
+ * Normalize the configured backend base URL. A full URL passes through (minus a
+ * trailing slash). A bare host — what a Render Blueprint `fromService ... property: host`
+ * reference yields — gets `https://`, and a dot-less Render service host gets
+ * `.onrender.com` appended. localhost stays on plain http.
+ */
+export function resolveApiBase(raw: string | undefined): string {
+  const value = (raw ?? "").trim().replace(/\/+$/, "");
+  if (!value) return "http://localhost:8000";
+  if (/^https?:\/\//i.test(value)) return value;
+  if (/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(value)) return `http://${value}`;
+  const host = value.includes(".") ? value : `${value}.onrender.com`;
+  return `https://${host}`;
+}
+
+export const API_BASE: string = resolveApiBase(import.meta.env.VITE_API_BASE_URL);
 
 const TOKEN_KEY = "chessmind.tokens";
 
@@ -149,6 +164,41 @@ export interface MoveResult {
   status: "active" | "finished";
 }
 
+export type QuestionKind = "piece_location" | "square_content" | "hanging_pieces" | "side_to_move" | "evaluation";
+
+export interface AskResult {
+  understood: boolean;
+  question_id: string | null;
+  kind: QuestionKind | null;
+  answer_text: string;
+  facts: Record<string, unknown>;
+  questions_asked: number;
+}
+
+export interface QuizQuestion {
+  question_id: string;
+  kind: QuestionKind;
+  prompt: string;
+}
+
+export interface QuestionTally {
+  asked: number;
+  quizzed: number;
+  answered: number;
+  correct: number;
+  mean_score: number | null;
+}
+
+export interface QuizAnswer {
+  question_id: string;
+  understood: boolean;
+  correct: boolean;
+  score: number | null;
+  expected_text: string | null;
+  feedback: string;
+  tally: QuestionTally;
+}
+
 export interface RevealResult {
   reveals_used: number;
   reveals_budget: number;
@@ -167,6 +217,33 @@ export interface OpeningEdge {
   draws: number;
 }
 
+export interface MasterMove {
+  uci: string;
+  san: string;
+  games: number;
+  white: number;
+  draws: number;
+  black: number;
+  average_rating: number | null;
+}
+
+/** Real master-game stats from the Lichess explorer; kept apart from local (imported/seed) counts. */
+export interface MastersStats {
+  source: string;
+  attribution: string;
+  explorer_url: string;
+  status: "live" | "cached" | "stale" | "unavailable" | "disabled";
+  fetched_at: string | null;
+  error: string | null;
+  total_games: number;
+  white: number;
+  draws: number;
+  black: number;
+  opening_eco: string | null;
+  opening_name: string | null;
+  moves: MasterMove[];
+}
+
 export interface OpeningTree {
   root: {
     position_id: string;
@@ -179,6 +256,8 @@ export interface OpeningTree {
   };
   total_positions: number;
   total_edges: number;
+  local_stats_note: string;
+  masters: MastersStats | null;
 }
 
 export interface MasteryRow {
@@ -278,6 +357,12 @@ export const api = {
     request<MoveResult>("POST", `/sessions/${id}/move`, body),
   reveal: (id: string, reason?: string) => request<RevealResult>("POST", `/sessions/${id}/reveal`, { reason }),
   finish: (id: string) => request<unknown>("POST", `/sessions/${id}/finish`),
+  ask: (id: string, alts: string[]) =>
+    request<AskResult>("POST", `/sessions/${id}/ask`, { text: alts[0], alternatives: alts.slice(1) }),
+  quiz: (id: string, kind?: QuestionKind) => request<QuizQuestion>("POST", `/sessions/${id}/quiz`, { kind }),
+  answerQuiz: (id: string, questionId: string, alts: string[]) =>
+    request<QuizAnswer>("POST", `/sessions/${id}/quiz/${questionId}/answer`, { text: alts[0], alternatives: alts.slice(1) }),
+  masters: (fen: string) => request<MastersStats>("GET", `/openings/masters?fen=${encodeURIComponent(fen)}`),
 
   openingTree: (fen?: string) =>
     request<OpeningTree>("GET", `/openings/tree?limit=20${fen ? `&fen=${encodeURIComponent(fen)}` : ""}`),

@@ -252,13 +252,27 @@ export function resolveConfirmation(transcript: string, options: LegalMove[]): C
 }
 
 /** Voice-level commands that are not moves. */
-export type VoiceCommand = "reveal" | "repeat" | "resign" | null;
+export type VoiceCommand = "reveal" | "repeat" | "resign" | "quiz" | null;
 export function parseCommand(transcript: string): VoiceCommand {
   const t = transcript.toLowerCase();
   if (/\b(reveal|show (me )?the board|show board)\b/.test(t)) return "reveal";
   if (/\b(repeat|say (that )?again|what was (that|the last))\b/.test(t)) return "repeat";
   if (/\b(resign|i give up)\b/.test(t)) return "resign";
+  if (/\b(quiz me|test me|ask me)\b|^quiz\b/.test(t)) return "quiz";
   return null;
+}
+
+/**
+ * True when an utterance is a question about the board ("where is my knight", "what's on e5",
+ * "anything hanging?", "whose move", "what's the eval") rather than a move. Questions go to
+ * POST /sessions/{id}/ask, which parses and answers them from the server's board.
+ */
+export function isBoardQuestion(transcript: string): boolean {
+  const t = transcript.toLowerCase().trim();
+  if (!t) return false;
+  if (/\?$/.test(t)) return true;
+  if (/^(where|what|what's|whats|which|whose|who|who's|is|are|any|anything|how|tell|can you|do i|does)\b/.test(t)) return true;
+  return /\b(hanging|undefended|eval|evaluation|whose|better|winning)\b/.test(t);
 }
 
 /** Natural phrasing of a move for TTS ("Nf3" -> "knight f3"). */

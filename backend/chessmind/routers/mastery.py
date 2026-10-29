@@ -51,7 +51,7 @@ async def _row(session: AsyncSession, m: MasteryState) -> MasteryRow:
 async def get_mastery(
     player_id: UUID,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> MasteryDashboard:
     _ensure_self(player_id, player)
 
@@ -111,7 +111,7 @@ async def get_mastery(
 async def next_drill(
     player_id: UUID,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> NextDrillResponse:
     _ensure_self(player_id, player)
     now = datetime.now(timezone.utc)
@@ -145,7 +145,7 @@ async def get_mastery_row(
     player_id: UUID,
     position_id: UUID,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> MasteryRow:
     """One position's MasteryState — lets a drill show its row before and after an answer."""
     _ensure_self(player_id, player)

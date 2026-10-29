@@ -1,0 +1,13 @@
+{
+  "_fixture_note": "HAND-WRITTEN in the documented /masters response shape; NOT recorded from Lichess. Exercises Lichess's king-takes-rook castling UCI (e1h1) and the opening header. Counts are test values only.",
+  "white": 90,
+  "draws": 80,
+  "black": 50,
+  "moves": [
+    {"uci": "c2c3", "san": "c3", "averageRating": 2450, "white": 50, "draws": 40, "black": 30, "game": null},
+    {"uci": "e1h1", "san": "O-O", "averageRating": 2440, "white": 30, "draws": 35, "black": 15, "game": null},
+    {"uci": "d2d3", "san": "d3", "averageRating": 2430, "white": 10, "draws": 5, "black": 5, "game": null}
+  ],
+  "topGames": [],
+  "opening": {"eco": "C50", "name": "Italian Game: Giuoco Piano"}
+}

@@ -18,6 +18,7 @@ import asyncio
 import logging
 import os
 import re
+import shutil
 import threading
 from dataclasses import dataclass
 from typing import Any
@@ -85,11 +86,15 @@ class EngineClient:
                     self._version = None
                 else:
                     return
-            path = get_settings().stockfish_path
+            configured = get_settings().stockfish_path
+            path = configured
             if not os.path.isabs(path):
                 # resolve relative to this file so uvicorn-cwd doesn't matter
                 here = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
                 path = os.path.normpath(os.path.join(here, path))
+            if not os.path.exists(path) and os.sep not in configured:
+                # bare command name, e.g. STOCKFISH_PATH=stockfish from apt
+                path = shutil.which(configured) or path
             if not os.path.exists(path):
                 raise RuntimeError(f"stockfish binary not found at {path}")
             logger.info("stockfish start path=%s", path)

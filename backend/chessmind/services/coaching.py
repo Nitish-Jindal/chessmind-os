@@ -44,7 +44,7 @@ def _material_balance(board: chess.Board) -> int:
     return total
 
 
-def _hanging_squares(board: chess.Board, color: chess.Color) -> list[int]:
+def hanging_squares(board: chess.Board, color: chess.Color) -> list[int]:
     """Return squares of ``color``'s pieces that are attacked and under-defended."""
     hanging: list[int] = []
     for square in chess.scan_reversed(board.occupied_co[color]):
@@ -77,12 +77,12 @@ def _board_feature_delta(before: chess.Board, after: chess.Board, player_color: 
     if player_color == "black":
         delta_material = -delta_material
 
-    hang_before = _hanging_squares(before, pc_color)
-    hang_after = _hanging_squares(after, pc_color)
+    hang_before = hanging_squares(before, pc_color)
+    hang_after = hanging_squares(after, pc_color)
     new_hanging = sorted(set(hang_after) - set(hang_before))
 
-    opp_hang_before = _hanging_squares(before, oc_color)
-    opp_hang_after = _hanging_squares(after, oc_color)
+    opp_hang_before = hanging_squares(before, oc_color)
+    opp_hang_after = hanging_squares(after, oc_color)
     captured_opp_hanging = sorted(set(opp_hang_before) - set(opp_hang_after))
 
     ks_before, qs_before = _castling_rights(before, pc_color)

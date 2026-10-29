@@ -381,6 +381,20 @@ sane default; **we do not use cursor pagination in the MVP** (see §11.4).
 | `GET  /opponents/{id}/tree?position=&color=&limit=20` | top-N moves per position; **limit default 20, no cursor** |
 | `GET  /players/{id}/mastery` | mastery scores, due drills, weak branches, analytics |
 
+**Added 2026-10-29 (as built):**
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET  /openings/tree` → `masters` block | real Lichess Masters stats for the root (source, status, fetched_at, sample size, per-move W/D/B), kept apart from local counts (`local_stats_note`) |
+| `GET  /openings/masters?fen=` | the same block for any legal position, in the local graph or not |
+| `POST /sessions/{id}/ask` | answer a board question (piece location, square contents, hanging pieces, side to move, evaluation) from the session FEN via python-chess; eval from the cache-first Stockfish row |
+| `POST /sessions/{id}/quiz` · `POST /sessions/{id}/quiz/{qid}/answer` · `GET /sessions/{id}/questions` | seeded visualization quiz about the current board; spoken/typed answers scored against facts captured at question time; persisted in `position_question` |
+
+Lichess explorer data is cached in `master_explorer_cache` (canonical FEN,
+TTL) and mirrored into `master_move_stat`, so the §8.3 master tier is fed
+by real data once positions have been viewed. Network calls never sit in
+the move hot path: the sampler only reads the table.
+
 Error shape is uniform: `{ "error": { "code": "...", "message": "...",
 "details": {} } }` with HTTP status reflecting the class.
 
@@ -573,6 +587,28 @@ a "the opponent plays X" without them.
   `STOCKFISH_PATH`, `SENTRY_DSN`.
 - **Deploy flow:** push to `main` → GitHub Actions runs tests → Render
   auto-deploys from the merged commit.
+
+**As built (2026-10-29, `render.yaml`): deviates from the plan above.**
+
+- **API:** native Python runtime, not Docker. It runs as a free-plan web
+  service in `singapore`. `scripts/render_build.sh` downloads the pinned
+  official Stockfish build (`sf_17.1`, AVX2 with an SSE4.1 fallback) into
+  `engines/`, installs `./backend`, runs `alembic upgrade head` and seeds the
+  opening graph idempotently (`seed_games.py --skip-if-seeded`). The free
+  plan has no pre-deploy hook, so migrations and the seed run in the build.
+- **Frontend:** Render static site (`frontend/dist`) with an SPA rewrite.
+  `VITE_API_BASE_URL` comes from the API service's `host`.
+- **Postgres:** Neon (external), not Render-managed. The app accepts the
+  Neon URL as-is. `chessmind.config.normalize_database_url` adds the driver
+  prefix. For asyncpg it renames `sslmode`→`ssl` and drops
+  `channel_binding`. psycopg/Alembic keeps both.
+- **No worker, no Redis:** import jobs are in-process asyncio tasks. The
+  worker and Redis stay planned.
+- **Env:** `DATABASE_URL` (prompted, `sync: false`), `JWT_SECRET` (Render
+  generated; boot refuses the dev placeholder in production),
+  `STOCKFISH_PATH`, `CORS_ORIGINS` + `CORS_ORIGIN_REGEX`, `PYTHON_VERSION`.
+  There is no `REDIS_URL`, `GROK_API_KEY` or `SENTRY_DSN` yet.
+- **No GitHub Actions yet.** Render auto-deploys from the branch it tracks.
 
 ### 9.2 Local
 

@@ -58,6 +58,12 @@ await page.getByRole("heading", { name: "Start a session" }).waitFor();
 // =========================================================================================
 // 1. PGN upload page: 153-game file -> repertoire import -> counts -> openings tree
 // =========================================================================================
+// The opening graph is global (deploys seed it), so measure the import as a delta on 1.e4.
+const e4Before = await page.evaluate(async () => {
+  const tree = await (await fetch("http://localhost:8000/openings/tree?limit=100&masters=false")).json();
+  return tree.root?.edges?.find((e) => e.san === "e4")?.games_count ?? 0;
+}).catch(() => 0);
+note("e4-before-import", e4Before);
 await page.getByRole("link", { name: "Import", exact: true }).click();
 await page.getByRole("heading", { name: "Import PGN" }).waitFor();
 check((await page.getByLabel("Import intent").locator("option").allTextContents()).length === 3, "intent selector offers repertoire / corpus / opponent");
@@ -75,11 +81,11 @@ await page.screenshot({ path: join(DATA, "ui_import_repertoire.png") });
 
 await page.getByRole("link", { name: /Browse the opening tree/ }).click();
 await page.getByRole("heading", { name: "Opening tree" }).waitFor();
-const e4row = page.getByRole("row").filter({ has: page.getByRole("button", { name: "e4", exact: true }) });
+const e4row = page.getByRole("region", { name: "Local games" }).getByRole("row").filter({ has: page.getByRole("button", { name: "e4", exact: true }) });
 await e4row.waitFor();
 const e4cells = await e4row.locator("td").allInnerTexts();
 note("tree-root-e4-row", e4cells);
-check(Number(e4cells[1]) === 108, "openings tree shows the uploaded games landed (1.e4 = 108 games)");
+check(Number(e4cells[1]) - e4Before === 108, `openings tree shows the uploaded games landed (1.e4 ${e4Before} -> ${e4cells[1]}, +108)`);
 await page.screenshot({ path: join(DATA, "ui_import_openings_tree.png") });
 
 // paste path + corpus intent

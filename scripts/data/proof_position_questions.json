@@ -1,0 +1,298 @@
+[
+  {
+    "k": "ok",
+    "v": "blindfold: board hidden while asking questions"
+  },
+  {
+    "k": "position",
+    "v": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3"
+  },
+  {
+    "k": "ok",
+    "v": "voice 'where is my knight' parsed as a piece-location question"
+  },
+  {
+    "k": "ok",
+    "v": "knight squares b1,f3 match chess.js b1,f3"
+  },
+  {
+    "k": "ok",
+    "v": "answer captioned"
+  },
+  {
+    "k": "ok",
+    "v": "answer spoken by TTS: \"Your knights are on b1 and f3.\""
+  },
+  {
+    "k": "ok",
+    "v": "opponent bishops c8,f8 match chess.js"
+  },
+  {
+    "k": "ok",
+    "v": "typed 'what's on e4' -> e4: white pawn (your)."
+  },
+  {
+    "k": "ok",
+    "v": "spoken 'see six' -> c6: black knight (the opponent's)."
+  },
+  {
+    "k": "ok",
+    "v": "'anything hanging' -> [] matches chess.js []"
+  },
+  {
+    "k": "ok",
+    "v": "'are your pieces hanging' -> [] matches chess.js []"
+  },
+  {
+    "k": "ok",
+    "v": "'whose move' -> White to move — you."
+  },
+  {
+    "k": "ok",
+    "v": "eval Stockfish 17.1 at depth 10: +0.45 for White, roughly equal (+0.45 from your side). matches the engine_analysis row (cp 45, cached=true)"
+  },
+  {
+    "k": "ok",
+    "v": "eval answer names engine + depth"
+  },
+  {
+    "k": "ok",
+    "v": "non-question utterance is not sent to /ask (handled as a move attempt)"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 1 (hanging_pieces): \"Which of your opponent's pieces are hanging? Name the squares, or say none.\""
+  },
+  {
+    "k": "quiz-1",
+    "v": {
+      "said": "none",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: none."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"none\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 2 (piece_location): \"Name every square holding your bishops.\""
+  },
+  {
+    "k": "quiz-2",
+    "v": {
+      "said": "c one and f one",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: c1 and f1."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"c one and f one\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 3 (side_to_move): \"Whose move is it: White or Black?\""
+  },
+  {
+    "k": "quiz-3",
+    "v": {
+      "said": "white",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: White."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"white\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 4 (evaluation): \"Roughly, who is better here: White, Black, or equal?\""
+  },
+  {
+    "k": "quiz-4",
+    "v": {
+      "said": "about equal",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: equal (Stockfish +0.45 at depth 10)."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"about equal\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 5 (square_content): \"What is on h8? Say the colour and piece, or empty.\""
+  },
+  {
+    "k": "quiz-5",
+    "v": {
+      "said": "black rook",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: black rook."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"black rook\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 6 (piece_location): \"Name every square holding your opponent's knights.\""
+  },
+  {
+    "k": "quiz-6",
+    "v": {
+      "said": "c six and g eight",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: c6 and g8."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"c six and g eight\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 7 (evaluation): \"Roughly, who is better here: White, Black, or equal?\""
+  },
+  {
+    "k": "quiz-7",
+    "v": {
+      "said": "about equal",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: equal (Stockfish +0.45 at depth 10)."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"about equal\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 8 (square_content): \"What is on e5? Say the colour and piece, or empty.\""
+  },
+  {
+    "k": "quiz-8",
+    "v": {
+      "said": "black pawn",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: black pawn."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"black pawn\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 9 (evaluation): \"Roughly, who is better here: White, Black, or equal?\""
+  },
+  {
+    "k": "quiz-9",
+    "v": {
+      "said": "about equal",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: equal (Stockfish +0.45 at depth 10)."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"about equal\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 10 (hanging_pieces): \"Which of your pieces are hanging? Name the squares, or say none.\""
+  },
+  {
+    "k": "quiz-10",
+    "v": {
+      "said": "h five",
+      "correct": false,
+      "score": 0,
+      "feedback": "Not quite. The answer is none."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "deliberately wrong answer \"h five\" scored 0"
+  },
+  {
+    "k": "ok",
+    "v": "quiz covered 5 question kinds: hanging_pieces, piece_location, side_to_move, evaluation, square_content"
+  },
+  {
+    "k": "ok",
+    "v": "UI tally shows 9/10"
+  },
+  {
+    "k": "tally",
+    "v": {
+      "asked": 8,
+      "quizzed": 10,
+      "answered": 10,
+      "correct": 9,
+      "mean_score": 0.9
+    }
+  },
+  {
+    "k": "ok",
+    "v": "answers persisted and scored in position_question"
+  },
+  {
+    "k": "ok",
+    "v": "blindfold: board never revealed during questions"
+  },
+  {
+    "k": "session-captions",
+    "v": "coach: White to move — you.\n\nyou: what's the eval\n\ncoach: Stockfish 17.1 at depth 10: +0.45 for White, roughly equal (+0.45 from your side).\n\nyou: blah blah\n\nsystem: I didn't find a legal move for \"blah blah\". Try again.\n\ncoach: Which of your opponent's pieces are hanging? Name the squares, or say none.\n\nyou: none\n\ncoach: Correct: none.\n\nyou: quiz me\n\ncoach: Name every square holding your bishops.\n\nyou: c one and f one\n\ncoach: Correct: c1 and f1.\n\ncoach: Whose move is it: White or Black?\n\nyou: white\n\ncoach: Correct: White.\n\nyou: quiz me\n\ncoach: Roughly, who is better here: White, Black, or equal?\n\nyou: about equal\n\ncoach: Correct: equal (Stockfish +0.45 at depth 10).\n\ncoach: What is on h8? Say the colour and piece, or empty.\n\nyou: black rook\n\ncoach: Correct: black rook.\n\nyou: quiz me\n\ncoach: Name every square holding your opponent's knights.\n\nyou: c six and g eight\n\ncoach: Correct: c6 and g8.\n\ncoach: Roughly, who is better here: White, Black, or equal?\n\nyou: about equal\n\ncoach: Correct: equal (Stockfish +0.45 at depth 10).\n\nyou: quiz me\n\ncoach: What is on e5? Say the colour and piece, or empty.\n\nyou: black pawn\n\ncoach: Correct: black pawn.\n\ncoach: Roughly, who is better here: White, Black, or equal?\n\nyou: about equal\n\ncoach: Correct: equal (Stockfish +0.45 at depth 10).\n\nyou: quiz me\n\ncoach: Which of your pieces are hanging? Name the squares, or say none.\n\nyou: h five\n\ncoach: Not quite. The answer is none."
+  },
+  {
+    "k": "masters-down",
+    "v": "Master games unavailable\n\nMaster statistics are unavailable right now (explorer recently unreachable; retrying shortly). Showing local counts only.\n\nSource: Lichess Masters database · lichess.org opening explorer · open on lichess.org"
+  },
+  {
+    "k": "ok",
+    "v": "explorer unreachable -> masters panel says so and falls back to local counts"
+  },
+  {
+    "k": "ok",
+    "v": "local counts still shown"
+  },
+  {
+    "k": "masters-up",
+    "v": "Master games fetched just now\n\n3,000 master games from this position\n\nMove\tGames\tWhite / Draw / Black\tAvg rating\nd4\t1,250\t33% / 45% / 22%\t2414\ne4\t1,230\t34% / 41% / 24%\t2410\nNf3\t350\t31% / 46% / 23%\t2420\nc4\t170\t35% / 41% / 24%\t2418\n\nSource: Lichess Masters database · lichess.org opening explorer · fetched 10/29/2026, 7:39:34 PM · open on lichess.org"
+  },
+  {
+    "k": "ok",
+    "v": "sample size shown from the explorer payload"
+  },
+  {
+    "k": "ok",
+    "v": "source attribution + lichess.org link shown"
+  },
+  {
+    "k": "ok",
+    "v": "illegal move in the payload was dropped by python-chess validation"
+  },
+  {
+    "k": "ok",
+    "v": "backend fetched the explorer once: /masters?fen=rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+  },
+  {
+    "k": "ok",
+    "v": "reload served from master_explorer_cache (no second upstream call)"
+  }
+]

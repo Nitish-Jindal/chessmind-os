@@ -13,7 +13,7 @@ from chessmind.security import TokenError, decode_token
 
 async def get_current_player(
     authorization: str | None = Header(default=None),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> Player:
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing bearer token")

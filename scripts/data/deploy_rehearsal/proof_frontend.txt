@@ -1,0 +1,65 @@
+ok voice dropdown populated from getVoices() on voiceschanged (2 voices + default)
+ok choosing a voice PATCHes /players/me
+ok voice choice restored from settings_json.tts_voice after reload
+after-drag captions system: Session started. Make your move on the board, or by voice.
+
+opponent: Opponent plays pawn d5.
+
+coach: d4 is playable — about +0.46 off the top line. Better was e4, planning e4 e5 Nf3 Nc6.
+ok drag move went through POST /sessions/{id}/move
+ok TTS announced the opponent reply
+coach-feedback Your move Nf3 best · opponent replied Nf6 (engine_fallback)
+
+Nf3 is the top choice.
+
+Stockfish 17.1 · depth 10 · eval (white) +0.31 → +0.28 · best line: c4 e6 cxd5 exd5 Bf4 Be7
+ok coach card shows Stockfish engine evidence
+ok TTS announced the coach feedback
+ok ambiguous utterance shows confirmation choices
+ok TTS asked 'Did you mean A or B?'
+ok confirmation resolved to exactly one POST /move
+ok text-input fallback accepted a move
+session1-captions system: Session started. Make your move on the board, or by voice.
+
+opponent: Opponent plays pawn d5.
+
+coach: d4 is playable — about +0.46 off the top line. Better was e4, planning e4 e5 Nf3 Nc6.
+
+you: knight f3
+
+opponent: Opponent plays knight f6.
+
+coach: Nf3 is the top choice.
+
+you: knight d2
+
+system: More than one move fits. Did you mean knight from f, d2, or knight from b, d2?
+
+you: second
+
+opponent: Opponent plays pawn e6.
+
+coach: Nbd2 is playable — about +0.46 off the top line. Better was c4, planning c4 dxc4 e3 b5.
+
+you: e3
+
+opponent: Opponent plays bishop e7.
+
+coach: e3 is the top choice.
+ok blindfold: no board squares in the DOM
+ok blindfold: board still hidden after the opponent replied
+ok blindfold: opponent reply announced by voice
+blindfold-captions system: Blindfold session. The board is hidden. Hold the talk button and say your move.
+
+you: e four
+
+opponent: Opponent plays pawn e5.
+
+coach: e4 is the top choice.
+reveal-response {"session_id":"84d6da83-869d-4e3c-a8b7-cd3a17b713d5","reveals_used":1,"reveals_budget":2,"hints_used":0,"current_fen":"rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2","was_free":true}
+ok reveal hit POST /sessions/{id}/reveal (free reveal #1)
+ok reveal counter updated in the UI
+ok board shows the position after reveal (32 pieces)
+ok voice 'reveal' used the second free reveal
+ok openings page rendered tree edges from /openings/tree
+api-calls ["POST /auth/register 201","POST /auth/login 200","GET /players/me 200","GET /opponents 200","PATCH /players/me 200","GET /players/me 200","GET /opponents 200","POST /sessions 201","GET /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21/legal 200","GET /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21 200","POST /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21/move 200","GET /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21/legal 200","GET /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21 200","POST /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21/move 200","GET /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21 200","GET /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21/legal 200","POST /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21/move 200","GET /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21/legal 200","GET /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21 200","POST /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21/move 200","GET /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21 200","GET /sessions/afad7fbb-8ee6-4e25-ad1e-a53d1f887d21/legal 200","GET /opponents 200","POST /sessions 201","GET /sessions/84d6da83-869d-4e3c-a8b7-cd3a17b713d5 200","GET /sessions/84d6da83-869d-4e3c-a8b7-cd3a17b713d5/legal 200","POST /sessions/84d6da83-869d-4e3c-a8b7-cd3a17b713d5/move 200","GET /sessions/84d6da83-869d-4e3c-a8b7-cd3a17b713d5 200","GET /sessions/84d6da83-869d-4e3c-a8b7-cd3a17b713d5/legal 200","POST /sessions/84d6da83-869d-4e3c-a8b7-cd3a17b713d5/reveal 200","POST /sessions/84d6da83-869d-4e3c-a8b7-cd3a17b713d5/reveal 200","GET /openings/tree 200","GET /players/c3866ca1-e9e3-4bad-85da-10b91ed451b3/mastery 200","GET /opponents 200","GET /openings/tree 200"]

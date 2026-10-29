@@ -45,7 +45,7 @@ async def _owned(session: AsyncSession, opponent_id: UUID, player: Player) -> Op
 async def create_opponent(
     payload: OpponentCreate,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> OpponentProfile:
     row = OpponentProfile(
         owner_player_id=player.id,
@@ -61,7 +61,7 @@ async def create_opponent(
 @router.get("", response_model=list[OpponentRead])
 async def list_opponents(
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> list[OpponentProfile]:
     rows = (
         await session.execute(
@@ -78,7 +78,7 @@ async def import_opponent_pgn(
     opponent_id: UUID,
     payload: OpponentPgnImport,
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> ImportJob:
     profile = await _owned(session, opponent_id, player)
     job = ImportJob(
@@ -106,7 +106,7 @@ async def opponent_tree(
     canonical_key_q: str | None = Query(default=None, alias="canonical"),
     limit: int = Query(default=20, ge=1, le=100),
     player: Player = Depends(get_current_player),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session, scope="function"),
 ) -> OpponentTreeResponse:
     """§11.4 shape — ``?limit=`` top-N default (20), no cursor pagination."""
     profile = await _owned(session, opponent_id, player)
