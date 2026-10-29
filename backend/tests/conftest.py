@@ -62,6 +62,7 @@ def _schema() -> None:
 
 
 _TABLES_TO_TRUNCATE = [
+    "engine_analysis",
     "repertoire_line",
     "move_edge",
     "position",
