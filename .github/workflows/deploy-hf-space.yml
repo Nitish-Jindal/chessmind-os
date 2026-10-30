@@ -1,0 +1,50 @@
+# Deploy the backend to a Hugging Face Docker Space on every push to main.
+#
+# Secrets / variables (GitHub repo → Settings → Secrets and variables → Actions):
+#   secret   HF_TOKEN   Hugging Face access token with write access to the Space
+#   variable HF_SPACE   Space id, "<hf-username-or-org>/<space-name>"
+#
+# The Space is pushed a single-commit snapshot of the repo without binary
+# assets (screenshots, the handoff .docx), which Hugging Face's git remote
+# refuses without LFS/Xet and the container does not need. Force-pushing a
+# snapshot means the Space's git history is just the latest deploy; GitHub
+# stays the source of truth.
+name: Deploy to Hugging Face Space
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hf-space
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Push snapshot to the Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          set -euo pipefail
+          : "${HF_TOKEN:?add the HF_TOKEN repository secret}"
+          : "${HF_SPACE:?add the HF_SPACE repository variable (owner/space-name)}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout --orphan hf-deploy
+          # The orphan branch starts with the full index; drop the binaries from it.
+          git ls-files -z -- '*.png' '*.docx' | xargs -0 git rm -q --cached
+          git commit -q -m "Deploy ${GITHUB_SHA}"
+
+          git push --force \
+            "https://${HF_SPACE%%/*}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" \
+            hf-deploy:main

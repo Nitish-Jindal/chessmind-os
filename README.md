@@ -1,3 +1,14 @@
+---
+title: ChessMind OS
+emoji: ♟️
+colorFrom: indigo
+colorTo: gray
+sdk: docker
+app_port: 7860
+pinned: false
+short_description: Voice-first, engine-grounded chess opening trainer (API)
+---
+
 # ChessMind OS
 
 Voice-first, engine-grounded chess opening intelligence. Maps a player's
@@ -7,8 +18,9 @@ Stockfish evidence, and simulates opponents from their actual games.
 
 Working title; brand clearance pending.
 
-**Status:** MVP vertical slice, deployable to Render with the Blueprint in
-`render.yaml`. Scenario-by-scenario status is in [`ACCEPTANCE.md`](ACCEPTANCE.md);
+**Status:** MVP vertical slice. Card-free deploy: API on a Hugging Face Docker
+Space, frontend on Cloudflare Pages or Vercel (see *Deploy*). `render.yaml` is
+kept as an alternative. Scenario-by-scenario status is in [`ACCEPTANCE.md`](ACCEPTANCE.md);
 phase tracking is in [`PROGRESS.md`](PROGRESS.md).
 
 ## Documents
@@ -20,7 +32,9 @@ phase tracking is in [`PROGRESS.md`](PROGRESS.md).
 | `docs/handoff/ChessMind_OS_Developer_Handoff.docx` | Original product brief. |
 | `ACCEPTANCE.md` | The handoff's 13 acceptance scenarios, each with its proof. |
 | `PROGRESS.md` | Phase tracker. |
-| `render.yaml` | Render Blueprint (API web service + static frontend). |
+| `Dockerfile`, `scripts/hf_start.sh` | Hugging Face Docker Space image and entrypoint. |
+| `.github/workflows/deploy-hf-space.yml` | Pushes `main` to the Space. |
+| `render.yaml` | Render Blueprint (alternative deploy). |
 
 ## Architecture
 
@@ -214,7 +228,84 @@ Voice is the browser's Web Speech API: no server-side speech, no keys.
   the evaluation bucket uses ±50 cp. Every question and answer is stored
   in `position_question`. `GET /sessions/{id}/questions` returns the tally.
 
-## Deploy to Render
+## Deploy: Hugging Face Space (API) + Cloudflare Pages / Vercel (frontend)
+
+No payment card needed. You need a Postgres 16 URL (Neon's free tier works),
+a Hugging Face account and a Cloudflare or Vercel account.
+
+How it fits together:
+
+| Piece | Where | Notes |
+| --- | --- | --- |
+| API | Hugging Face **Docker** Space | Built from the root `Dockerfile` (`python:3.12-slim`, Stockfish from apt at `/usr/games/stockfish`). Listens on `7860` (`app_port` in the frontmatter above). |
+| Start | `scripts/hf_start.sh` | `alembic upgrade head` → `seed_games.py --skip-if-seeded` → `uvicorn chessmind.app:app --host 0.0.0.0 --port 7860`. A failed step stops the container. |
+| Database | Neon (any Postgres 16) | `DATABASE_URL` as Neon gives it; the app normalizes the driver and TLS parameters. |
+| Frontend | Cloudflare Pages or Vercel | Static build of `frontend/`; `frontend/public/_redirects` (Cloudflare/Netlify) and `frontend/vercel.json` send every path to `/index.html` so client-side routes survive a reload. |
+| Deploys | `.github/workflows/deploy-hf-space.yml` | On push to `main`, force-pushes a single-commit snapshot to the Space (without `scripts/data` screenshots and the handoff `.docx`: binary files Hugging Face's git remote rejects without LFS). |
+
+### 1. Create the Space (once)
+
+1. huggingface.co → **New → Space**. Name it (e.g. `chessmind-api`), choose
+   **SDK: Docker → Blank**, hardware **CPU basic (free)**. Visibility
+   **Public** (a private Space cannot be called from a browser without a
+   token). Create it empty; the first deploy fills it.
+2. Hugging Face → **Settings → Access Tokens → New token**, type **Write**
+   (or fine-grained with write access to this Space). Copy it.
+3. In the Space → **Settings → Variables and secrets**, add:
+
+| Name | Kind | Value |
+| --- | --- | --- |
+| `DATABASE_URL` | **Secret** | Neon connection string, pasted as-is. |
+| `JWT_SECRET` | **Secret** | A long random string, e.g. `python -c "import secrets; print(secrets.token_urlsafe(48))"`. The app refuses to boot in production with the placeholder. |
+| `CORS_ORIGINS` | Variable | Exact frontend origin(s), comma-separated, no trailing slash: `https://chessmind.pages.dev`. |
+| `LICHESS_API_TOKEN` | Secret (optional) | Only if Lichess starts requiring a token for the masters explorer. |
+| `CORS_ORIGIN_REGEX` | Variable (optional) | e.g. `^https://chessmind(-[a-z0-9]+)?\.pages\.dev$` to also allow Cloudflare/Vercel preview URLs. |
+
+`ENVIRONMENT=production` and `STOCKFISH_PATH=/usr/games/stockfish` are baked
+into the image; override them in the Space only if you change the image.
+
+### 2. Wire up GitHub (once)
+
+GitHub repo → **Settings → Secrets and variables → Actions**:
+
+| Name | Kind | Value |
+| --- | --- | --- |
+| `HF_TOKEN` | Repository **secret** | The Hugging Face write token from step 1.2. |
+| `HF_SPACE` | Repository **variable** | `<hf-username-or-org>/<space-name>`, e.g. `jane/chessmind-api`. |
+
+Then push to `main` (or run the workflow from the **Actions** tab). The
+Space rebuilds; watch **Logs** in the Space. First build takes a few minutes.
+The API is at `https://<hf-username>-<space-name>.hf.space`; check
+`https://<hf-username>-<space-name>.hf.space/health`.
+
+Free Spaces sleep after inactivity; the first request wakes the container
+(migrate + seed-skip + boot take a few seconds).
+
+### 3. Deploy the frontend
+
+Set `VITE_API_BASE_URL` to the Space URL at **build time**.
+
+- **Cloudflare Pages** → Create → Connect to Git → this repo. Root directory
+  `frontend`, build command `npm ci && npm run build`, output directory
+  `dist`, env var `VITE_API_BASE_URL=https://<hf-username>-<space-name>.hf.space`.
+  `_redirects` is copied into `dist` from `frontend/public`.
+- **Vercel** → Add New → Project → this repo. Root directory `frontend`
+  (framework Vite is detected; `frontend/vercel.json` adds the rewrite), env
+  var `VITE_API_BASE_URL` as above.
+
+Then put the resulting frontend origin into the Space's `CORS_ORIGINS`
+(Space restarts on change) and reload.
+
+### Local check of the image
+
+```bash
+docker build -t chessmind-hf .
+docker run --rm -p 7860:7860 -e DATABASE_URL='postgresql://user:pass@host/db' \
+  -e JWT_SECRET=change-me-long-random -e CORS_ORIGINS=http://localhost:5173 chessmind-hf
+curl localhost:7860/health
+```
+
+## Deploy to Render (alternative)
 
 `render.yaml` defines two services (no secrets in the file):
 
