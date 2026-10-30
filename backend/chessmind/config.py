@@ -93,6 +93,15 @@ class Settings(BaseSettings):
     lichess_explorer_moves: int = 12
     lichess_api_token: str = Field(default="", description="Optional Lichess token, sent as Bearer if set.")
 
+    # Optional LLM wording of the coaching (services/llm_coach.py). Off unless enabled AND a key
+    # and model are set; moves, evals and stats never come from it (CLAUDE.md §3).
+    llm_explanations_enabled: bool = False
+    llm_provider: str = Field(default="xai", description="xai (Grok) | openai | anthropic | gemini")
+    llm_api_key: str = ""
+    llm_model: str = Field(default="", description="Provider model id; required when enabled.")
+    llm_base_url: str = Field(default="", description="Override the provider's API base URL.")
+    llm_timeout_s: float = 6.0
+
     @model_validator(mode="after")
     def _normalize(self) -> "Settings":
         raw = self.database_url

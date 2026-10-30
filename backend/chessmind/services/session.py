@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 import secrets
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import UUID, uuid4
@@ -28,7 +28,7 @@ from chessmind.models import (
     TrainingAttempt,
     TrainingSession,
 )
-from chessmind.services import opening_taxonomy
+from chessmind.services import llm_coach, opening_taxonomy
 from chessmind.services.coaching import coach_move
 from chessmind.services.canonical_fen import canonical_key
 from chessmind.services.engine import analyze_board
@@ -272,6 +272,7 @@ async def apply_player_move(
             "correction_san": coaching.correction_san,
             "evidence_refs": coaching.evidence_refs,
             "board_features": coaching.board_features,
+            "explanation_source": coaching.explanation_source,
             "player_relative_before": label.player_relative_before,
             "player_relative_after": label.player_relative_after,
         },
@@ -330,6 +331,7 @@ async def apply_player_move(
             "correction_san": coaching.correction_san,
             "evidence_refs": coaching.evidence_refs,
             "board_features": coaching.board_features,
+            "explanation_source": coaching.explanation_source,
         },
         opponent_move=opponent_payload,
         current_fen=ts.state_json["current_fen"],
@@ -623,13 +625,31 @@ def set_quiet(ts: TrainingSession, quiet: bool) -> dict[str, Any]:
 async def explain_move(*, quiet: bool, **kwargs: Any):
     """Coaching for one move: the deterministic template, optionally reworded by the LLM layer.
 
-    Quiet mode returns an empty summary and no correction (the attempt is still graded).
+    Quiet mode returns an empty summary and no correction (the attempt is still graded) and
+    never calls the LLM. With the LLM layer off or failing validation, the template is used.
     """
     coaching = coach_move(**kwargs)
     if quiet:
-        return type(coaching)(spoken_summary="", correction_san=None,
-                              evidence_refs=coaching.evidence_refs, board_features=coaching.board_features)
-    return coaching
+        return replace(coaching, spoken_summary="", correction_san=None)
+    if not llm_coach.is_enabled():
+        return coaching
+    label: LabelResult = kwargs["label"]
+    evidence = llm_coach.Evidence(
+        fen_before=kwargs["board_before"].fen(),
+        player_color=kwargs["player_color"],
+        played_san=kwargs["played_san"],
+        classification=label.classification.value,
+        eval_swing_cp=label.eval_swing_cp,
+        eval_before_cp_white=label.eval_before_cp,
+        eval_after_cp_white=label.eval_after_cp,
+        best_san_list=list(kwargs["best_san_list"]),
+        best_pv_san=list(kwargs["best_pv_san"]),
+        board_features=coaching.board_features,
+        template_text=coaching.spoken_summary,
+    )
+    out = await llm_coach.explain(evidence)
+    refs = coaching.evidence_refs + [f"llm_fact:{c}" for c in out.cited_facts]
+    return replace(coaching, spoken_summary=out.text, explanation_source=out.source, evidence_refs=refs)
 
 
 # --------------------------------------------------------------------------- #

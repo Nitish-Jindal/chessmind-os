@@ -586,6 +586,7 @@ function SessionView({ id }: { id: string }) {
               <p className="muted">
                 {/stockfish/i.test(last.engine_version) ? last.engine_version : `Stockfish ${last.engine_version}`} · depth {last.engine_depth} · eval (white) {fmtEval(last.eval_before_cp_white)} → {fmtEval(last.eval_after_cp_white)}
                 {ev && showBoard && <> · best line: {ev.pv_san.slice(0, 6).join(" ")}</>}
+                {" "}· wording: {last.coaching.explanation_source?.startsWith("llm:") ? `LLM (${last.coaching.explanation_source.slice(4)}), checked against the engine facts` : "deterministic template"}
               </p>
             </section>
           )}

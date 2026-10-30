@@ -140,6 +140,8 @@ const hist = (await apiGet(`/sessions/${sid}`)).state_json.move_history_san;
 const c = new Chess(); for (const m of hist) c.move(m);
 note("history", hist.join(" "));
 check(hist.slice(0, 5).join(" ") === "e4 e5 Nf3 Nc6 Bb5", "server history starts 1.e4 e5 2.Nf3 Nc6 3.Bb5 (replayed by chess.js)");
+// No LLM_API_KEY in this stack: the optional LLM layer is off and the template is used.
+check((await page.getByLabel("Coach feedback").innerText()).includes("wording: deterministic template"), "coach card: wording from the deterministic template (LLM layer off without a key)");
 await page.screenshot({ path: join(OUT, "vo_ruy_lopez_announced.png"), fullPage: true });
 
 // ---------------------------------------------------------------- B. Illegal move in blindfold

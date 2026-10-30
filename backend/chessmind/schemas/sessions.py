@@ -81,6 +81,7 @@ class CoachingPayload(BaseModel):
     correction_san: str | None
     evidence_refs: list[str]
     board_features: dict[str, Any]
+    explanation_source: str = "template"  # "llm:<provider>:<model>" when the optional LLM layer worded it
 
 
 class OpeningAnnouncement(BaseModel):

@@ -211,7 +211,7 @@ export interface MoveResult {
   engine_version: string;
   engine_depth: number;
   best_lines: { line_rank: number; cp: number | null; mate: number | null; pv_san: string[] }[];
-  coaching: { spoken_summary: string; correction_san: string | null; evidence_refs: string[] };
+  coaching: { spoken_summary: string; correction_san: string | null; evidence_refs: string[]; explanation_source?: string };
   opponent_move: OpponentMove | null;
   current_fen: string;
   status: "active" | "finished";

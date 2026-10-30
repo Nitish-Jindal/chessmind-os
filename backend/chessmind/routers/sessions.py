@@ -202,6 +202,7 @@ async def post_move(
         correction_san=outcome.coaching["correction_san"],
         evidence_refs=outcome.coaching["evidence_refs"],
         board_features=outcome.coaching["board_features"],
+        explanation_source=outcome.coaching.get("explanation_source", "template"),
     )
     return MoveResponse(
         session_id=ts.id,

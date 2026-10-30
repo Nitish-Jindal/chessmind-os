@@ -26,6 +26,7 @@ class CoachingResponse:
     correction_san: str | None
     evidence_refs: list[str]
     board_features: dict[str, Any]
+    explanation_source: str = "template"  # or "llm:<provider>:<model>" (services/llm_coach.py)
 
 
 # --------------------------------------------------------------------------- #
