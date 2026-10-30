@@ -48,6 +48,8 @@ function Launcher() {
   const [sampler, setSampler] = useState<SamplerMode>("mix");
   const [opponents, setOpponents] = useState<Opponent[]>([]);
   const [opp, setOpp] = useState("");
+  const [quiet, setQuiet] = useState(false);
+  const [opening, setOpening] = useState("");
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,6 +64,8 @@ function Launcher() {
         player_color: color,
         sampler_mode: opp ? "opponent_twin" : sampler,
         opponent_profile_id: opp || null,
+        quiet,
+        opening_request: opening.trim() || null,
       });
       nav(`/session/${s.id}`);
     } catch (x) {
@@ -103,8 +107,24 @@ function Launcher() {
             ))}
           </select>
         </label>
+        <label>
+          Opponent's opening{" "}
+          <input
+            value={opening}
+            onChange={(e) => setOpening(e.target.value)}
+            placeholder="any · Caro-Kann · London System · d4"
+            aria-label="Opponent's opening"
+          />
+        </label>
+        <label>
+          <input type="checkbox" checked={quiet} onChange={(e) => setQuiet(e.target.checked)} aria-label="Quiet mode" /> Quiet mode
+        </label>
         <button className="primary" onClick={start}>Start</button>
       </div>
+      <p className="muted">
+        Playing Black? The opponent opens and announces its first move. You can also say “play d4 against me” or
+        “play the Queen's Gambit against me” before your first move to have it open differently.
+      </p>
       {err && <p className="error" role="alert">{err}</p>}
     </section>
   );

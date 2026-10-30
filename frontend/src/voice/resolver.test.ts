@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Chess } from "chess.js";
-import { buildLegalMoves, isBoardQuestion, parseCommand, resolveConfirmation, resolveMove, speakMove } from "./resolver";
+import { buildLegalMoves, isBoardQuestion, isOpeningRequest, looksLikeMove, parseCommand, parseQuietCommand, resolveConfirmation, resolveMove, speakMove } from "./resolver";
 
 // Legal lists built from chess.js stand in for the backend's python-chess output;
 // the resolver only ever consumes the {san, uci} arrays, same as GET /legal.
@@ -124,5 +124,30 @@ describe("board questions vs moves", () => {
     expect(parseCommand("quiz me")).toBe("quiz");
     expect(parseCommand("test me on this position")).toBe("quiz");
     expect(parseCommand("knight f3")).toBe(null);
+  });
+});
+
+describe("session commands", () => {
+  it("quiet mode on/off", () => {
+    expect(parseQuietCommand("quiet mode")).toBe(true);
+    expect(parseQuietCommand("quiet mode on")).toBe(true);
+    expect(parseQuietCommand("be quiet")).toBe(true);
+    expect(parseQuietCommand("quiet mode off")).toBe(false);
+    expect(parseQuietCommand("turn off quiet mode")).toBe(false);
+    expect(parseQuietCommand("knight f3")).toBe(null);
+  });
+  it("opening requests are not moves", () => {
+    expect(isOpeningRequest("play the Caro-Kann against me")).toBe(true);
+    expect(isOpeningRequest("play d4 against me")).toBe(true);
+    expect(isOpeningRequest("play d4")).toBe(false);
+  });
+  it("move-shaped utterances, legal or not", () => {
+    expect(looksLikeMove("king e2")).toBe(true);
+    expect(looksLikeMove("knight e5")).toBe(true);
+    expect(looksLikeMove("castle kingside")).toBe(true);
+    expect(looksLikeMove("banana")).toBe(false);
+    expect(looksLikeMove("hello there")).toBe(false);
+    // Illegal at the start: the resolver finds nothing, but the utterance was a move.
+    expect(resolveMove("king e2", legalFor()).kind).toBe("none");
   });
 });

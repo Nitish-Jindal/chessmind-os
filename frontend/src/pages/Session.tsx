@@ -1,7 +1,18 @@
 import { Chess } from "chess.js";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { api, type LegalMoves, type MasteryRow, type MoveResult, type QuestionTally, type QuizQuestion, type SessionState } from "../api";
+import {
+  api,
+  illegalMoveDetail,
+  type LegalMoves,
+  type MasteryRow,
+  type MoveResult,
+  type OpeningAnnouncement,
+  type OpponentMove,
+  type QuestionTally,
+  type QuizQuestion,
+  type SessionState,
+} from "../api";
 import { useAuth } from "../auth";
 import { Board } from "../components/Board";
 import { Captions } from "../components/Captions";
@@ -10,7 +21,10 @@ import { VoicePicker } from "../components/VoicePicker";
 import {
   buildLegalMoves,
   isBoardQuestion,
+  isOpeningRequest,
+  looksLikeMove,
   parseCommand,
+  parseQuietCommand,
   resolveAlternatives,
   resolveConfirmation,
   speakMove,
@@ -55,6 +69,8 @@ function SessionView({ id }: { id: string }) {
   const [quiz, setQuiz] = useState<QuizQuestion | null>(null);
   const [tally, setTally] = useState<QuestionTally | null>(null);
   const [lastAnswer, setLastAnswer] = useState<string | null>(null);
+  // Set when the last move attempt matched no legal move; cleared by the next accepted move.
+  const [illegal, setIllegal] = useState<string | null>(null);
   const turnStart = useRef(Date.now());
 
   const legalMoves = useMemo(() => (legal ? buildLegalMoves(legal.legal_moves_san, legal.legal_moves_uci) : []), [legal]);
@@ -63,6 +79,9 @@ function SessionView({ id }: { id: string }) {
   const color = sess?.state_json.player_color ?? "white";
   const finished = legal?.status === "finished";
   const myTurn = legal?.next_to_move === "player" && !finished;
+  const quiet = !!sess?.settings_json.quiet;
+  const quietRef = useRef(false);
+  quietRef.current = quiet;
 
   const refresh = useCallback(async () => {
     const [s, l] = await Promise.all([api.getSession(id), api.legal(id)]);
@@ -83,7 +102,13 @@ function SessionView({ id }: { id: string }) {
       .then(({ s }) => {
         const om = s.state_json.last_opponent_move;
         say("system", s.mode === "blindfold" ? "Blindfold session. The board is hidden. Hold the talk button and say your move." : "Session started. Make your move on the board, or by voice.");
-        if (om && s.state_json.move_history_san.length === 1) say("opponent", `Opponent plays ${speakMove(om.san)}.`);
+        if (s.settings_json.quiet) caption("system", "Quiet mode: only the opponent's moves are spoken.");
+        const req = s.state_json.opening_request;
+        if (req && !s.settings_json.quiet) caption("system", `Opponent's opening: ${req.label}.`);
+        if (om && s.state_json.move_history_san.length === 1) {
+          say("opponent", `Opponent plays ${speakMove(om.san)}.`);
+          if (om.announcement && !s.settings_json.quiet) say("opening", om.announcement.text);
+        }
       })
       .catch((e: Error) => setErr(e.message));
     return () => cancelSpeech();
@@ -110,6 +135,24 @@ function SessionView({ id }: { id: string }) {
     nav(`/session/${s.id}?drill=${n.row.position_id}`);
   }
 
+  const announce = useCallback(
+    (list: OpeningAnnouncement[]) => {
+      if (!quietRef.current) for (const a of list) say("opening", a.text);
+    },
+    [say],
+  );
+
+  /** "Opponent plays X", then the opening it reached (if new), then a note when the requested opening ends. */
+  const speakOpponent = useCallback(
+    (om: OpponentMove | null | undefined, label?: string) => {
+      if (!om) return;
+      say("opponent", `Opponent plays ${speakMove(om.san)}.`);
+      if (om.announcement) announce([om.announcement]);
+      if (om.request_event === "out_of_book" && label) caption("system", `Out of book for the ${label}; the opponent plays normally from here.`);
+    },
+    [say, caption, announce],
+  );
+
   /** Every move — dragged, spoken or typed — goes through the backend, which is the only authority. */
   const submit = useCallback(
     async (m: { san?: string; uci?: string }) => {
@@ -120,6 +163,7 @@ function SessionView({ id }: { id: string }) {
       try {
         const r = await api.move(id, { ...m, latency_ms: Date.now() - turnStart.current });
         setLast(r);
+        setIllegal(null);
         if (drillPos && player && !drillAnswered.current) {
           // First answer in a drill session is the graded recall of the drilled position.
           drillAnswered.current = true;
@@ -128,20 +172,64 @@ function SessionView({ id }: { id: string }) {
         }
         setFen(r.current_fen);
         setRevealed(false);
-        if (r.opponent_move) say("opponent", `Opponent plays ${speakMove(r.opponent_move.san)}.`);
-        say("coach", r.coaching.spoken_summary);
+        announce(r.announcements.filter((a) => a.by === "player"));
+        speakOpponent(r.opponent_move, r.opening_request?.label);
+        if (!r.quiet && r.coaching.spoken_summary) say("coach", r.coaching.spoken_summary);
         if (r.status === "finished") say("system", "The game is over.");
         await refresh();
       } catch (e) {
-        const msg = (e as Error).message;
-        setErr(msg);
-        caption("system", `Move rejected: ${msg}`);
+        const bad = illegalMoveDetail(e);
+        if (bad) {
+          // python-chess found no legal move matching the input: say so, keep the position.
+          setIllegal(bad.message);
+          say("system", bad.message);
+        } else {
+          const msg = (e as Error).message;
+          setErr(msg);
+          caption("system", `Move rejected: ${msg}`);
+        }
         await refresh().catch(() => {});
       } finally {
         setBusy(false);
       }
     },
-    [busy, id, say, caption, refresh, drillPos, player],
+    [busy, id, say, caption, refresh, drillPos, player, announce, speakOpponent],
+  );
+
+  const toggleQuiet = useCallback(
+    async (on: boolean) => {
+      const flip = (q: boolean) => setSess((s) => (s ? { ...s, settings_json: { ...s.settings_json, quiet: q } } : s));
+      flip(on); // optimistic, so the checkbox follows the click; reverted if the PATCH fails
+      try {
+        setSess(await api.setQuiet(id, on));
+        if (on) setQuiz(null);
+        say("system", on ? "Quiet mode on. I'll only call out the opponent's moves." : "Quiet mode off. Coaching is back on.");
+      } catch (e) {
+        flip(!on);
+        setErr((e as Error).message);
+      }
+    },
+    [id, say],
+  );
+
+  /** "Play the Caro-Kann / d4 against me": parsed and validated server-side, then followed by the sampler. */
+  const requestOpening = useCallback(
+    async (alts: string[]) => {
+      try {
+        const r = await api.openingCommand(id, alts);
+        say("system", r.message);
+        if (r.restarted) {
+          setLast(null);
+          setIllegal(null);
+          setRevealed(false);
+        }
+        speakOpponent(r.opponent_move);
+        await refresh();
+      } catch (e) {
+        setErr((e as Error).message);
+      }
+    },
+    [id, say, speakOpponent, refresh],
   );
 
   /** Board question → server answers from python-chess / cached Stockfish; spoken and captioned. */
@@ -159,6 +247,7 @@ function SessionView({ id }: { id: string }) {
   );
 
   const startQuiz = useCallback(async () => {
+    if (quietRef.current) return caption("system", "Quiet mode is on: no quizzes. Say \"quiet mode off\" to turn coaching back on.");
     try {
       const q = await api.quiz(id);
       setQuiz(q);
@@ -167,7 +256,7 @@ function SessionView({ id }: { id: string }) {
     } catch (e) {
       setErr((e as Error).message);
     }
-  }, [id, say]);
+  }, [id, say, caption]);
 
   /** Quiz answer → scored server-side against the board captured when the question was asked. */
   const answerQuiz = useCallback(
@@ -214,6 +303,10 @@ function SessionView({ id }: { id: string }) {
       const heard = alts[0];
       caption("you", heard);
 
+      const quietCmd = parseQuietCommand(heard);
+      if (quietCmd !== null) return void toggleQuiet(quietCmd);
+      if (isOpeningRequest(heard)) return void requestOpening(alts);
+
       const cmd = parseCommand(heard);
       if (cmd === "reveal" && blindfold) return void doReveal();
       if (cmd === "repeat") {
@@ -252,9 +345,14 @@ function SessionView({ id }: { id: string }) {
         setPending(r.moves);
         return say("system", `More than one move fits. Did you mean ${r.moves.map((m) => speakMove(m.san)).join(", or ")}?`);
       }
-      say("system", `I didn't find a legal move for "${heard}". Try again.`);
+      if (alts.some(looksLikeMove)) {
+        // A move was said, but python-chess lists no legal move that matches it here.
+        setIllegal("That's an illegal move, try again.");
+        return say("system", "That's an illegal move, try again.");
+      }
+      say("system", `I didn't catch a move in "${heard}". Try again.`);
     },
-    [blindfold, caption, say, doReveal, startQuiz, answerQuiz, askBoard],
+    [blindfold, caption, say, doReveal, startQuiz, answerQuiz, askBoard, toggleQuiet, requestOpening],
   );
   const onUtterance = useRef(handleUtterance);
   onUtterance.current = handleUtterance;
@@ -328,11 +426,21 @@ function SessionView({ id }: { id: string }) {
   return (
     <>
       <h1>
-        {drillPos ? "Mastery drill" : blindfold ? "Blindfold session" : sess.settings_json.sampler_mode === "opponent_twin" ? "Playing the twin" : "Guided session"}{" "}
+        {drillPos
+          ? "Mastery drill"
+          : sess.settings_json.sampler_mode === "opponent_twin"
+            ? blindfold ? "Blindfold vs the twin" : "Playing the twin"
+            : blindfold ? "Blindfold session" : "Guided session"}{" "}
         <span className="badge">{color}</span>
+        {quiet && <> <span className="badge">quiet</span></>}
       </h1>
       <div className="grid">
         <div>
+          {illegal && (
+            <p className="illegal" role="alert" aria-label="Illegal move">
+              <strong>Illegal move — try again.</strong> No legal move matches that; the position has not changed.
+            </p>
+          )}
           {showBoard ? (
             <Board fen={fen} orientation={color} interactive={!!myTurn && !busy} onDrop={onDrop} />
           ) : (
@@ -356,6 +464,13 @@ function SessionView({ id }: { id: string }) {
             )}
           </div>
           {finished && <p><strong>Game over.</strong></p>}
+          <p className="muted" aria-label="Opening">
+            {!quiet && sess.state_json.opening && <>Opening: <strong>{sess.state_json.opening.eco} {sess.state_json.opening.name}</strong></>}
+            {sess.state_json.opening_request && (
+              <> · Opponent's opening: <strong>{sess.state_json.opening_request.label}</strong>{" "}
+                <span className="badge">{sess.state_json.opening_request.status.replace(/_/g, " ")}</span></>
+            )}
+          </p>
         </div>
 
         <div>
@@ -395,10 +510,19 @@ function SessionView({ id }: { id: string }) {
                 <button onClick={() => setPending(null)}>Cancel</button>
               </div>
             )}
+            <div className="row" style={{ marginTop: ".5rem" }}>
+              <label>
+                <input type="checkbox" checked={quiet} onChange={(e) => void toggleQuiet(e.target.checked)} aria-label="Quiet mode" />{" "}
+                Quiet mode <span className="muted">(only the opponent's moves; no coaching or quizzes)</span>
+              </label>
+            </div>
+            <p className="muted" style={{ marginBottom: 0 }}>
+              Set the opponent's opening: say “play the Caro-Kann against me” or “play d4 against me”.
+            </p>
             <VoicePicker />
           </section>
 
-          <section className="card" aria-label="Position questions">
+          {!quiet && <section className="card" aria-label="Position questions">
             <div className="row">
               <button onClick={() => (quiz ? (setQuiz(null), say("system", "Question skipped.")) : void startQuiz())}>
                 {quiz ? "Skip question" : "Quiz me on this position"}
@@ -415,7 +539,7 @@ function SessionView({ id }: { id: string }) {
             {!quiz && !lastAnswer && (
               <p className="muted">Ask by voice or text: “where is my knight”, “what's on e5”, “anything hanging”, “whose move”, “what's the eval”.</p>
             )}
-          </section>
+          </section>}
 
           <h2>Live captions</h2>
           <Captions interim={interim} />
@@ -442,7 +566,16 @@ function SessionView({ id }: { id: string }) {
             </section>
           )}
 
-          {last && (
+          {last && last.quiet && (
+            <section className="card" aria-label="Last moves">
+              <p>
+                Your move <strong>{last.played_san}</strong>
+                {last.opponent_move && <> · opponent replied <strong>{last.opponent_move.san}</strong></>}
+              </p>
+            </section>
+          )}
+
+          {last && !last.quiet && (
             <section className="card" aria-label="Coach feedback">
               <p>
                 Your move <strong>{last.played_san}</strong> <span className="badge">{last.classification}</span>
