@@ -3,7 +3,7 @@
 A single-pane view of where the five-day MVP is. Update as items land; do
 not mark a phase complete until its proof condition is demonstrated.
 
-Last updated: 2026-10-29 — Render Blueprint + deploy rehearsal; position questions/quiz; Lichess Masters adapter; ACCEPTANCE.md walk of the 13 scenarios.
+Last updated: 2026-10-30 — reviewer-feedback round: opening announcements (Lichess taxonomy), quiet mode, illegal-move feedback, "play <opening> against me", play as Black, opponent prep report, optional LLM wording. Previous: 2026-10-29 — Render Blueprint + deploy rehearsal; position questions/quiz; Lichess Masters adapter; ACCEPTANCE.md walk of the 13 scenarios.
 
 ## Phase 0 — Scaffold & plan
 
@@ -149,7 +149,9 @@ and recall move on screen, dashboard drops to 0 due).
       `POST /imports/pgn` with `intent=opponent`); async via `ImportJob`;
       attribution preserved. (Dedupe by source + headers not verified.)
 - [ ] `opponent_profile` + opening-tree stats filtered by recency, color,
-      time control, rating.
+      time control, rating. (Per-colour lines/branches now exist in the
+      prep report, `GET /opponents/{id}/prep`; recency, time-control and
+      rating filters still do not.)
 - [x] `GET /opponents/{id}/tree?limit=N` with `limit=20` default per
       position; no cursor pagination. Browsable in the Opponents page.
 - [x] Lichess Masters explorer adapter: real master move stats per
@@ -229,6 +231,36 @@ correct reviews of one position), DB commit before response (stale reads
 right after a move), and the Italian proof's retrain step.
 
 **Proof:** deployed demo passes all 13 acceptance scenarios live.
+
+## Reviewer feedback round — 2026-10-30
+
+Proofs: `scripts/proof_voice_openings.mjs` (38 checks),
+`scripts/proof_opponent_prep.mjs` (41 checks), and backend
+`test_opening_voice.py` (33), `test_opponent_prep.py` (2),
+`test_llm_coach.py` (12). Backend 194 passing, frontend 32. Details in
+`ACCEPTANCE.md` → "Reviewer feedback round".
+
+- [x] Announce the opening by voice, once per name, after either side's
+      move. Names come from the vendored Lichess `chess-openings` taxonomy
+      (CC0) keyed by canonical FEN. Fixed the importer smearing game
+      headers onto every position (migration `0006`).
+- [x] Quiet mode: session setting + UI checkbox + "quiet mode on/off".
+      Only opponent moves are spoken; no coaching, quizzes or announcements.
+      Legality is still checked.
+- [x] Illegal-move feedback: spoken and captioned "That's an illegal move,
+      try again.", a blindfold-visible alert, API 422 `illegal_move`, and
+      the game does not advance.
+- [x] "Play the London / Caro-Kann / Spanish / Italian / Queen's Gambit /
+      Sicilian / d4 against me" for both colours. The sampler follows the
+      defining line, then the family's named lines, then falls back to
+      normal sampling.
+- [x] Play Black with the engine opening; "play d4 against me" before the
+      first move restarts the game with 1.d4.
+- [x] Opponent prep: real 150-game import, `GET /opponents/{id}/prep` (lines
+      by colour, branches, Stockfish suggestions), blindfold game vs the twin.
+- [x] Optional LLM wording behind `LLM_EXPLANATIONS_ENABLED` + key + model,
+      validated against the cited evidence, template fallback. Not tested
+      against a live provider (no key here).
 
 ## Known gaps parked for post-MVP
 

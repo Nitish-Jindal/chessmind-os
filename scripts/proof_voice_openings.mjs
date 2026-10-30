@@ -214,8 +214,9 @@ const legalQ = (await apiGet(`/sessions/${sid}/legal`)).legal_moves_san;
 const { body: loud } = await sayAndCapture(legalQ.includes("d4") ? "d4" : legalQ[0], /\/move$/);
 await settle();
 check(!loud.quiet && loud.coaching.spoken_summary.length > 0 && (await captions()).includes("coach:"), "coaching returns after quiet mode is turned off");
+const patched = page.waitForResponse((r) => r.url().endsWith("/settings"));
 await page.getByLabel("Quiet mode").check();
-await page.waitForResponse((r) => r.url().endsWith("/settings"));
+await patched;
 await page.waitForTimeout(200);
 check((await page.getByLabel("Position questions").count()) === 0, "checkbox turns quiet mode back on");
 

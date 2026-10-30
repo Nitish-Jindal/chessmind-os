@@ -84,6 +84,10 @@
     "v": "server history starts 1.e4 e5 2.Nf3 Nc6 3.Bb5 (replayed by chess.js)"
   },
   {
+    "k": "ok",
+    "v": "coach card: wording from the deterministic template (LLM layer off without a key)"
+  },
+  {
     "k": "phase",
     "v": "B: illegal move in blindfold"
   },
@@ -170,7 +174,7 @@
         "classification": "inaccuracy",
         "quiet": true,
         "summary": "",
-        "opp": "Bc5",
+        "opp": "f5",
         "announcements": []
       }
     ]
@@ -184,7 +188,7 @@
     "v": [
       "Opponent plays pawn e5.",
       "Opponent plays knight c6.",
-      "Opponent plays bishop c5."
+      "Opponent plays pawn f5."
     ]
   },
   {
@@ -222,7 +226,7 @@
   {
     "k": "opening command",
     "v": {
-      "session_id": "20833ef1-fcaf-4b36-bdf9-54703c606eaa",
+      "session_id": "05b46ca7-5844-4069-b97f-c133c44c4375",
       "understood": true,
       "accepted": true,
       "message": "I'll play the Caro-Kann Defense (B10: 1. e4 c6) where the position allows.",
@@ -251,7 +255,7 @@
       "uci": "c7c6",
       "source_tier": "requested_opening",
       "confidence": 1,
-      "sample_size": 0,
+      "sample_size": 27,
       "announcement": {
         "eco": "B10",
         "name": "Caro-Kann Defense",
@@ -297,7 +301,7 @@
   {
     "k": "play d4 against me",
     "v": {
-      "session_id": "d974b690-9233-42f6-8fe9-6b27abc6f387",
+      "session_id": "9daad21c-f48c-461c-bcdc-d0845ffa4c4c",
       "understood": true,
       "accepted": true,
       "message": "Restarted. I play d4.",

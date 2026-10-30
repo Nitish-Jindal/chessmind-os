@@ -61,129 +61,61 @@
   },
   {
     "k": "ok",
-    "v": "quiz 1 (hanging_pieces): \"Which of your opponent's pieces are hanging? Name the squares, or say none.\""
+    "v": "quiz 1 (evaluation): \"Roughly, who is better here: White, Black, or equal?\""
   },
   {
     "k": "quiz-1",
     "v": {
-      "said": "none",
+      "said": "about equal",
       "correct": true,
       "score": 1,
-      "feedback": "Correct: none."
+      "feedback": "Correct: equal (Stockfish +0.45 at depth 10)."
     }
   },
   {
     "k": "ok",
-    "v": "spoken answer \"none\" scored correct"
+    "v": "spoken answer \"about equal\" scored correct"
   },
   {
     "k": "ok",
-    "v": "quiz 2 (piece_location): \"Name every square holding your bishops.\""
+    "v": "quiz 2 (square_content): \"What is on c6? Say the colour and piece, or empty.\""
   },
   {
     "k": "quiz-2",
     "v": {
-      "said": "c one and f one",
+      "said": "black knight",
       "correct": true,
       "score": 1,
-      "feedback": "Correct: c1 and f1."
+      "feedback": "Correct: black knight."
     }
   },
   {
     "k": "ok",
-    "v": "spoken answer \"c one and f one\" scored correct"
+    "v": "spoken answer \"black knight\" scored correct"
   },
   {
     "k": "ok",
-    "v": "quiz 3 (side_to_move): \"Whose move is it: White or Black?\""
+    "v": "quiz 3 (piece_location): \"Name every square holding your kings.\""
   },
   {
     "k": "quiz-3",
     "v": {
-      "said": "white",
+      "said": "e one",
       "correct": true,
       "score": 1,
-      "feedback": "Correct: White."
+      "feedback": "Correct: e1."
     }
   },
   {
     "k": "ok",
-    "v": "spoken answer \"white\" scored correct"
+    "v": "spoken answer \"e one\" scored correct"
   },
   {
     "k": "ok",
-    "v": "quiz 4 (evaluation): \"Roughly, who is better here: White, Black, or equal?\""
+    "v": "quiz 4 (square_content): \"What is on b7? Say the colour and piece, or empty.\""
   },
   {
     "k": "quiz-4",
-    "v": {
-      "said": "about equal",
-      "correct": true,
-      "score": 1,
-      "feedback": "Correct: equal (Stockfish +0.45 at depth 10)."
-    }
-  },
-  {
-    "k": "ok",
-    "v": "spoken answer \"about equal\" scored correct"
-  },
-  {
-    "k": "ok",
-    "v": "quiz 5 (square_content): \"What is on h8? Say the colour and piece, or empty.\""
-  },
-  {
-    "k": "quiz-5",
-    "v": {
-      "said": "black rook",
-      "correct": true,
-      "score": 1,
-      "feedback": "Correct: black rook."
-    }
-  },
-  {
-    "k": "ok",
-    "v": "spoken answer \"black rook\" scored correct"
-  },
-  {
-    "k": "ok",
-    "v": "quiz 6 (piece_location): \"Name every square holding your opponent's knights.\""
-  },
-  {
-    "k": "quiz-6",
-    "v": {
-      "said": "c six and g eight",
-      "correct": true,
-      "score": 1,
-      "feedback": "Correct: c6 and g8."
-    }
-  },
-  {
-    "k": "ok",
-    "v": "spoken answer \"c six and g eight\" scored correct"
-  },
-  {
-    "k": "ok",
-    "v": "quiz 7 (evaluation): \"Roughly, who is better here: White, Black, or equal?\""
-  },
-  {
-    "k": "quiz-7",
-    "v": {
-      "said": "about equal",
-      "correct": true,
-      "score": 1,
-      "feedback": "Correct: equal (Stockfish +0.45 at depth 10)."
-    }
-  },
-  {
-    "k": "ok",
-    "v": "spoken answer \"about equal\" scored correct"
-  },
-  {
-    "k": "ok",
-    "v": "quiz 8 (square_content): \"What is on e5? Say the colour and piece, or empty.\""
-  },
-  {
-    "k": "quiz-8",
     "v": {
       "said": "black pawn",
       "correct": true,
@@ -197,24 +129,92 @@
   },
   {
     "k": "ok",
-    "v": "quiz 9 (evaluation): \"Roughly, who is better here: White, Black, or equal?\""
+    "v": "quiz 5 (square_content): \"What is on b2? Say the colour and piece, or empty.\""
   },
   {
-    "k": "quiz-9",
+    "k": "quiz-5",
     "v": {
-      "said": "about equal",
+      "said": "white pawn",
       "correct": true,
       "score": 1,
-      "feedback": "Correct: equal (Stockfish +0.45 at depth 10)."
+      "feedback": "Correct: white pawn."
     }
   },
   {
     "k": "ok",
-    "v": "spoken answer \"about equal\" scored correct"
+    "v": "spoken answer \"white pawn\" scored correct"
   },
   {
     "k": "ok",
-    "v": "quiz 10 (hanging_pieces): \"Which of your pieces are hanging? Name the squares, or say none.\""
+    "v": "quiz 6 (side_to_move): \"Whose move is it: White or Black?\""
+  },
+  {
+    "k": "quiz-6",
+    "v": {
+      "said": "white",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: White."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"white\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 7 (piece_location): \"Name every square holding your opponent's kings.\""
+  },
+  {
+    "k": "quiz-7",
+    "v": {
+      "said": "e eight",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: e8."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"e eight\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 8 (square_content): \"What is on a2? Say the colour and piece, or empty.\""
+  },
+  {
+    "k": "quiz-8",
+    "v": {
+      "said": "white pawn",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: white pawn."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"white pawn\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 9 (hanging_pieces): \"Which of your opponent's pieces are hanging? Name the squares, or say none.\""
+  },
+  {
+    "k": "quiz-9",
+    "v": {
+      "said": "none",
+      "correct": true,
+      "score": 1,
+      "feedback": "Correct: none."
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken answer \"none\" scored correct"
+  },
+  {
+    "k": "ok",
+    "v": "quiz 10 (piece_location): \"Name every square holding your knights.\""
   },
   {
     "k": "quiz-10",
@@ -222,7 +222,7 @@
       "said": "h five",
       "correct": false,
       "score": 0,
-      "feedback": "Not quite. The answer is none."
+      "feedback": "Not quite. The answer is b1 and f3."
     }
   },
   {
@@ -231,7 +231,7 @@
   },
   {
     "k": "ok",
-    "v": "quiz covered 5 question kinds: hanging_pieces, piece_location, side_to_move, evaluation, square_content"
+    "v": "quiz covered 5 question kinds: evaluation, square_content, piece_location, side_to_move, hanging_pieces"
   },
   {
     "k": "ok",
@@ -257,7 +257,7 @@
   },
   {
     "k": "session-captions",
-    "v": "coach: White to move — you.\n\nyou: what's the eval\n\ncoach: Stockfish 17.1 at depth 10: +0.45 for White, roughly equal (+0.45 from your side).\n\nyou: blah blah\n\nsystem: I didn't find a legal move for \"blah blah\". Try again.\n\ncoach: Which of your opponent's pieces are hanging? Name the squares, or say none.\n\nyou: none\n\ncoach: Correct: none.\n\nyou: quiz me\n\ncoach: Name every square holding your bishops.\n\nyou: c one and f one\n\ncoach: Correct: c1 and f1.\n\ncoach: Whose move is it: White or Black?\n\nyou: white\n\ncoach: Correct: White.\n\nyou: quiz me\n\ncoach: Roughly, who is better here: White, Black, or equal?\n\nyou: about equal\n\ncoach: Correct: equal (Stockfish +0.45 at depth 10).\n\ncoach: What is on h8? Say the colour and piece, or empty.\n\nyou: black rook\n\ncoach: Correct: black rook.\n\nyou: quiz me\n\ncoach: Name every square holding your opponent's knights.\n\nyou: c six and g eight\n\ncoach: Correct: c6 and g8.\n\ncoach: Roughly, who is better here: White, Black, or equal?\n\nyou: about equal\n\ncoach: Correct: equal (Stockfish +0.45 at depth 10).\n\nyou: quiz me\n\ncoach: What is on e5? Say the colour and piece, or empty.\n\nyou: black pawn\n\ncoach: Correct: black pawn.\n\ncoach: Roughly, who is better here: White, Black, or equal?\n\nyou: about equal\n\ncoach: Correct: equal (Stockfish +0.45 at depth 10).\n\nyou: quiz me\n\ncoach: Which of your pieces are hanging? Name the squares, or say none.\n\nyou: h five\n\ncoach: Not quite. The answer is none."
+    "v": "coach: White to move — you.\n\nyou: what's the eval\n\ncoach: Stockfish 17.1 at depth 10: +0.45 for White, roughly equal (+0.45 from your side).\n\nyou: blah blah\n\nsystem: I didn't catch a move in \"blah blah\". Try again.\n\ncoach: Roughly, who is better here: White, Black, or equal?\n\nyou: about equal\n\ncoach: Correct: equal (Stockfish +0.45 at depth 10).\n\nyou: quiz me\n\ncoach: What is on c6? Say the colour and piece, or empty.\n\nyou: black knight\n\ncoach: Correct: black knight.\n\ncoach: Name every square holding your kings.\n\nyou: e one\n\ncoach: Correct: e1.\n\nyou: quiz me\n\ncoach: What is on b7? Say the colour and piece, or empty.\n\nyou: black pawn\n\ncoach: Correct: black pawn.\n\ncoach: What is on b2? Say the colour and piece, or empty.\n\nyou: white pawn\n\ncoach: Correct: white pawn.\n\nyou: quiz me\n\ncoach: Whose move is it: White or Black?\n\nyou: white\n\ncoach: Correct: White.\n\ncoach: Name every square holding your opponent's kings.\n\nyou: e eight\n\ncoach: Correct: e8.\n\nyou: quiz me\n\ncoach: What is on a2? Say the colour and piece, or empty.\n\nyou: white pawn\n\ncoach: Correct: white pawn.\n\ncoach: Which of your opponent's pieces are hanging? Name the squares, or say none.\n\nyou: none\n\ncoach: Correct: none.\n\nyou: quiz me\n\ncoach: Name every square holding your knights.\n\nyou: h five\n\ncoach: Not quite. The answer is b1 and f3."
   },
   {
     "k": "masters-down",
@@ -273,7 +273,7 @@
   },
   {
     "k": "masters-up",
-    "v": "Master games fetched just now\n\n3,000 master games from this position\n\nMove\tGames\tWhite / Draw / Black\tAvg rating\nd4\t1,250\t33% / 45% / 22%\t2414\ne4\t1,230\t34% / 41% / 24%\t2410\nNf3\t350\t31% / 46% / 23%\t2420\nc4\t170\t35% / 41% / 24%\t2418\n\nSource: Lichess Masters database · lichess.org opening explorer · fetched 10/29/2026, 7:39:34 PM · open on lichess.org"
+    "v": "Master games fetched just now\n\n3,000 master games from this position\n\nMove\tGames\tWhite / Draw / Black\tAvg rating\nd4\t1,250\t33% / 45% / 22%\t2414\ne4\t1,230\t34% / 41% / 24%\t2410\nNf3\t350\t31% / 46% / 23%\t2420\nc4\t170\t35% / 41% / 24%\t2418\n\nSource: Lichess Masters database · lichess.org opening explorer · fetched 10/30/2026, 10:57:43 PM · open on lichess.org"
   },
   {
     "k": "ok",
