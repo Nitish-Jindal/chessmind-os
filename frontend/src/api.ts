@@ -57,7 +57,7 @@ async function refreshTokens(): Promise<boolean> {
     try {
       const r = await fetch(`${API_BASE}/auth/refresh`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
         body: JSON.stringify({ refresh_token: t.refresh_token }),
       });
       if (!r.ok) return false;
@@ -73,7 +73,7 @@ async function refreshTokens(): Promise<boolean> {
 }
 
 async function request<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { "ngrok-skip-browser-warning": "true" };
   const tokens = loadTokens();
   if (tokens) headers.Authorization = `Bearer ${tokens.access_token}`;
   if (body !== undefined) headers["Content-Type"] = "application/json";
