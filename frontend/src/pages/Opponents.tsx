@@ -1,7 +1,7 @@
 import { Chess } from "chess.js";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, type Opponent, type OpponentTree } from "../api";
+import { api, type Opponent, type OpponentTree, type PrepReport, type PrepSide } from "../api";
 import { Board } from "../components/Board";
 import { ImportPanel } from "../components/ImportPanel";
 
@@ -55,12 +55,117 @@ function TreeBrowser({ opp }: { opp: Opponent }) {
   );
 }
 
+/** "1. e4 c5 2. Nf3" from a SAN list starting at the initial position. */
+function numbered(sans: string[]): string {
+  return sans.map((s, i) => (i % 2 === 0 ? `${i / 2 + 1}. ${s}` : s)).join(" ");
+}
+const pct = (x: number) => `${Math.round(x * 100)}%`;
+const cp = (v: number | null) => (v == null ? "—" : `${v >= 0 ? "+" : ""}${(v / 100).toFixed(2)}`);
+
+function PrepSideView({ side, title }: { side: PrepSide; title: string }) {
+  return (
+    <section className="card" aria-label={title}>
+      <h3 style={{ marginTop: 0 }}>{title}</h3>
+      <p className="muted">
+        {side.games} games · they scored {side.opponent_result.score_pct ?? "—"}% (+{side.opponent_result.wins} ={side.opponent_result.draws} −{side.opponent_result.losses}) · you play {side.you_play}
+      </p>
+      {side.games === 0 ? <p className="muted">No games with this colour.</p> : (
+        <>
+          <p>First move: {side.first_moves.map((m) => `${m.san} ${pct(m.share)}`).join(" · ")}</p>
+          <h4>Most frequent lines</h4>
+          <table>
+            <thead><tr><th>Line</th><th>Games</th><th>Their score</th><th>Suggested response (Stockfish)</th></tr></thead>
+            <tbody>
+              {side.frequent_lines.map((l) => {
+                const sr = l.suggested_response;
+                const extra = sr ? sr.after_san.slice(l.san.length) : [];
+                return (
+                  <tr key={l.san.join(" ")}>
+                    <td>
+                      {numbered(l.san)}
+                      {l.opening && <div className="muted">{l.opening.eco} {l.opening.name}</div>}
+                    </td>
+                    <td>{l.games} ({pct(l.share)})</td>
+                    <td>{l.opponent_result.score_pct ?? "—"}%</td>
+                    <td>
+                      {sr?.best ? (
+                        <>
+                          {extra.length > 0 && <>after their usual {extra.join(" ")}: </>}
+                          play <strong>{sr.best.san}</strong> ({cp(sr.best.cp_for_you)} for you)
+                          {sr.best.opponent_faced_it && <> · they faced it {sr.best.opponent_faced_it.games}×, scored {sr.best.opponent_faced_it.score_pct}%</>}
+                          <div className="muted">PV {sr.best.pv_san.join(" ")} · {sr.engine.version} d{sr.engine.depth}</div>
+                        </>
+                      ) : <span className="muted">—</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <h4>Likely branches</h4>
+          <ul>
+            {side.likely_branches.map((b) => (
+              <li key={b.after_san.join(" ") || "start"}>
+                After {b.after_san.length ? numbered(b.after_san) : "the first move"} ({b.games} games,{" "}
+                {b.to_move === "opponent" ? "they choose" : "you choose"}): {b.options.map((o) => `${o.san} ${pct(o.share)}`).join(" · ")}
+              </li>
+            ))}
+            {side.likely_branches.length === 0 && <li className="muted">No position where two moves recur.</li>}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
+function Prep({ opp }: { opp: Opponent }) {
+  const [rep, setRep] = useState<PrepReport | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => setRep(null), [opp.id, opp.games_imported]);
+  async function build() {
+    setBusy(true);
+    setErr(null);
+    try {
+      setRep(await api.opponentPrep(opp.id));
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section aria-label="Prep report">
+      <div className="row">
+        <h2 style={{ margin: 0 }}>Prep report</h2>
+        <button onClick={() => void build()} disabled={busy || opp.games_imported === 0}>
+          {busy ? "Analysing with Stockfish…" : rep ? "Rebuild" : "Build prep report"}
+        </button>
+      </div>
+      {err && <p className="error" role="alert">{err}</p>}
+      {rep && (
+        <>
+          <p className="muted">
+            First {rep.max_plies} plies of {rep.games_imported} imported games. Lines from their games; names from the
+            Lichess opening taxonomy; suggestions are Stockfish's best move where it is your turn.
+          </p>
+          <div className="grid">
+            <PrepSideView side={rep.opponent_as_white} title={`When ${rep.display_name} has White`} />
+            <PrepSideView side={rep.opponent_as_black} title={`When ${rep.display_name} has Black`} />
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 export function Opponents() {
   const nav = useNavigate();
   const [list, setList] = useState<Opponent[]>([]);
   const [sel, setSel] = useState<Opponent | null>(null);
   const [name, setName] = useState("");
   const [color, setColor] = useState<"white" | "black">("white");
+  const [blind, setBlind] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const reload = useCallback(async (keep?: string) => {
@@ -86,7 +191,7 @@ export function Opponents() {
     if (!sel) return;
     setErr(null);
     try {
-      const s = await api.createSession({ mode: "opponent", player_color: color, sampler_mode: "opponent_twin", opponent_profile_id: sel.id });
+      const s = await api.createSession({ mode: blind ? "blindfold" : "opponent", player_color: color, sampler_mode: "opponent_twin", opponent_profile_id: sel.id });
       nav(`/session/${s.id}`);
     } catch (e) {
       setErr((e as Error).message);
@@ -117,10 +222,14 @@ export function Opponents() {
                   <option value="black">Black</option>
                 </select>
               </label>
+              <label>
+                <input type="checkbox" checked={blind} onChange={(e) => setBlind(e.target.checked)} aria-label="Blindfold against the twin" /> Blindfold
+              </label>
               <button className="primary" disabled={sel.games_imported === 0} onClick={playTwin}>Play the twin</button>
               {sel.games_imported === 0 && <span className="muted">Import some of their games first.</span>}
             </div>
           </section>
+          <Prep opp={sel} />
           <h2>Opening tree</h2>
           <TreeBrowser opp={sel} />
         </>

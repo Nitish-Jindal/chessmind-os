@@ -371,6 +371,66 @@ export interface OpponentTree {
   }[];
 }
 
+export interface PrepScore {
+  games: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  score_pct: number | null;
+}
+
+export interface PrepCandidate {
+  san: string;
+  line_rank: number;
+  cp_white: number | null;
+  mate_white: number | null;
+  cp_for_you: number | null;
+  pv_san: string[];
+  opponent_faced_it: PrepScore | null;
+}
+
+export interface PrepSide {
+  opponent_color: "white" | "black";
+  you_play: "white" | "black";
+  games: number;
+  opponent_result: PrepScore;
+  min_games_for_line: number;
+  first_moves: ({ san: string; share: number } & PrepScore)[];
+  frequent_lines: {
+    san: string[];
+    games: number;
+    share: number;
+    opponent_result: PrepScore;
+    opening: OpeningName | null;
+    suggested_response: {
+      after_san: string[];
+      fen: string;
+      engine: { version: string; depth: number; multipv: number; perspective: string };
+      best: PrepCandidate | null;
+      alternatives: PrepCandidate[];
+      their_record_here: ({ san: string } & PrepScore)[];
+    } | null;
+  }[];
+  likely_branches: {
+    after_san: string[];
+    fen: string;
+    to_move: "opponent" | "you";
+    games: number;
+    opening: OpeningName | null;
+    options: ({ san: string; share: number } & PrepScore)[];
+  }[];
+}
+
+export interface PrepReport {
+  opponent_profile_id: string;
+  display_name: string;
+  games_imported: number;
+  max_plies: number;
+  sources: Record<string, string>;
+  opponent_as_white: PrepSide;
+  opponent_as_black: PrepSide;
+}
+
 export type ImportIntent = "repertoire" | "opponent" | "corpus";
 
 export interface ImportJob {
@@ -439,6 +499,8 @@ export const api = {
   opponents: () => request<Opponent[]>("GET", "/opponents"),
   createOpponent: (display_name: string) => request<Opponent>("POST", "/opponents", { display_name }),
   importJob: (id: string) => request<ImportJob>("GET", `/imports/${id}`),
+  opponentPrep: (id: string, plies = 12, lines = 5) =>
+    request<PrepReport>("GET", `/opponents/${id}/prep?plies=${plies}&lines=${lines}`),
   opponentTree: (id: string, fen?: string) =>
     request<OpponentTree>("GET", `/opponents/${id}/tree${fen ? `?fen=${encodeURIComponent(fen)}` : ""}`),
 };

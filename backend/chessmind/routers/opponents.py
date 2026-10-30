@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 import chess
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,6 +32,7 @@ from chessmind.schemas.opponents import (
 )
 from chessmind.services.canonical_fen import canonical_key
 from chessmind.services.opponent_import import run_opponent_import_job
+from chessmind.services.opponent_prep import build_prep_report
 
 router = APIRouter(prefix="/opponents", tags=["opponents"])
 
@@ -178,3 +181,19 @@ async def opponent_tree(
         edges=edges,
         sample_total=total if rows else 0,
     )
+
+
+@router.get("/{opponent_id}/prep")
+async def opponent_prep(
+    opponent_id: UUID,
+    plies: int = Query(default=12, ge=2, le=24),
+    lines: int = Query(default=5, ge=1, le=12),
+    depth: int = Query(default=14, ge=6, le=20),
+    player: Player = Depends(get_current_player),
+    session: AsyncSession = Depends(get_session, scope="function"),
+) -> dict[str, Any]:
+    """Prep report: per colour, the opponent's most frequent lines (first ``plies`` plies of their
+    games), likely branches, and Stockfish's suggested response at the end of each line."""
+    profile = await _owned(session, opponent_id, player)
+    return await build_prep_report(session, profile=profile, max_plies=plies, max_lines=lines,
+                                   engine_depth=depth)
