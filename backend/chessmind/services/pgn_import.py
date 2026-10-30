@@ -194,19 +194,16 @@ async def _import_single_game(
     session.add(game_row)
     await session.flush()
 
-    header_eco = headers.get("ECO") or None
-    opening_name = headers.get("Opening") or None
-
+    # The game's ECO/Opening headers describe the whole game, so they stay on the Game row;
+    # positions are named by the opening taxonomy inside upsert_position.
     touched_positions: set[UUID] = set()
     result_str = headers.get("Result") or "*"
 
     for visit in walk_game(game):
-        from_pos_id = await upsert_position(
-            session, visit.board_before, eco=header_eco, opening_name=opening_name
-        )
+        from_pos_id = await upsert_position(session, visit.board_before)
         after = visit.board_before.copy(stack=False)
         after.push(visit.move)
-        to_pos_id = await upsert_position(session, after, eco=header_eco, opening_name=opening_name)
+        to_pos_id = await upsert_position(session, after)
 
         await upsert_move_edge(
             session,
