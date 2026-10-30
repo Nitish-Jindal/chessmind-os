@@ -25,6 +25,12 @@ class SessionCreate(BaseModel):
     starting_fen: str | None = None
     opening_scope_json: dict[str, Any] = Field(default_factory=dict)
     novelty_prob: float = Field(default=0.1, ge=0.0, le=1.0)
+    quiet: bool = Field(default=False, description="Quiet mode: no coaching prose, quizzes or opening announcements.")
+    opening_request: str | None = Field(
+        default=None, max_length=200,
+        description='Opening for the opponent to play: "Caro-Kann", "London System", "d4", '
+                    'or a full phrase such as "play the Sicilian against me".',
+    )
 
 
 class SessionState(BaseModel):
@@ -77,6 +83,15 @@ class CoachingPayload(BaseModel):
     board_features: dict[str, Any]
 
 
+class OpeningAnnouncement(BaseModel):
+    eco: str
+    name: str
+    pgn: str
+    ply: int
+    by: Literal["player", "opponent"]
+    text: str
+
+
 class MoveResponse(BaseModel):
     session_id: UUID
     attempt_id: UUID
@@ -97,6 +112,34 @@ class MoveResponse(BaseModel):
     opponent_move: dict[str, Any] | None
     current_fen: str
     status: SessionStatus
+    quiet: bool = False
+    announcements: list[OpeningAnnouncement] = Field(default_factory=list)
+    opening: dict[str, Any] | None = None
+    opening_request: dict[str, Any] | None = None
+
+
+class IllegalMoveDetail(BaseModel):
+    """``detail`` of the 422 returned when no legal move matches the submitted move."""
+
+    code: Literal["illegal_move"] = "illegal_move"
+    message: str
+    input: str
+    current_fen: str
+
+
+class SessionSettingsPatch(BaseModel):
+    quiet: bool
+
+
+class OpeningCommandResponse(BaseModel):
+    session_id: UUID
+    understood: bool
+    accepted: bool
+    message: str
+    restarted: bool = False
+    opening_request: dict[str, Any] | None = None
+    opponent_move: dict[str, Any] | None = None
+    current_fen: str
 
 
 class RevealRequest(BaseModel):
