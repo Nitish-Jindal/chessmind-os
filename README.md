@@ -3,8 +3,10 @@ title: ChessMind OS
 emoji: ♟️
 colorFrom: indigo
 colorTo: gray
-sdk: docker
-app_port: 7860
+sdk: gradio
+sdk_version: 6.31.0
+app_file: app.py
+python_version: "3.12"
 pinned: false
 short_description: Voice-first, engine-grounded chess opening trainer (API)
 ---
@@ -18,7 +20,7 @@ Stockfish evidence, and simulates opponents from their actual games.
 
 Working title; brand clearance pending.
 
-**Status:** MVP vertical slice. Card-free deploy: API on a Hugging Face Docker
+**Status:** MVP vertical slice. Card-free deploy: API on a Hugging Face Gradio
 Space, frontend on Cloudflare Pages or Vercel (see *Deploy*). `render.yaml` is
 kept as an alternative. Scenario-by-scenario status is in [`ACCEPTANCE.md`](ACCEPTANCE.md);
 phase tracking is in [`PROGRESS.md`](PROGRESS.md).
@@ -32,7 +34,8 @@ phase tracking is in [`PROGRESS.md`](PROGRESS.md).
 | `docs/handoff/ChessMind_OS_Developer_Handoff.docx` | Original product brief. |
 | `ACCEPTANCE.md` | The handoff's 13 acceptance scenarios, each with its proof. |
 | `PROGRESS.md` | Phase tracker. |
-| `Dockerfile`, `scripts/hf_start.sh` | Hugging Face Docker Space image and entrypoint. |
+| `app.py`, `requirements.txt`, `packages.txt` | Hugging Face Gradio Space entrypoint, pip deps, apt deps (Stockfish). |
+| `Dockerfile`, `scripts/hf_start.sh` | Docker alternative (Docker Spaces are PRO-gated; also runs anywhere). |
 | `.github/workflows/deploy-hf-space.yml` | Pushes `main` to the Space. |
 | `render.yaml` | Render Blueprint (alternative deploy). |
 
@@ -228,7 +231,47 @@ Voice is the browser's Web Speech API: no server-side speech, no keys.
   the evaluation bucket uses ±50 cp. Every question and answer is stored
   in `position_question`. `GET /sessions/{id}/questions` returns the tally.
 
-## Deploy: Hugging Face Space (API) + Cloudflare Pages / Vercel (frontend)
+## Deploy: Hugging Face Gradio Space (API, free tier)
+
+The README frontmatter declares a **Gradio** Space (`sdk: gradio`,
+`app_file: app.py`, `python_version: "3.12"` because the backend needs
+Python ≥ 3.12). Hugging Face installs `packages.txt` via apt (Stockfish at
+`/usr/games/stockfish`) and `requirements.txt` via pip, then runs
+`python app.py`, which:
+
+1. exits early if `DATABASE_URL` or `JWT_SECRET` is missing;
+2. runs `alembic -c backend/alembic.ini upgrade head`;
+3. runs `scripts/seed_games.py --skip-if-seeded` (no-op once seeded);
+4. serves the real FastAPI app (`chessmind.app`) with uvicorn on `0.0.0.0:7860`,
+   plus a small Gradio status page at `/status`. API docs are at `/docs`.
+
+`ENVIRONMENT=production` is forced by `app.py`; `STOCKFISH_PATH` defaults to
+`/usr/games/stockfish`.
+
+**Where to set what**
+
+| Where | Name | Kind | Value |
+| --- | --- | --- | --- |
+| Space → Settings → Variables and secrets | `DATABASE_URL` | Secret (required) | Neon connection string, as-is. |
+| same | `JWT_SECRET` | Secret (required) | Long random string (`python -c "import secrets; print(secrets.token_urlsafe(48))"`). |
+| same | `CORS_ORIGINS` | Variable | Exact frontend origin(s), comma-separated, no trailing slash. |
+| same | `LICHESS_API_TOKEN` | Secret (optional) | Only if the Lichess explorer requires a token. |
+| same | `STOCKFISH_PATH` | Variable (optional) | Only to override `/usr/games/stockfish`. |
+| GitHub repo → Settings → Secrets and variables → Actions | `HF_TOKEN` | Repository **secret** | Hugging Face **Write** token. |
+| same | `HF_SPACE` | Repository **variable** | `<hf-username-or-org>/<space-name>`. |
+
+Create the Space with **SDK: Gradio**, hardware CPU basic (free), public.
+The `deploy-hf-space.yml` workflow force-pushes a snapshot of the repo to the
+Space on every push to `main` (it works unchanged for Gradio Spaces). The
+frontend steps below (*Deploy the frontend*) are the same.
+
+Local run: `pip install -r requirements.txt` (needs Python 3.12+, a local
+`stockfish`, and a Postgres), set the env vars, then `python app.py`.
+
+The Docker flow below is kept as an alternative (it needs a Docker Space, so
+swap the frontmatter back to `sdk: docker` / `app_port: 7860` to use it).
+
+## Deploy: Hugging Face Docker Space (API, alternative) + Cloudflare Pages / Vercel (frontend)
 
 No payment card needed. You need a Postgres 16 URL (Neon's free tier works),
 a Hugging Face account and a Cloudflare or Vercel account.

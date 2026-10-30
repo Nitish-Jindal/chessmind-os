@@ -1,0 +1,3 @@
+./backend
+gradio==6.31.0
+uvicorn[standard]
