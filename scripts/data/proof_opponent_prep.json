@@ -1,0 +1,298 @@
+[
+  {
+    "k": "fixture games",
+    "v": {
+      "white": 78,
+      "black": 72
+    }
+  },
+  {
+    "k": "import result",
+    "v": "succeeded 150 of 150 games imported · 13751 positions · 15233 move edges"
+  },
+  {
+    "k": "import seconds",
+    "v": "97.6"
+  },
+  {
+    "k": "ok",
+    "v": "150 of 150 real Firouzja games imported through the Opponents page"
+  },
+  {
+    "k": "ok",
+    "v": "78 games with Firouzja as white (chess.js: 78)"
+  },
+  {
+    "k": "ok",
+    "v": "first-move counts as white match chess.js: e4 55, d4 19, b3 2, Nf3 1, c4 1"
+  },
+  {
+    "k": "ok",
+    "v": "line e4 c5 Nf3 Nc6 Bb5 (Sicilian Defense: Nyezhmetdinov-Rossolimo Attack): 7 games = chess.js 7"
+  },
+  {
+    "k": "ok",
+    "v": "  suggestion e6 is legal for you (black) after the line; -37 cp for you, 17.1 d14"
+  },
+  {
+    "k": "ok",
+    "v": "line d4 d5 (Queen's Pawn Game): 5 games = chess.js 5"
+  },
+  {
+    "k": "ok",
+    "v": "  suggestion dxc4 is legal for you (black) after c4; -30 cp for you, 17.1 d14"
+  },
+  {
+    "k": "ok",
+    "v": "line e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 (Ruy Lopez: Closed): 4 games = chess.js 4"
+  },
+  {
+    "k": "ok",
+    "v": "  suggestion O-O is legal for you (black) after Bb3; -35 cp for you, 17.1 d14"
+  },
+  {
+    "k": "ok",
+    "v": "line e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 O-O O-O d5 (Italian Game: Classical Variation, Giuoco Pianissimo): 4 games = chess.js 4"
+  },
+  {
+    "k": "ok",
+    "v": "  suggestion Nxd5 is legal for you (black) after exd5; -36 cp for you, 17.1 d14"
+  },
+  {
+    "k": "ok",
+    "v": "line e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6 (Sicilian Defense: Najdorf Variation): 4 games = chess.js 4"
+  },
+  {
+    "k": "ok",
+    "v": "  suggestion e5 is legal for you (black) after a4; -17 cp for you, 17.1 d14"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"start\" (opponent to choose): e4 55, d4 19"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"e4\" (you to choose): e5 34, c5 18"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"e4 e5 Nf3\" (you to choose): Nc6 27, Nf6 6"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"e4 e5 Nf3 Nc6\" (opponent to choose): Bb5 17, Bc4 9"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"d4\" (you to choose): Nf6 14, d5 5"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"e4 c5 Nf3\" (you to choose): d6 9, Nc6 7"
+  },
+  {
+    "k": "ok",
+    "v": "72 games with Firouzja as black (chess.js: 72)"
+  },
+  {
+    "k": "ok",
+    "v": "first-move counts as black match chess.js: e4 33, d4 28, c4 9, Nf3 2"
+  },
+  {
+    "k": "ok",
+    "v": "line d4 Nf6 c4 e6 Nf3 d5 Nc3 (Queen's Gambit Declined: Three Knights Variation): 6 games = chess.js 6"
+  },
+  {
+    "k": "ok",
+    "v": "  suggestion e4 is legal for you (white) after dxc4; 41 cp for you, 17.1 d14"
+  },
+  {
+    "k": "ok",
+    "v": "line e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O b5 Bb3 (Ruy Lopez: Morphy Defense): 5 games = chess.js 5"
+  },
+  {
+    "k": "ok",
+    "v": "  suggestion c3 is legal for you (white) after Bc5; 40 cp for you, 17.1 d14"
+  },
+  {
+    "k": "ok",
+    "v": "line e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6 (Sicilian Defense: Najdorf Variation): 5 games = chess.js 5"
+  },
+  {
+    "k": "ok",
+    "v": "  suggestion f4 is legal for you (white) after the line; 42 cp for you, 17.1 d14"
+  },
+  {
+    "k": "ok",
+    "v": "line d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 (King's Indian Defense: Normal Variation): 5 games = chess.js 5"
+  },
+  {
+    "k": "ok",
+    "v": "  suggestion h3 is legal for you (white) after the line; 60 cp for you, 17.1 d14"
+  },
+  {
+    "k": "ok",
+    "v": "line e4 e5 Nf3 Nc6 Bb5 Nf6 (Ruy Lopez: Berlin Defense): 5 games = chess.js 5"
+  },
+  {
+    "k": "ok",
+    "v": "  suggestion O-O is legal for you (white) after the line; 26 cp for you, 17.1 d14"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"start\" (you to choose): e4 33, d4 28, c4 9"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"e4\" (opponent to choose): e5 15, c5 9, c6 7"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"d4 Nf6 c4\" (opponent to choose): e6 15, g6 8"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"e4 e5 Nf3 Nc6\" (you to choose): Bb5 10, Bc4 4"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"d4 Nf6 c4 e6 Nf3 d5\" (you to choose): Nc3 6, g3 5"
+  },
+  {
+    "k": "ok",
+    "v": "branch after \"e4 e5 Nf3 Nc6 Bb5\" (opponent to choose): Nf6 5, a6 5"
+  },
+  {
+    "k": "prep summary",
+    "v": {
+      "white": [
+        [
+          "e4 c5 Nf3 Nc6 Bb5",
+          7,
+          "Sicilian Defense: Nyezhmetdinov-Rossolimo Attack",
+          "e6"
+        ],
+        [
+          "d4 d5",
+          5,
+          "Queen's Pawn Game",
+          "dxc4"
+        ],
+        [
+          "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5",
+          4,
+          "Ruy Lopez: Closed",
+          "O-O"
+        ],
+        [
+          "e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 O-O O-O d5",
+          4,
+          "Italian Game: Classical Variation, Giuoco Pianissimo",
+          "Nxd5"
+        ],
+        [
+          "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6",
+          4,
+          "Sicilian Defense: Najdorf Variation",
+          "e5"
+        ]
+      ],
+      "black": [
+        [
+          "d4 Nf6 c4 e6 Nf3 d5 Nc3",
+          6,
+          "Queen's Gambit Declined: Three Knights Variation",
+          "e4"
+        ],
+        [
+          "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O b5 Bb3",
+          5,
+          "Ruy Lopez: Morphy Defense",
+          "c3"
+        ],
+        [
+          "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6",
+          5,
+          "Sicilian Defense: Najdorf Variation",
+          "f4"
+        ],
+        [
+          "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6",
+          5,
+          "King's Indian Defense: Normal Variation",
+          "h3"
+        ],
+        [
+          "e4 e5 Nf3 Nc6 Bb5 Nf6",
+          5,
+          "Ruy Lopez: Berlin Defense",
+          "O-O"
+        ]
+      ]
+    }
+  },
+  {
+    "k": "ok",
+    "v": "UI shows the top White line's count and its suggested response"
+  },
+  {
+    "k": "ok",
+    "v": "blindfold vs twin: board hidden"
+  },
+  {
+    "k": "twin's first move",
+    "v": {
+      "san": "e4",
+      "uci": "e2e4",
+      "confidence": 0.7051,
+      "sample_size": 55,
+      "source_tier": "opponent_profile",
+      "announcement": null,
+      "request_event": null
+    }
+  },
+  {
+    "k": "ok",
+    "v": "twin opened e4 from Firouzja's own White games (opponent_profile tier)"
+  },
+  {
+    "k": "reply chosen from his games",
+    "v": {
+      "after": "e4",
+      "faced": {
+        "e5": 34,
+        "c5": 18,
+        "c6": 2,
+        "g6": 1
+      }
+    }
+  },
+  {
+    "k": "after voice reply",
+    "v": {
+      "played": "e5",
+      "twin": {
+        "san": "Nf3",
+        "uci": "g1f3",
+        "source_tier": "opponent_profile",
+        "confidence": 0.9706,
+        "sample_size": 33,
+        "announcement": null,
+        "request_event": null
+      }
+    }
+  },
+  {
+    "k": "ok",
+    "v": "spoken e5 accepted; twin answered Nf3 from their games"
+  },
+  {
+    "k": "spoken",
+    "v": [
+      "Blindfold session. The board is hidden. Hold the talk button and say your move.",
+      "Opponent plays pawn e4.",
+      "Opponent plays knight f3.",
+      "e5 is the top choice."
+    ]
+  }
+]

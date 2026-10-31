@@ -292,3 +292,25 @@ export function speakMove(san: string): string {
   s = s.replace("x", " takes ");
   return `${piece ?? "pawn"} ${s}`.replace(/\s+/g, " ").trim() + promo + suffix;
 }
+
+/** "quiet mode on" / "be quiet" → true; "quiet mode off" / "coach me" → false; anything else → null. */
+export function parseQuietCommand(transcript: string): boolean | null {
+  const t = transcript.toLowerCase().replace(/[.,!?]/g, " ").trim();
+  if (/\b(quiet mode off|turn off quiet( mode)?|stop quiet|exit quiet|coach me again|coaching on|talk to me)\b/.test(t)) return false;
+  if (/\b(quiet mode( on)?|turn on quiet( mode)?|be quiet|go quiet|quiet please|no coaching|coaching off|silent mode)\b/.test(t)) return true;
+  return null;
+}
+
+/**
+ * "play the Caro-Kann against me" / "play d4 against me": the player sets the opponent's opening.
+ * The backend (POST /sessions/{id}/opening) parses the name or move and validates it with python-chess.
+ */
+export function isOpeningRequest(transcript: string): boolean {
+  return /\b(against|versus|vs\.?)\s+me\b/i.test(transcript);
+}
+
+/** True when an utterance has the shape of a move (a square, castling, or a piece + square), legal or not. */
+export function looksLikeMove(transcript: string): boolean {
+  const d = describe(transcript);
+  return !!d.castle || d.squares.length > 0 || !!d.fromSquare;
+}

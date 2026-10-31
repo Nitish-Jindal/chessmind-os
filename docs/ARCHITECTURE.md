@@ -389,6 +389,11 @@ sane default; **we do not use cursor pagination in the MVP** (see §11.4).
 | `GET  /openings/masters?fen=` | the same block for any legal position, in the local graph or not |
 | `POST /sessions/{id}/ask` | answer a board question (piece location, square contents, hanging pieces, side to move, evaluation) from the session FEN via python-chess; eval from the cache-first Stockfish row |
 | `POST /sessions/{id}/quiz` · `POST /sessions/{id}/quiz/{qid}/answer` · `GET /sessions/{id}/questions` | seeded visualization quiz about the current board; spoken/typed answers scored against facts captured at question time; persisted in `position_question` |
+| `POST /sessions` → `quiet`, `opening_request` | quiet mode (no coaching prose, quizzes or opening announcements); the opponent's opening ("Caro-Kann", "London System", "d4", or "play the Sicilian against me") |
+| `POST /sessions/{id}/move` → `announcements[]`, `opening`, `opening_request`; **422** `{code: "illegal_move", message: "That's an illegal move, try again."}` | named openings reached for the first time this session (taxonomy, §7.4), after the player's and/or the opponent's move; an illegal move leaves the board unchanged |
+| `PATCH /sessions/{id}/settings` | toggle quiet mode mid-session |
+| `POST /sessions/{id}/opening` | "play <opening or move> against me": parsed deterministically, validated by python-chess, followed by the sampler (§8.3); restarts the game if the engine opened and the player has not moved yet |
+| `GET  /opponents/{id}/prep?plies=&lines=&depth=` | prep report (§8.4): per colour, the opponent's most frequent lines, likely branches, Stockfish's suggested responses |
 
 Lichess explorer data is cached in `master_explorer_cache` (canonical FEN,
 TTL) and mirrored into `master_move_stat`, so the §8.3 master tier is fed
@@ -476,6 +481,29 @@ Provider seam: `CoachProvider` interface, `GrokProvider` implementation,
 and a `TemplateFallbackProvider` that uses the Stockfish PV directly for
 when the LLM is unavailable or over budget.
 
+**As built (2026-10-30): `chessmind/services/llm_coach.py`, optional.**
+Off unless `LLM_EXPLANATIONS_ENABLED=true` and `LLM_API_KEY` + `LLM_MODEL`
+are set; providers `xai` (Grok, default), `openai`, `anthropic`, `gemini`
+over plain HTTPS (`LLM_BASE_URL` overrides the endpoint). The deterministic
+template (`services/coaching.py`) is always computed first and is the
+fallback. Deviations from the plan above, kept deliberately small:
+
+- The LLM rewords only `spoken_summary`. `correction_san` and every number
+  stay from the template / Stockfish, so there is nothing for it to
+  recommend that the engine did not.
+- Evidence is a numbered fact list (`F1`…: played move, classification and
+  swing, white-centric evals, best move, MultiPV alternatives, PV, board
+  features, template text). The reply is
+  `{"text", "cited_facts": ["F1", ...]}`; unknown or missing citations fail.
+- Validation also rejects any piece move / capture / castle in the text
+  that is not an evidence move (and replays the evidence moves with
+  python-chess), and any signed decimal that is not one of the evals.
+  Bare squares ("the pawn on g4") are allowed; a pawn move written as a
+  bare square ("d4") cannot be told apart from a square and is not caught.
+- Quiet mode never calls the LLM. `MoveResponse.coaching.explanation_source`
+  is `template` or `llm:<provider>:<model>`; cited fact ids are appended to
+  `evidence_refs` as `llm_fact:F<n>`.
+
 ### 6.4 Voice (`chessmind.voice`)
 
 MVP uses the browser Web Speech API end-to-end:
@@ -534,6 +562,22 @@ multiple mainline paths.
 is lazy — a position is in the graph if it has at least one `move_edge`
 pointing out of it; the frontend requests the next layer on demand.
 
+### 7.4 Opening taxonomy (as built 2026-10-30)
+
+Position names come from the Lichess `chess-openings` dataset (CC0),
+vendored in `backend/chessmind/data/openings/` (commit recorded in
+`SOURCE.md`). Each of its ~3,900 lines is replayed with python-chess at
+first use and keyed by canonical EPD; when several lines end on one
+position, the shortest names it. `upsert_position` writes `eco` /
+`opening_name` from this table only. PGN `ECO`/`Opening` headers stay on
+`game`; they used to be copied onto every position of the game, which
+named the start position after whichever game was imported first.
+Migration `0006` re-labelled existing rows.
+
+Sessions announce a name the first time it is reached (after either
+side's move), except four generic first-move names (King's Pawn Game,
+Queen's Pawn Game, King's Knight Opening and its "Normal Variation").
+
 ---
 
 ## 8. Opponent modeling
@@ -568,6 +612,32 @@ conditional distribution with:
 
 Confidence and sample size ship on every surfaced row; the UI never shows
 a "the opponent plays X" without them.
+
+**Requested opening (as built 2026-10-30).** When the player asks for an
+opening ("play the Caro-Kann against me"), the session stores the parsed
+request and the sampler consults it before the tiers above:
+
+1. While the game is on the opening's defining line (its shortest named
+   line, e.g. 1.d4 d5 2.c4), the opponent plays that line's next move, so
+   the usual move order is used rather than a transposition.
+2. Otherwise any legal move that stays on one of the family's named lines
+   counts (`source_tier = "requested_opening"`), weighted by
+   `master_move_stat` + `move_edge` games + 1 with the session seed.
+3. Once no move stays in book, the request is marked `out_of_book` and
+   the normal tiers resume. A single-move request ("play d4 against me")
+   applies to the opponent's next move only (`requested_move`).
+
+### 8.4 Prep report (as built 2026-10-30)
+
+`GET /opponents/{id}/prep` reads the opponent's imported games
+(`game.source = "opponent:<id>"`), replays the first `plies` plies with
+python-chess into a prefix tree per colour, and reports first moves,
+frequent lines (every move played in at least max(2, 5%) of that colour's
+games), likely branches (two or more recurring continuations), and for
+each line the position where it is the player's turn (after the
+opponent's usual next move if needed) with Stockfish's MultiPV answer
+from `engine_analysis` and the opponent's record against each candidate.
+No prose is generated.
 
 ---
 
@@ -733,6 +803,18 @@ of this document.
   session orchestrator.
 
 ---
+
+### 11.6 Opening names — **Resolved (2026-10-30): Lichess chess-openings taxonomy**
+
+Opened 2026-10-30 when the announcement feature exposed that names came
+from PGN headers smeared across whole games. Resolved the same day: vendor
+the CC0 Lichess dataset, name positions only from it (§7.4).
+
+### 11.7 LLM coaching — **Resolved (2026-10-30): optional, behind a flag**
+
+The coach adapter (§6.3) ships off by default and needs a provider API
+key and model id to turn on. The deterministic template remains the
+product's default and the fallback for every failure.
 
 ## 12. Testing strategy
 

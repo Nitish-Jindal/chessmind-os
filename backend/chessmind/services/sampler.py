@@ -310,3 +310,47 @@ async def sample_opponent_move(
         source_tier="engine_fallback", confidence=0.0, sample_size=0,
         candidates_considered=candidates_considered,
     )
+
+
+async def sample_book_move(
+    session: AsyncSession,
+    *,
+    board: chess.Board,
+    moves: list[chess.Move],
+    config: SamplerConfig,
+    turn_index: int = 0,
+) -> SamplerResult | None:
+    """Pick one of ``moves`` (the requested opening's book moves here), seeded like the tiers.
+
+    Each move is weighted by the games behind it in ``master_move_stat`` and the opening
+    graph, plus one so book moves with no recorded games stay possible. ``mainline`` mode
+    takes the heaviest move.
+    """
+    legal = {m.uci() for m in board.legal_moves}
+    ucis = sorted(m.uci() for m in moves if m.uci() in legal)
+    if not ucis:
+        return None
+    key = canonical_key(board)
+    pos = (await session.execute(select(Position).where(Position.canonical_key == key))).scalar_one_or_none()
+    games: dict[str, int] = {u: 0 for u in ucis}
+    if pos is not None:
+        for c in [*await _master_candidates(session, position_id=pos.id, min_games=1),
+                  *await _opening_graph_candidates(session, position_id=pos.id, min_games=1)]:
+            if c.uci in games:
+                games[c.uci] += c.games
+    seed_bytes = f"{config.seed}:{turn_index}:{key}:book".encode("utf-8")
+    rng = random.Random(int.from_bytes(hashlib.sha256(seed_bytes).digest()[:8], "big"))
+    cands = [Candidate(uci=u, weight=float(games[u] + 1), source_tier="requested_opening", games=games[u])
+             for u in ucis]
+    mode = SamplerMode.MAINLINE if config.mode is SamplerMode.MAINLINE else SamplerMode.MIX
+    pick = _choose(cands, mode=mode, rng=rng, legal=legal)
+    if pick is None:
+        return None
+    total = sum(c.games for c in cands)
+    return SamplerResult(
+        uci=pick.uci, san=board.san(chess.Move.from_uci(pick.uci)),
+        source_tier="requested_opening",
+        confidence=round(pick.games / total, 4) if total else round(1 / len(cands), 4),
+        sample_size=pick.games,
+        candidates_considered=len(cands),
+    )

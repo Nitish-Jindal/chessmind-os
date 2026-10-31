@@ -184,7 +184,7 @@ let askCalls = 0;
 const countAsk = (req) => { if (/\/ask$/.test(new URL(req.url()).pathname)) askCalls++; };
 page.on("request", countAsk);
 await speak(["blah blah"]);
-await captionHas("I didn't find a legal move");
+await captionHas("I didn't catch a move");
 page.off("request", countAsk);
 check(askCalls === 0, "non-question utterance is not sent to /ask (handled as a move attempt)");
 

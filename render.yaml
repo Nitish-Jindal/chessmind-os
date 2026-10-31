@@ -39,6 +39,15 @@ services:
       - key: CORS_ORIGIN_REGEX
         # Render appends a random suffix when the subdomain is taken.
         value: ^https://chessmind-web(-[a-z0-9]+)?\.onrender\.com$
+      # Optional LLM wording of coaching; stays off until a key and model are pasted in.
+      - key: LLM_EXPLANATIONS_ENABLED
+        value: "false"
+      - key: LLM_PROVIDER
+        value: xai
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false
 
   - type: web
     name: chessmind-web

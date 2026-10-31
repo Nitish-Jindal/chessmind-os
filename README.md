@@ -52,8 +52,12 @@ phase tracking is in [`PROGRESS.md`](PROGRESS.md).
  ├─ auth (argon2id, JWT access + refresh)
  ├─ PGN import → opening graph (canonical-FEN positions, move edges, W/L/D)
  ├─ sessions FSM (guided / blindfold / tournament / opponent twin)
- ├─ sampler: opponent_profile → master_move_stat → opening_graph → engine
- ├─ labeler + deterministic coaching template (no LLM in the loop)
+ ├─ sampler: [requested opening book] → opponent_profile → master_move_stat
+ │           → opening_graph → engine
+ ├─ opening taxonomy (Lichess chess-openings, CC0): names + announcements
+ ├─ labeler + deterministic coaching template; optional LLM wording
+ │  (off by default; validated against the cited evidence)
+ ├─ opponent prep report (their games + Stockfish suggestions)
  ├─ position questions + quizzes: answered/scored from the session FEN
  │  (python-chess) and the cached Stockfish row
  ├─ Lichess Masters explorer adapter (TTL cache → master_move_stat)
@@ -68,8 +72,10 @@ phase tracking is in [`PROGRESS.md`](PROGRESS.md).
 Chess facts never come from a language model: legality, SAN and FEN come
 from `python-chess`; evaluations and PVs from Stockfish (persisted with
 version, depth, nodes and `perspective='white'`); statistics from the
-indexed tables. See `CLAUDE.md` §3. The coaching text is currently a
-deterministic template over that evidence; the LLM adapter is not wired.
+indexed tables; opening names from the vendored Lichess `chess-openings`
+taxonomy. See `CLAUDE.md` §3. The coaching text is a deterministic template
+over that evidence. An optional LLM layer (off by default, needs an API key)
+can reword it, and only within the cited evidence; see *Optional LLM coaching*.
 
 Layout: `backend/` (FastAPI app, Alembic migrations, pytest suite),
 `frontend/` (Vite app, vitest suite), `scripts/` (seeders, proof scripts,
@@ -106,20 +112,26 @@ npm run dev                    # http://localhost:5173
 Tests (real Postgres and real Stockfish; SQLite is not supported anywhere):
 
 ```bash
-cd backend && pytest -q        # 147 tests; needs the chessmind_test DB and engines/stockfish-bin
-cd frontend && npm test        # 29 tests: voice resolver, question routing, API base URL
+cd backend && pytest -q        # 194 tests; needs the chessmind_test DB and engines/stockfish-bin
+cd frontend && npm test        # 32 tests: voice resolver, question/command routing, API base URL
 ```
 
-Known wart: pytest prints `147 passed` and then the interpreter can hang on
+Known wart: pytest prints `194 passed` and then the interpreter can hang on
 exit (pre-existing; the engine/DB background threads are not torn down).
 Run it under `timeout` in scripts.
 
 Browser proofs (headless Chromium against the running stack; only the
 microphone/system voices are stubbed): `node scripts/proof_frontend.mjs`,
-`node scripts/proof_ui_flows.mjs` and `node scripts/proof_position_questions.mjs`
-(the last one needs a fresh database and the backend started with
-`LICHESS_EXPLORER_URL=http://127.0.0.1:8765 LICHESS_EXPLORER_BACKOFF_S=2`;
-see the script header). API proofs: `scripts/day1_proof.py`,
+`node scripts/proof_ui_flows.mjs`, `node scripts/proof_voice_openings.mjs`
+(opening announcements, quiet mode, illegal moves, "play … against me",
+playing Black), `node scripts/proof_opponent_prep.mjs` (150 real games →
+prep report → blindfold game vs the twin) and
+`node scripts/proof_position_questions.mjs`. The last one needs a fresh
+database, the backend started with
+`LICHESS_EXPLORER_URL=http://127.0.0.1:8765 LICHESS_EXPLORER_BACKOFF_S=2`,
+and a production frontend build (`npx vite build && npx vite preview --port 5173`).
+Under the dev server, React StrictMode runs effects twice, so the masters
+panel reads "cached" instead of "fetched just now". API proofs: `scripts/day1_proof.py`,
 `proof_italian_session.py`, `proof_mastery.py`, `proof_opponent.py`.
 
 ## Configuration
@@ -140,6 +152,11 @@ see the script header). API proofs: `scripts/day1_proof.py`,
 | `LICHESS_EXPLORER_TTL_HOURS` | `168` | How long a cached position is served before refetching. |
 | `LICHESS_EXPLORER_TIMEOUT_S` / `LICHESS_EXPLORER_BACKOFF_S` | `4` / `60` | Per-request timeout; after a failure, no upstream calls for this long (a 429 honours `Retry-After`). |
 | `LICHESS_API_TOKEN` | empty | Optional. Sent as `Authorization: Bearer` if Lichess starts requiring a token for the explorer. |
+| `LLM_EXPLANATIONS_ENABLED` | `false` | Optional LLM wording of coaching. Stays off unless `LLM_API_KEY` **and** `LLM_MODEL` are also set. |
+| `LLM_PROVIDER` | `xai` | `xai` (Grok), `openai`, `anthropic` or `gemini`. |
+| `LLM_API_KEY` | empty | Provider API key. **Required to enable the LLM layer**; never commit it. |
+| `LLM_MODEL` | empty | Provider model id (e.g. a Grok, GPT, Claude or Gemini model name). Required when enabled. |
+| `LLM_BASE_URL` / `LLM_TIMEOUT_S` | provider default / `6` | Endpoint override (OpenAI-compatible gateways) and per-call timeout. |
 | `VITE_API_BASE_URL` (frontend, build time) | `http://localhost:8000` | Full URL, or a bare host: `api.example.com` → `https://api.example.com`; a dot-less Render service host `chessmind-api` → `https://chessmind-api.onrender.com`. |
 
 ## Dataset ingestion
@@ -177,7 +194,18 @@ see the script header). API proofs: `scripts/day1_proof.py`,
   unreachable, a stale cached snapshot is served (`status: stale`), or
   `status: unavailable` and the UI shows local counts only. The Openings
   page shows the Lichess attribution and a link back.
-- Fixtures: `scripts/data/ui_repertoire_153.pgn`, `ui_opponent_120.pgn`.
+- **Opening names** — `backend/chessmind/data/openings/*.tsv` is the
+  Lichess [`chess-openings`](https://github.com/lichess-org/chess-openings)
+  dataset (CC0, commit in `SOURCE.md`), ~3,900 named lines. Each is
+  replayed with python-chess and keyed by canonical FEN, so transpositions
+  share a name. Positions get `eco` / `opening_name` only from this table
+  (migration `0006` re-labelled older rows); PGN `ECO`/`Opening` headers
+  stay on the `game` row.
+- Fixtures: `scripts/data/ui_repertoire_153.pgn`, `ui_opponent_120.pgn`
+  (composed lines), and `opponent_firouzja_150.pgn`: the 150 most recent
+  standard games of Alireza Firouzja (2021-09 → 2022-08), real games from
+  the PgnMentor collection as mirrored at
+  [rozim/ChessData](https://github.com/rozim/ChessData) (`PgnMentor/Firouzja.pgn`).
 
 ## Stockfish deployment
 
@@ -230,6 +258,72 @@ Voice is the browser's Web Speech API: no server-side speech, no keys.
   overlap, square contents give half credit each for piece and colour, and
   the evaluation bucket uses ±50 cp. Every question and answer is stored
   in `position_question`. `GET /sessions/{id}/questions` returns the tally.
+
+- **Opening announcements**: the first time a session reaches a named
+  position (after either side's move), its name is spoken and captioned
+  once (`opening:` captions), e.g. "Ruy Lopez" after 1.e4 e5 2.Nf3 Nc6
+  3.Bb5. Generic first-move names (King's Pawn Game, Queen's Pawn Game,
+  King's Knight Opening) are skipped. The session page shows the current
+  opening.
+- **Quiet mode**: a launcher checkbox, a session checkbox, or saying "quiet
+  mode on/off" (`PATCH /sessions/{id}/settings`). Only the opponent's moves
+  are spoken; no coaching, quizzes or announcements. Moves are still
+  validated, and still graded for the mastery schedule.
+- **Illegal moves**: a move-shaped utterance or entry that matches no legal
+  move gets "That's an illegal move, try again." (spoken and captioned),
+  plus a red alert above the board, or above the hidden board in
+  blindfold. The game does not advance. The API answers an illegal SAN/UCI
+  with 422 `{code: "illegal_move"}`.
+- **Setting the opponent's opening**: say "play the London System /
+  Caro-Kann / Spanish (Ruy Lopez) / Italian / Queen's Gambit / Sicilian
+  against me", or any other taxonomy family by name, or a move: "play d4
+  against me". It can also be typed in the launcher's *Opponent's opening*
+  field. The phrase is parsed deterministically
+  (`services/opening_taxonomy.py`) and the move validated by python-chess.
+  The opponent first follows the opening's defining line, then any move
+  that stays on the family's named lines (weighted by master/graph
+  counts, seeded), then samples normally once out of book (captioned).
+  This works whether you play White or Black.
+- **Playing Black**: choose *Play as: Black*. The engine opens and its
+  first move is spoken. Saying "play d4 against me" (or naming an opening)
+  before your first move restarts the game so the engine opens that way.
+
+## Opponent prep
+
+Import one opponent's games on the Opponents page (or `POST
+/opponents/{id}/import`), then *Build prep report*
+(`GET /opponents/{id}/prep?plies=12&lines=5&depth=14`). For each colour the
+opponent played:
+
+- **first moves** and **most frequent lines**: every move in a line was
+  played in at least max(2, 5%) of their games with that colour, with the
+  opponent's score and the taxonomy name;
+- **likely branches**: positions where two or more continuations recur,
+  with their shares and who chooses;
+- **suggested responses**: Stockfish's best move (MultiPV 3, persisted in
+  `engine_analysis`) where it is your turn at the end of each line, after
+  their usual next move if needed. Each comes with how the opponent scored
+  when they faced it.
+
+Everything is counted from their games with python-chess. *Play the twin*
+with *Blindfold* checked starts a voice-only session against their digital
+twin.
+
+## Optional LLM coaching
+
+Off by default. To enable, set `LLM_EXPLANATIONS_ENABLED=true`,
+`LLM_PROVIDER` (`xai` for Grok, `openai`, `anthropic`, `gemini`),
+**`LLM_API_KEY`** and `LLM_MODEL`. Without a key nothing is sent anywhere,
+and coaching is the deterministic template. When enabled, the move's
+grounded facts are sent as a numbered list: classification and swing,
+Stockfish's best move, alternatives, PV and white-centric evals, the
+python-chess board features, and the template text. The model must answer
+JSON `{"text", "cited_facts"}`. The reply is discarded, and the template
+used, if it cites unknown facts, names a piece move or capture that is not
+in the engine evidence, quotes an eval that is not in the facts, or if the
+call fails or times out. Only the spoken summary is reworded; the
+suggested move and every number stay deterministic. Quiet mode never calls
+it. The coach card shows the wording's source.
 
 ## Deploy: Hugging Face Gradio Space (API, free tier)
 
@@ -435,13 +529,16 @@ deployed numbers.
   replace the fixtures with recorded responses. If Lichess requires a
   token for the explorer, set `LICHESS_API_TOKEN`. Seeded local W/L/D
   counts remain assigned, not real, and are labelled as such.
-- **Opening names on local positions are wrong for early moves.**
-  Pre-existing: the PGN importer stamps a game's header ECO/Opening on
-  every position of that game, and the first game imported wins. On the
-  seeded database the start position reads "C50 Italian Giuoco
-  Pianissimo". The masters panel shows Lichess's per-position opening name
-  instead. Fixing the importer needs a data repair of existing rows and is
-  not done here.
+- **Opening names are exact-position only.** A position gets a name only
+  if it is one of the taxonomy's named positions. Unnamed positions keep
+  the last name reached for display, and nothing is announced for them.
+- **Opening requests follow named lines only.** The "book" for a
+  requested opening is the taxonomy's named lines for that family, not a
+  repertoire. Systems such as the London are reached only through move
+  orders the taxonomy names (1.d4 d5 2.Bf4, 1.d4 Nf6 2.Nf3 e6 3.Bf4, …);
+  after an unnamed reply (e.g. 1.d4 e6) the opponent samples normally. A
+  single-move request applies to the next opponent move only. Once you
+  have moved, a request does not restart the game.
 - **Render free-tier cold start.** The free web service sleeps after
   ~15 min idle. The first request then waits for the container to boot,
   and the first analysis also pays the Stockfish process spawn. Expect
@@ -461,8 +558,17 @@ deployed numbers.
   (`questions_asked`) but does not reduce the visualization score.
 - **Chess DNA** (`GET /players/{id}/chess-dna`) and the progress dashboard
   beyond the mastery page are not built.
-- **LLM coach not wired.** Coaching is a deterministic template over
-  Stockfish evidence and board features. The Grok adapter is future work.
+- **LLM coaching is optional and unproven against a live provider.** No
+  API key is available in this sandbox. The adapter, validation and every
+  fallback are tested against a local HTTP server that speaks the
+  OpenAI-compatible and Anthropic wire formats with canned replies; the
+  Gemini path is untested. The validator cannot tell a pawn move written
+  as a bare square ("d4") from a square mention, so it does not reject one.
+- **Quiet mode still grades.** Each quiet move still runs the Stockfish
+  grading (for the mastery schedule), so latency matches a normal move.
+- **Opponent prep reads whole games; import is slow.** Opponent import
+  walks every ply into the global graph: 150 real games took ~95 s locally.
+  The report has no recency or time-control weighting yet.
 - **No CI yet.** There is no `.github/workflows`. Tests run locally (see
   above).
 - **Single process, no Redis/worker.** Import jobs run as in-process

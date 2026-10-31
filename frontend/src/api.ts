@@ -43,9 +43,23 @@ export function saveTokens(t: Tokens | null): void {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  /** ``detail`` as the backend sent it (string or structured object, e.g. an IllegalMoveDetail). */
+  constructor(public status: number, message: string, public detail?: unknown) {
     super(message);
   }
+}
+
+/** 422 from POST /sessions/{id}/move: no legal move matches; the game did not advance. */
+export interface IllegalMoveDetail {
+  code: "illegal_move";
+  message: string;
+  input: string;
+  current_fen: string;
+}
+
+export function illegalMoveDetail(e: unknown): IllegalMoveDetail | null {
+  const d = e instanceof ApiError ? (e.detail as IllegalMoveDetail | undefined) : undefined;
+  return d && typeof d === "object" && d.code === "illegal_move" ? d : null;
 }
 
 let refreshing: Promise<boolean> | null = null;
@@ -85,13 +99,15 @@ async function request<T>(method: string, path: string, body?: unknown, retry = 
   if (res.status === 401 && retry && (await refreshTokens())) return request<T>(method, path, body, false);
   if (!res.ok) {
     let detail = res.statusText;
+    let raw: unknown;
     try {
       const j = await res.json();
-      detail = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail ?? j);
+      raw = j.detail;
+      detail = typeof j.detail === "string" ? j.detail : typeof j.detail?.message === "string" ? j.detail.message : JSON.stringify(j.detail ?? j);
     } catch {
       /* non-JSON error body */
     }
-    throw new ApiError(res.status, detail);
+    throw new ApiError(res.status, detail, raw);
   }
   return (await res.json()) as T;
 }
@@ -125,7 +141,32 @@ export interface SessionState {
     reveals_used: number;
     reveals_budget: number;
     hints_used: number;
+    opening?: OpeningName | null;
+    opening_announcements?: OpeningAnnouncement[];
+    opening_request?: OpeningRequest | null;
   };
+}
+
+export interface OpeningName {
+  eco: string;
+  name: string;
+  pgn: string;
+}
+
+/** A named opening reached for the first time in this session (Lichess chess-openings taxonomy). */
+export interface OpeningAnnouncement extends OpeningName {
+  ply: number;
+  by: "player" | "opponent";
+  text: string;
+}
+
+export interface OpeningRequest {
+  kind: "opening" | "move";
+  label: string;
+  status: "active" | "out_of_book" | "pending" | "done" | "not_legal";
+  eco?: string | null;
+  pgn?: string | null;
+  san?: string;
 }
 
 export interface OpponentMove {
@@ -134,6 +175,18 @@ export interface OpponentMove {
   source_tier: string;
   confidence: number;
   sample_size: number;
+  announcement?: OpeningAnnouncement | null;
+  request_event?: "in_book" | "out_of_book" | "played_requested_move" | "requested_move_not_legal" | null;
+}
+
+export interface OpeningCommandResult {
+  understood: boolean;
+  accepted: boolean;
+  message: string;
+  restarted: boolean;
+  opening_request: OpeningRequest | null;
+  opponent_move: OpponentMove | null;
+  current_fen: string;
 }
 
 export interface LegalMoves {
@@ -158,10 +211,14 @@ export interface MoveResult {
   engine_version: string;
   engine_depth: number;
   best_lines: { line_rank: number; cp: number | null; mate: number | null; pv_san: string[] }[];
-  coaching: { spoken_summary: string; correction_san: string | null; evidence_refs: string[] };
+  coaching: { spoken_summary: string; correction_san: string | null; evidence_refs: string[]; explanation_source?: string };
   opponent_move: OpponentMove | null;
   current_fen: string;
   status: "active" | "finished";
+  quiet: boolean;
+  announcements: OpeningAnnouncement[];
+  opening: OpeningName | null;
+  opening_request: OpeningRequest | null;
 }
 
 export type QuestionKind = "piece_location" | "square_content" | "hanging_pieces" | "side_to_move" | "evaluation";
@@ -314,6 +371,66 @@ export interface OpponentTree {
   }[];
 }
 
+export interface PrepScore {
+  games: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  score_pct: number | null;
+}
+
+export interface PrepCandidate {
+  san: string;
+  line_rank: number;
+  cp_white: number | null;
+  mate_white: number | null;
+  cp_for_you: number | null;
+  pv_san: string[];
+  opponent_faced_it: PrepScore | null;
+}
+
+export interface PrepSide {
+  opponent_color: "white" | "black";
+  you_play: "white" | "black";
+  games: number;
+  opponent_result: PrepScore;
+  min_games_for_line: number;
+  first_moves: ({ san: string; share: number } & PrepScore)[];
+  frequent_lines: {
+    san: string[];
+    games: number;
+    share: number;
+    opponent_result: PrepScore;
+    opening: OpeningName | null;
+    suggested_response: {
+      after_san: string[];
+      fen: string;
+      engine: { version: string; depth: number; multipv: number; perspective: string };
+      best: PrepCandidate | null;
+      alternatives: PrepCandidate[];
+      their_record_here: ({ san: string } & PrepScore)[];
+    } | null;
+  }[];
+  likely_branches: {
+    after_san: string[];
+    fen: string;
+    to_move: "opponent" | "you";
+    games: number;
+    opening: OpeningName | null;
+    options: ({ san: string; share: number } & PrepScore)[];
+  }[];
+}
+
+export interface PrepReport {
+  opponent_profile_id: string;
+  display_name: string;
+  games_imported: number;
+  max_plies: number;
+  sources: Record<string, string>;
+  opponent_as_white: PrepSide;
+  opponent_as_black: PrepSide;
+}
+
 export type ImportIntent = "repertoire" | "opponent" | "corpus";
 
 export interface ImportJob {
@@ -350,7 +467,12 @@ export const api = {
     starting_fen?: string;
     novelty_prob?: number;
     seed?: number;
+    quiet?: boolean;
+    opening_request?: string | null;
   }) => request<SessionState>("POST", "/sessions", body),
+  setQuiet: (id: string, quiet: boolean) => request<SessionState>("PATCH", `/sessions/${id}/settings`, { quiet }),
+  openingCommand: (id: string, alts: string[]) =>
+    request<OpeningCommandResult>("POST", `/sessions/${id}/opening`, { text: alts[0], alternatives: alts.slice(1) }),
   getSession: (id: string) => request<SessionState>("GET", `/sessions/${id}`),
   legal: (id: string) => request<LegalMoves>("GET", `/sessions/${id}/legal`),
   move: (id: string, body: { san?: string; uci?: string; latency_ms?: number }) =>
@@ -377,6 +499,8 @@ export const api = {
   opponents: () => request<Opponent[]>("GET", "/opponents"),
   createOpponent: (display_name: string) => request<Opponent>("POST", "/opponents", { display_name }),
   importJob: (id: string) => request<ImportJob>("GET", `/imports/${id}`),
+  opponentPrep: (id: string, plies = 12, lines = 5) =>
+    request<PrepReport>("GET", `/opponents/${id}/prep?plies=${plies}&lines=${lines}`),
   opponentTree: (id: string, fen?: string) =>
     request<OpponentTree>("GET", `/opponents/${id}/tree${fen ? `?fen=${encodeURIComponent(fen)}` : ""}`),
 };

@@ -15,6 +15,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chessmind.models import MoveEdge, Position, RepertoireLine
+from chessmind.services import opening_taxonomy
 from chessmind.services.canonical_fen import canonical_key
 
 
@@ -25,8 +26,16 @@ async def upsert_position(
     eco: str | None = None,
     opening_name: str | None = None,
 ) -> UUID:
-    """Return the id of the Position row for ``board``, creating it if needed."""
+    """Return the id of the Position row for ``board``, creating it if needed.
+
+    ``eco`` / ``opening_name`` come from the opening taxonomy when the position is a named
+    one. The arguments are only a fallback for positions the taxonomy does not name, and
+    callers pass them only when they describe this exact position (not a whole game).
+    """
     key = canonical_key(board)
+    named = opening_taxonomy.lookup_key(key)
+    if named is not None:
+        eco, opening_name = named.eco, named.name
     stmt = (
         pg_insert(Position)
         .values(

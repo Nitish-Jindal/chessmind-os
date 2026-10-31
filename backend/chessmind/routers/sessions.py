@@ -16,9 +16,12 @@ from chessmind.schemas.sessions import (
     CoachingPayload,
     EngineLine,
     FinishResponse,
+    IllegalMoveDetail,
     LegalMovesResponse,
     MoveRequest,
     MoveResponse,
+    OpeningAnnouncement,
+    OpeningCommandResponse,
     QuestionTally,
     QuizAnswerResponse,
     QuizQuestion,
@@ -26,15 +29,21 @@ from chessmind.schemas.sessions import (
     RevealRequest,
     RevealResponse,
     SessionCreate,
+    SessionSettingsPatch,
     SessionState,
     UtteranceRequest,
 )
 from chessmind.services import position_questions as pq
+from chessmind.services.opening_taxonomy import parse_opening_request
 from chessmind.services.session import (
+    ILLEGAL_MOVE_MESSAGE,
+    IllegalMoveError,
     apply_player_move,
     consume_reveal,
     create_session,
     finish_session,
+    set_opening_request,
+    set_quiet,
 )
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
@@ -53,6 +62,12 @@ async def post_session(
     player: Player = Depends(get_current_player),
     session: AsyncSession = Depends(get_session, scope="function"),
 ) -> TrainingSession:
+    request = None
+    if payload.opening_request:
+        text = payload.opening_request.strip()
+        if parse_opening_request(text) is None:
+            text = f"play {text} against me"
+        request = parse_opening_request(text)
     try:
         ts, _opener = await create_session(
             session,
@@ -65,10 +80,54 @@ async def post_session(
             starting_fen=payload.starting_fen,
             opening_scope_json=payload.opening_scope_json,
             novelty_prob=payload.novelty_prob,
+            quiet=payload.quiet,
+            opening_request=request,
         )
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
     return ts
+
+
+@router.patch("/{session_id}/settings", response_model=SessionState)
+async def patch_session_settings(
+    session_id,
+    payload: SessionSettingsPatch,
+    player: Player = Depends(get_current_player),
+    session: AsyncSession = Depends(get_session, scope="function"),
+) -> TrainingSession:
+    """Toggle quiet mode mid-session."""
+    ts = await _owned(session, session_id, player)
+    set_quiet(ts, payload.quiet)
+    return ts
+
+
+@router.post("/{session_id}/opening", response_model=OpeningCommandResponse)
+async def post_opening_command(
+    session_id,
+    payload: UtteranceRequest,
+    player: Player = Depends(get_current_player),
+    session: AsyncSession = Depends(get_session, scope="function"),
+) -> OpeningCommandResponse:
+    """"Play <opening or move> against me": parsed deterministically, validated by python-chess."""
+    ts = await _owned(session, session_id, player)
+    out: dict | None = None
+    error: str | None = None
+    for text in payload.all_texts():
+        try:
+            out = await set_opening_request(session, ts=ts, text=text)
+        except ValueError as exc:
+            error = error or str(exc)
+            continue
+        if out["understood"]:
+            break
+    if out is None or not out["understood"]:
+        # ``error``: the request parsed but cannot apply (e.g. that move is illegal here).
+        return OpeningCommandResponse(
+            session_id=ts.id, understood=error is not None, accepted=False,
+            message=error or (out["message"] if out else "I didn't understand that."),
+            current_fen=ts.state_json["current_fen"],
+        )
+    return OpeningCommandResponse(session_id=ts.id, accepted=True, current_fen=ts.state_json["current_fen"], **out)
 
 
 @router.get("/{session_id}", response_model=SessionState)
@@ -121,6 +180,10 @@ async def post_move(
             uci=payload.uci,
             latency_ms=payload.latency_ms,
         )
+    except IllegalMoveError as exc:
+        # The board is unchanged; the client speaks and captions ``message``.
+        detail = IllegalMoveDetail(message=ILLEGAL_MOVE_MESSAGE, input=exc.move_input, current_fen=exc.fen)
+        raise HTTPException(422, detail.model_dump()) from exc
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
 
@@ -139,6 +202,7 @@ async def post_move(
         correction_san=outcome.coaching["correction_san"],
         evidence_refs=outcome.coaching["evidence_refs"],
         board_features=outcome.coaching["board_features"],
+        explanation_source=outcome.coaching.get("explanation_source", "template"),
     )
     return MoveResponse(
         session_id=ts.id,
@@ -160,6 +224,10 @@ async def post_move(
         opponent_move=outcome.opponent_move,
         current_fen=outcome.current_fen,
         status=outcome.status,
+        quiet=outcome.quiet,
+        announcements=[OpeningAnnouncement(**a) for a in outcome.announcements or []],
+        opening=outcome.opening,
+        opening_request=outcome.opening_request,
     )
 
 
@@ -210,6 +278,8 @@ async def post_quiz(
 ) -> QuizQuestion:
     """Ask the player a visualization question about the current board (seeded)."""
     ts = await _owned(session, session_id, player)
+    if (ts.settings_json or {}).get("quiet"):
+        raise HTTPException(status.HTTP_409_CONFLICT, "quiet mode is on: quizzes are off")
     row = await pq.new_quiz(session, ts=ts, kind=payload.kind)
     return QuizQuestion(session_id=ts.id, question_id=row.id, kind=row.kind, prompt=row.prompt)
 

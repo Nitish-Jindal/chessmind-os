@@ -5,7 +5,7 @@ import { cancelSpeech, speakText, ttsSupported, watchVoices } from "./speech";
 
 export interface Caption {
   id: number;
-  who: "you" | "opponent" | "coach" | "system";
+  who: "you" | "opponent" | "coach" | "opening" | "system";
   text: string;
 }
 

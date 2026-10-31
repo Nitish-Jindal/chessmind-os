@@ -1,0 +1,348 @@
+[
+  {
+    "k": "phase",
+    "v": "A: opening announcement — 1.e4 e5 2.Nf3 Nc6 3.Bb5, blindfold, mainline sampler over the seeded graph"
+  },
+  {
+    "k": "ok",
+    "v": "blindfold: board hidden"
+  },
+  {
+    "k": "ok",
+    "v": "after e4 the mainline opponent played e5 (got e5, opening_graph)"
+  },
+  {
+    "k": "ok",
+    "v": "after Nf3 the mainline opponent played Nc6 (got Nc6, opening_graph)"
+  },
+  {
+    "k": "announcements per move",
+    "v": [
+      {
+        "played": "e4",
+        "opponent": "e5",
+        "announcements": []
+      },
+      {
+        "played": "Nf3",
+        "opponent": "Nc6",
+        "announcements": []
+      },
+      {
+        "played": "Bb5",
+        "opponent": "a6",
+        "announcements": [
+          "Ruy Lopez (C60, ply 5, by player)",
+          "Ruy Lopez: Morphy Defense (C70, ply 6, by opponent)"
+        ]
+      }
+    ]
+  },
+  {
+    "k": "ok",
+    "v": "no announcement for 1.e4 e5 2.Nf3 Nc6 (generic King's Pawn / King's Knight names)"
+  },
+  {
+    "k": "ok",
+    "v": "3.Bb5 announced 'Ruy Lopez' (C60) at ply 5"
+  },
+  {
+    "k": "spoken (phase A)",
+    "v": [
+      "Opponent plays pawn e5.",
+      "e4 is the top choice.",
+      "Opponent plays knight c6.",
+      "Nf3 is the top choice.",
+      "Ruy Lopez",
+      "Opponent plays pawn a6.",
+      "Ruy Lopez: Morphy Defense",
+      "Bb5 is playable — about +0.26 off the top line. Better was d4, planning d4 exd4 Nxd4 Nf6."
+    ]
+  },
+  {
+    "k": "ok",
+    "v": "TTS spoke 'Ruy Lopez' exactly once"
+  },
+  {
+    "k": "ok",
+    "v": "caption 'opening: Ruy Lopez' shown"
+  },
+  {
+    "k": "opening line",
+    "v": "Opening: C70 Ruy Lopez: Morphy Defense"
+  },
+  {
+    "k": "ok",
+    "v": "opening line on the page names the Ruy Lopez (latest named position)"
+  },
+  {
+    "k": "history",
+    "v": "e4 e5 Nf3 Nc6 Bb5 a6"
+  },
+  {
+    "k": "ok",
+    "v": "server history starts 1.e4 e5 2.Nf3 Nc6 3.Bb5 (replayed by chess.js)"
+  },
+  {
+    "k": "ok",
+    "v": "coach card: wording from the deterministic template (LLM layer off without a key)"
+  },
+  {
+    "k": "phase",
+    "v": "B: illegal move in blindfold"
+  },
+  {
+    "k": "ok",
+    "v": "Ke3 is not in python-chess's legal list here"
+  },
+  {
+    "k": "ok",
+    "v": "spoken: \"That's an illegal move, try again.\""
+  },
+  {
+    "k": "ok",
+    "v": "captioned the illegal-move message"
+  },
+  {
+    "k": "ok",
+    "v": "red 'Illegal move' alert shown above the hidden board"
+  },
+  {
+    "k": "ok",
+    "v": "board stays hidden"
+  },
+  {
+    "k": "ok",
+    "v": "no move was posted for the illegal utterance"
+  },
+  {
+    "k": "direct POST {san: Qh5}",
+    "v": {
+      "detail": {
+        "code": "illegal_move",
+        "message": "That's an illegal move, try again.",
+        "input": "Qh5",
+        "current_fen": "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4"
+      }
+    }
+  },
+  {
+    "k": "ok",
+    "v": "server answers an illegal SAN with 422 illegal_move"
+  },
+  {
+    "k": "ok",
+    "v": "game did not advance after illegal input"
+  },
+  {
+    "k": "ok",
+    "v": "legal move h3 accepted and the alert cleared"
+  },
+  {
+    "k": "phase",
+    "v": "C: quiet mode"
+  },
+  {
+    "k": "ok",
+    "v": "quiet badge in the title"
+  },
+  {
+    "k": "ok",
+    "v": "quiz card hidden in quiet mode"
+  },
+  {
+    "k": "quiet moves (API)",
+    "v": [
+      {
+        "played": "e4",
+        "classification": "best",
+        "quiet": true,
+        "summary": "",
+        "opp": "e5",
+        "announcements": []
+      },
+      {
+        "played": "Nf3",
+        "classification": "best",
+        "quiet": true,
+        "summary": "",
+        "opp": "Nc6",
+        "announcements": []
+      },
+      {
+        "played": "h4",
+        "classification": "inaccuracy",
+        "quiet": true,
+        "summary": "",
+        "opp": "f5",
+        "announcements": []
+      }
+    ]
+  },
+  {
+    "k": "ok",
+    "v": "API: empty coaching and no announcements for every quiet move"
+  },
+  {
+    "k": "spoken (quiet)",
+    "v": [
+      "Opponent plays pawn e5.",
+      "Opponent plays knight c6.",
+      "Opponent plays pawn f5."
+    ]
+  },
+  {
+    "k": "ok",
+    "v": "only 'Opponent plays …' was spoken (3 moves)"
+  },
+  {
+    "k": "ok",
+    "v": "no coach or opening captions"
+  },
+  {
+    "k": "ok",
+    "v": "no coach card"
+  },
+  {
+    "k": "ok",
+    "v": "'quiz me' makes no quiz request in quiet mode"
+  },
+  {
+    "k": "ok",
+    "v": "voice 'quiet mode off' → PATCH /sessions/{id}/settings quiet=false"
+  },
+  {
+    "k": "ok",
+    "v": "coaching returns after quiet mode is turned off"
+  },
+  {
+    "k": "ok",
+    "v": "checkbox turns quiet mode back on"
+  },
+  {
+    "k": "phase",
+    "v": "D: Caro-Kann requested by voice as White"
+  },
+  {
+    "k": "opening command",
+    "v": {
+      "session_id": "05b46ca7-5844-4069-b97f-c133c44c4375",
+      "understood": true,
+      "accepted": true,
+      "message": "I'll play the Caro-Kann Defense (B10: 1. e4 c6) where the position allows.",
+      "restarted": false,
+      "opening_request": {
+        "kind": "opening",
+        "label": "Caro-Kann Defense",
+        "match": "prefix",
+        "text": "Caro-Kann Defense",
+        "eco": "B10",
+        "pgn": "1. e4 c6",
+        "status": "active"
+      },
+      "opponent_move": null,
+      "current_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    }
+  },
+  {
+    "k": "ok",
+    "v": "parsed to Caro-Kann Defense (B10, 1. e4 c6)"
+  },
+  {
+    "k": "reply to 1.e4",
+    "v": {
+      "san": "c6",
+      "uci": "c7c6",
+      "source_tier": "requested_opening",
+      "confidence": 1,
+      "sample_size": 27,
+      "announcement": {
+        "eco": "B10",
+        "name": "Caro-Kann Defense",
+        "pgn": "1. e4 c6",
+        "ply": 2,
+        "by": "opponent",
+        "text": "Caro-Kann Defense"
+      },
+      "request_event": "in_book"
+    }
+  },
+  {
+    "k": "ok",
+    "v": "opponent replied 1...c6 from the requested opening"
+  },
+  {
+    "k": "spoken (Caro-Kann)",
+    "v": [
+      "I'll play the Caro-Kann Defense (B10: 1. e4 c6) where the position allows.",
+      "Opponent plays pawn c6.",
+      "Caro-Kann Defense",
+      "e4 is the top choice."
+    ]
+  },
+  {
+    "k": "ok",
+    "v": "spoken: 'Opponent plays pawn c6.' then 'Caro-Kann Defense'"
+  },
+  {
+    "k": "phase",
+    "v": "E: playing Black — engine opens and announces; 'play d4 against me'"
+  },
+  {
+    "k": "engine's first move",
+    "v": [
+      "e4"
+    ]
+  },
+  {
+    "k": "ok",
+    "v": "engine opened as White and its first move was spoken"
+  },
+  {
+    "k": "play d4 against me",
+    "v": {
+      "session_id": "9daad21c-f48c-461c-bcdc-d0845ffa4c4c",
+      "understood": true,
+      "accepted": true,
+      "message": "Restarted. I play d4.",
+      "restarted": true,
+      "opening_request": {
+        "kind": "move",
+        "san_text": "d4",
+        "san": "d4",
+        "label": "d4",
+        "status": "done"
+      },
+      "opponent_move": {
+        "san": "d4",
+        "uci": "d2d4",
+        "source_tier": "requested_move",
+        "confidence": 1,
+        "sample_size": 0,
+        "announcement": null,
+        "request_event": "played_requested_move"
+      },
+      "current_fen": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1"
+    }
+  },
+  {
+    "k": "ok",
+    "v": "game restarted and the engine opened 1.d4"
+  },
+  {
+    "k": "ok",
+    "v": "server history is just 1.d4, Black to move"
+  },
+  {
+    "k": "ok",
+    "v": "player's 1...d5 accepted; engine replied c4"
+  },
+  {
+    "k": "ok",
+    "v": "launcher 'Queen's Gambit' as Black → engine opened 1.d4"
+  },
+  {
+    "k": "ok",
+    "v": "after 1...d5 the engine played 2.c4 and 'Queen's Gambit' was announced"
+  }
+]
