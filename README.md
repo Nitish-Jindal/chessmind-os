@@ -113,7 +113,7 @@ Tests (real Postgres and real Stockfish; SQLite is not supported anywhere):
 
 ```bash
 cd backend && pytest -q        # 194 tests; needs the chessmind_test DB and engines/stockfish-bin
-cd frontend && npm test        # 39 tests: automatic mic lifecycle, voice resolver, API base URL
+cd frontend && npm test        # 41 tests: automatic mic lifecycle, voice resolver, API base URL
 ```
 
 Known wart: pytest prints `194 passed` and then the interpreter can hang on

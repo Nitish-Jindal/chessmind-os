@@ -9,6 +9,9 @@ export interface MicrophonePolicy {
 
 export type MicrophoneStatus = "off" | "listening" | "unavailable" | "denied";
 export type RecognizerFactory = (handlers: RecognizerHandlers) => Recognizer | null;
+const INITIAL_RETRY_DELAY_MS = 250;
+const MAX_RETRY_DELAY_MS = 5000;
+const STABLE_RUN_MS = 15000;
 
 /** Owns recognition restarts, speech gating, and the normal/quiet turn policy for one session. */
 export class AutomaticMicrophone {
@@ -20,7 +23,8 @@ export class AutomaticMicrophone {
   private denied = false;
   private disposed = false;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
-  private retryDelay = 250;
+  private retryDelay = INITIAL_RETRY_DELAY_MS;
+  private stableRunTimer: ReturnType<typeof setTimeout> | null = null;
   private currentStatus: MicrophoneStatus = "off";
 
   constructor(
@@ -57,6 +61,7 @@ export class AutomaticMicrophone {
     this.disposed = true;
     this.generation++;
     this.clearRetry();
+    this.clearStableRunTimer();
     this.stopRun();
   }
 
@@ -84,6 +89,9 @@ export class AutomaticMicrophone {
       onInterim: this.onInterim,
       onFinal: (alternatives) => {
         if (generation !== this.generation || !this.shouldListen) return;
+        // A final result proves the browser recognition service is working again.
+        this.retryDelay = INITIAL_RETRY_DELAY_MS;
+        this.clearStableRunTimer();
         if (!this.policy.quiet) {
           if (finalInRun) return;
           finalInRun = true;
@@ -97,10 +105,13 @@ export class AutomaticMicrophone {
       onState: (listening) => {
         if (generation !== this.generation) return;
         if (listening) {
-          this.retryDelay = 250;
+          this.watchForStableRun(generation);
           this.setStatus("listening");
         } else {
+          this.clearStableRunTimer();
           this.recognizer = null;
+          // Invalidate every callback from the ended run before scheduling its replacement.
+          this.generation++;
           if (!this.denied) this.setStatus("off");
           this.scheduleRetry();
         }
@@ -130,6 +141,8 @@ export class AutomaticMicrophone {
       recognizer.start(this.policy.quiet);
     } catch (error) {
       this.recognizer = null;
+      this.generation++;
+      this.clearStableRunTimer();
       this.setStatus("off");
       this.onError(`Speech recognition could not start: ${String(error)}`, false);
       this.scheduleRetry();
@@ -141,6 +154,7 @@ export class AutomaticMicrophone {
     const current = this.recognizer;
     this.recognizer = null;
     this.generation++;
+    this.clearStableRunTimer();
     this.setStatus("off");
     try {
       current.stop();
@@ -152,7 +166,7 @@ export class AutomaticMicrophone {
   private scheduleRetry(): void {
     if (!this.shouldListen || this.retryTimer) return;
     const wait = this.retryDelay;
-    this.retryDelay = Math.min(this.retryDelay * 2, 5000);
+    this.retryDelay = Math.min(this.retryDelay * 2, MAX_RETRY_DELAY_MS);
     this.retryTimer = setTimeout(() => {
       this.retryTimer = null;
       this.reconcile();
@@ -162,6 +176,19 @@ export class AutomaticMicrophone {
   private clearRetry(): void {
     if (this.retryTimer) clearTimeout(this.retryTimer);
     this.retryTimer = null;
+  }
+
+  private watchForStableRun(generation: number): void {
+    this.clearStableRunTimer();
+    this.stableRunTimer = setTimeout(() => {
+      this.stableRunTimer = null;
+      if (generation === this.generation && this.recognizer) this.retryDelay = INITIAL_RETRY_DELAY_MS;
+    }, STABLE_RUN_MS);
+  }
+
+  private clearStableRunTimer(): void {
+    if (this.stableRunTimer) clearTimeout(this.stableRunTimer);
+    this.stableRunTimer = null;
   }
 
   private setStatus(status: MicrophoneStatus): void {

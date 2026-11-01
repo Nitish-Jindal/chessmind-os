@@ -135,6 +135,49 @@ describe("AutomaticMicrophone", () => {
     mic.dispose();
   });
 
+  it("increases retry delays on repeated failures up to the five-second cap", () => {
+    vi.useFakeTimers();
+    const { mic, runs } = fixture();
+    mic.update({ enabled: true, quiet: true, anySpeech: false, opponentSpeech: false });
+
+    for (const delay of [250, 500, 1000, 2000, 4000, 5000, 5000]) {
+      const failedRun = runs.at(-1)!;
+      const countBeforeRetry = runs.length;
+      failedRun.error("Speech recognition error: network");
+      vi.advanceTimersByTime(delay - 1);
+      expect(runs).toHaveLength(countBeforeRetry);
+      vi.advanceTimersByTime(1);
+      expect(runs).toHaveLength(countBeforeRetry + 1);
+    }
+
+    // A successful transcript restores the initial retry interval.
+    runs.at(-1)!.final("e4");
+    runs.at(-1)!.end();
+    const countBeforeSuccessRetry = runs.length;
+    vi.advanceTimersByTime(249);
+    expect(runs).toHaveLength(countBeforeSuccessRetry);
+    vi.advanceTimersByTime(1);
+    expect(runs).toHaveLength(countBeforeSuccessRetry + 1);
+    mic.dispose();
+  });
+
+  it("rejects callbacks from an ended recognizer after its replacement starts", () => {
+    vi.useFakeTimers();
+    const received: string[][] = [];
+    const { mic, runs } = fixture((alts) => { received.push(alts); });
+    mic.update({ enabled: true, quiet: true, anySpeech: false, opponentSpeech: false });
+    const endedRun = runs[0];
+    endedRun.end();
+    vi.advanceTimersByTime(250);
+    expect(runs).toHaveLength(2);
+
+    endedRun.final("e4");
+    expect(received).toEqual([]);
+    runs[1].final("d4");
+    expect(received).toEqual([["d4"]]);
+    mic.dispose();
+  });
+
   it("ignores duplicate and stale results from a previous run", () => {
     const received: string[][] = [];
     const { mic, runs } = fixture((alts) => { received.push(alts); });
