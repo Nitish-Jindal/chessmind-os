@@ -7,7 +7,7 @@
 // github.com/rozim/ChessData (PgnMentor/Firouzja.pgn). Real games, not composed lines.
 //
 // Real: Vite build, FastAPI, Postgres, Stockfish, python-chess, opening taxonomy. Stubbed (as
-// in the other browser proofs): microphone and system voices. The report's counts are checked
+// in the other browser proofs): automatic microphone input and system voices. The report's counts are checked
 // against chess.js replaying the same PGN file, independent of the python-chess code under test.
 import { createRequire } from "node:module";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -43,26 +43,31 @@ note("fixture games", { white: truth.white.length, black: truth.black.length });
 
 const initScript = () => {
   window.__spoken = [];
-  window.__utterance = [];
+  window.__activeRec = null;
+  window.__resultIndex = 0;
   const synth = window.speechSynthesis;
   synth.getVoices = () => [{ voiceURI: "fake-en-us", name: "Fake American", lang: "en-US", default: true, localService: true }];
   synth.speak = (u) => { window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 5); };
   class FakeRec {
-    start() { this.listening = true; }
+    start(continuous) { this.listening = true; this.continuous = continuous; window.__activeRec = this; }
     stop() {
       if (!this.listening) return;
       this.listening = false;
-      const alts = window.__utterance.shift();
-      if (alts !== undefined) {
-        const list = Array.isArray(alts) ? alts : [alts];
-        const res = { isFinal: true, length: list.length };
-        list.forEach((t, i) => { res[i] = { transcript: t, confidence: 0.9 - i * 0.1 }; });
-        this.onresult?.({ resultIndex: 0, results: { length: 1, 0: res } });
-      }
+      if (window.__activeRec === this) window.__activeRec = null;
       setTimeout(() => this.onend?.(), 5);
     }
     abort() { this.stop(); }
   }
+  window.__deliverUtterance = (input) => {
+    const rec = window.__activeRec;
+    if (!rec?.listening) return false;
+    const list = Array.isArray(input) ? input : [input];
+    const index = window.__resultIndex++;
+    const res = { isFinal: true, length: list.length };
+    list.forEach((t, i) => { res[i] = { transcript: t, confidence: 0.9 - i * 0.1 }; });
+    rec.onresult?.({ resultIndex: index, results: { length: index + 1, [index]: res } });
+    return true;
+  };
   window.SpeechRecognition = FakeRec;
   window.webkitSpeechRecognition = FakeRec;
 };
@@ -74,11 +79,8 @@ const page = await ctx.newPage();
 page.on("pageerror", (e) => { console.error("PAGE ERROR", e.message); process.exitCode = 1; });
 
 async function speak(utterance) {
-  await page.evaluate((u) => window.__utterance.push(u), utterance);
-  const ptt = page.getByRole("button", { name: /hold to talk|listening/i });
-  await ptt.dispatchEvent("pointerdown");
-  await page.waitForTimeout(60);
-  await ptt.dispatchEvent("pointerup");
+  await page.waitForFunction(() => window.__activeRec?.listening === true, null, { timeout: 30000 });
+  if (!(await page.evaluate((u) => window.__deliverUtterance(u), utterance))) throw new Error("automatic microphone was not listening");
 }
 
 // ---------------------------------------------------------------- register + import

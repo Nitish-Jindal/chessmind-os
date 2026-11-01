@@ -24,36 +24,42 @@ const Ctor: SRCtor | undefined = w.SpeechRecognition ?? w.webkitSpeechRecognitio
 export const sttSupported = Ctor !== undefined;
 export const ttsSupported = "speechSynthesis" in window;
 
+const pendingSpeech = new Set<() => void>();
+
 export interface Recognizer {
-  start(): void;
+  start(continuous?: boolean): void;
   stop(): void;
 }
 
-/** One utterance per start(): interim transcripts stream out, final alternatives resolve at the end. */
-export function createRecognizer(handlers: {
+export interface RecognizerHandlers {
   onInterim: (text: string) => void;
   onFinal: (alternatives: string[]) => void;
   onState: (listening: boolean) => void;
-  onError: (message: string) => void;
-}): Recognizer | null {
+  onError: (message: string, denied: boolean) => void;
+}
+
+/** A recognizer run; the session controller starts a fresh run after browser service restarts. */
+export function createRecognizer(handlers: RecognizerHandlers): Recognizer | null {
   if (!Ctor) return null;
   let rec: SRInstance | null = null;
-  let gotFinal = false;
+  let finalIndices = new Set<number>();
   return {
-    start() {
+    start(continuous = false) {
       if (rec) return;
       const r = new Ctor();
       rec = r;
-      gotFinal = false;
+      finalIndices = new Set();
       r.lang = "en-US";
       r.interimResults = true;
-      r.continuous = false;
+      r.continuous = continuous;
       r.maxAlternatives = 5;
       r.onresult = (e) => {
+        if (rec !== r) return;
         for (let i = e.resultIndex; i < e.results.length; i++) {
           const res = e.results[i];
           if (res.isFinal) {
-            gotFinal = true;
+            if (finalIndices.has(i)) continue;
+            finalIndices.add(i);
             const alts: string[] = [];
             for (let j = 0; j < res.length; j++) alts.push(res[j].transcript);
             handlers.onFinal(alts);
@@ -61,23 +67,33 @@ export function createRecognizer(handlers: {
         }
       };
       r.onerror = (e) => {
-        if (e.error !== "no-speech" && e.error !== "aborted") handlers.onError(`Speech recognition error: ${e.error}`);
+        if (rec !== r || e.error === "no-speech" || e.error === "aborted") return;
+        const denied = e.error === "not-allowed" || e.error === "service-not-allowed";
+        handlers.onError(`Speech recognition error: ${e.error}`, denied);
       };
       r.onend = () => {
+        if (rec !== r) return;
         rec = null;
         handlers.onState(false);
-        if (!gotFinal) handlers.onInterim("");
+        handlers.onInterim("");
       };
-      handlers.onState(true);
       try {
         r.start();
+        handlers.onState(true);
       } catch {
         rec = null;
         handlers.onState(false);
+        handlers.onError("Speech recognition could not start. Check microphone access and try again.", false);
       }
     },
     stop() {
-      rec?.stop();
+      const current = rec;
+      rec = null;
+      try {
+        current?.stop();
+      } catch {
+        // Recognition may already have ended in the browser.
+      }
     },
   };
 }
@@ -99,6 +115,14 @@ export function watchVoices(cb: (voices: SpeechSynthesisVoice[]) => void): () =>
 export function speakText(text: string, voiceURI: string | null): Promise<void> {
   if (!ttsSupported || !text.trim()) return Promise.resolve();
   return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      pendingSpeech.delete(finish);
+      resolve();
+    };
+    pendingSpeech.add(finish);
     const u = new SpeechSynthesisUtterance(text);
     const v = voiceURI ? listVoices().find((x) => x.voiceURI === voiceURI) : undefined;
     if (v) {
@@ -109,12 +133,17 @@ export function speakText(text: string, voiceURI: string | null): Promise<void> 
         /* a voice that vanished between listing and speaking: fall back to the default */
       }
     }
-    u.onend = () => resolve();
-    u.onerror = () => resolve();
-    window.speechSynthesis.speak(u);
+    u.onend = finish;
+    u.onerror = finish;
+    try {
+      window.speechSynthesis.speak(u);
+    } catch {
+      finish();
+    }
   });
 }
 
 export function cancelSpeech(): void {
   if (ttsSupported) window.speechSynthesis.cancel();
+  for (const finish of [...pendingSpeech]) finish();
 }

@@ -293,6 +293,34 @@ export function speakMove(san: string): string {
   return `${piece ?? "pawn"} ${s}`.replace(/\s+/g, " ").trim() + promo + suffix;
 }
 
+/** Concise, move-only wording for quiet sessions. SAN is returned by the legal session response. */
+export function speakQuietMove(san: string): string {
+  if (san.startsWith("O-O-O")) return "Castle queenside" + (san.endsWith("#") ? ", checkmate" : san.endsWith("+") ? ", check" : "");
+  if (san.startsWith("O-O")) return "Castle kingside" + (san.endsWith("#") ? ", checkmate" : san.endsWith("+") ? ", check" : "");
+
+  const names: Record<string, string> = { N: "knight", B: "bishop", R: "rook", Q: "queen", K: "king" };
+  const suffix = san.endsWith("#") ? ", checkmate" : san.endsWith("+") ? ", check" : "";
+  let body = san.replace(/[+#]/g, "");
+  const promotion = body.match(/=([QRBN])/);
+  body = body.replace(/=[QRBN]/, "");
+  const piece = names[body[0]] ?? "pawn";
+  if (piece !== "pawn") body = body.slice(1);
+
+  const destinationMatch = body.match(/([a-h][1-8])$/);
+  const target = destinationMatch?.[1] ?? body;
+  const prefix = body.slice(0, body.length - target.length).replace("x", "");
+  const capture = body.includes("x");
+  let destination = target;
+  if (capture && piece !== "pawn") destination = `${prefix ? `from ${prefix} ` : ""}takes ${target}`;
+  else if (capture) destination = `takes ${target}`;
+  else if (prefix && piece !== "pawn") destination = `from ${prefix} to ${target}`;
+
+  let phrase = `${piece} ${destination}`;
+  if (promotion) phrase += ` promotes to ${names[promotion[1]]}`;
+  phrase += suffix;
+  return phrase.charAt(0).toUpperCase() + phrase.slice(1);
+}
+
 /** "quiet mode on" / "be quiet" → true; "quiet mode off" / "coach me" → false; anything else → null. */
 export function parseQuietCommand(transcript: string): boolean | null {
   const t = transcript.toLowerCase().replace(/[.,!?]/g, " ").trim();

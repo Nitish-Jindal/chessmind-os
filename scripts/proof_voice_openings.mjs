@@ -5,8 +5,8 @@
 //
 // Real: Vite build, FastAPI, Postgres, Stockfish, python-chess, the Lichess chess-openings
 // taxonomy, and the app's resolver/captions/TTS code. Stubbed (as in proof_frontend.mjs): the
-// microphone (an init-script SpeechRecognition that emits the transcript we hand it) and system
-// voices (speechSynthesis.speak is recorded in window.__spoken). Expects the seeded opening graph
+// microphone (an automatic init-script SpeechRecognition) and system voices (speech output is
+// recorded in window.__spoken, including recognition/TTS overlap). Expects the seeded opening graph
 // (scripts/seed_games.py), which the mainline sampler follows in phase A.
 import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -28,26 +28,37 @@ function check(cond, msg) { if (!cond) { console.error("FAIL:", msg); process.ex
 
 const initScript = () => {
   window.__spoken = [];
-  window.__utterance = [];
+  window.__activeRec = null;
+  window.__recognizerStarts = 0;
+  window.__micTtsOverlaps = 0;
+  window.__resultIndex = 0;
   const synth = window.speechSynthesis;
   synth.getVoices = () => [{ voiceURI: "fake-en-us", name: "Fake American", lang: "en-US", default: true, localService: true }];
-  synth.speak = (u) => { window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 5); };
+  synth.speak = (u) => {
+    if (window.__activeRec?.listening) window.__micTtsOverlaps++;
+    window.__spoken.push(u.text);
+    setTimeout(() => u.onend && u.onend(), 5);
+  };
   class FakeRec {
-    start() { this.listening = true; }
+    start(continuous) { this.listening = true; this.continuous = continuous; window.__activeRec = this; window.__recognizerStarts++; }
     stop() {
       if (!this.listening) return;
       this.listening = false;
-      const alts = window.__utterance.shift();
-      if (alts !== undefined) {
-        const list = Array.isArray(alts) ? alts : [alts];
-        const res = { isFinal: true, length: list.length };
-        list.forEach((t, i) => { res[i] = { transcript: t, confidence: 0.9 - i * 0.1 }; });
-        this.onresult?.({ resultIndex: 0, results: { length: 1, 0: res } });
-      }
+      if (window.__activeRec === this) window.__activeRec = null;
       setTimeout(() => this.onend?.(), 5);
     }
     abort() { this.stop(); }
   }
+  window.__deliverUtterance = (input) => {
+    const rec = window.__activeRec;
+    if (!rec?.listening) return false;
+    const list = Array.isArray(input) ? input : [input];
+    const index = window.__resultIndex++;
+    const res = { isFinal: true, length: list.length };
+    list.forEach((t, i) => { res[i] = { transcript: t, confidence: 0.9 - i * 0.1 }; });
+    rec.onresult?.({ resultIndex: index, results: { length: index + 1, [index]: res } });
+    return true;
+  };
   window.SpeechRecognition = FakeRec;
   window.webkitSpeechRecognition = FakeRec;
 };
@@ -61,18 +72,17 @@ const apiCalls = [];
 page.on("request", (r) => { const u = new URL(r.url()); if (u.origin === new URL(API).origin) apiCalls.push(`${r.method()} ${u.pathname}`); });
 
 async function speak(utterance) {
-  await page.evaluate((u) => window.__utterance.push(u), utterance);
-  const ptt = page.getByRole("button", { name: /hold to talk|listening/i });
-  await ptt.dispatchEvent("pointerdown");
-  await page.waitForTimeout(60);
-  await ptt.dispatchEvent("pointerup");
+  await page.waitForFunction(() => window.__activeRec?.listening === true, null, { timeout: 30000 });
+  const state = await page.evaluate((u) => ({ delivered: window.__deliverUtterance(u), listeningAfterResult: window.__activeRec?.listening === true }), utterance);
+  if (!state.delivered) throw new Error("automatic microphone was not listening for the utterance");
+  return state.listeningAfterResult;
 }
 /** Say something and return the JSON (and status) of the API call it triggers. */
 async function sayAndCapture(utterance, urlRe) {
   const resp = page.waitForResponse((r) => urlRe.test(new URL(r.url()).pathname) && ["POST", "PATCH"].includes(r.request().method()), { timeout: 60000 });
-  await speak(utterance);
+  const listeningAfterResult = await speak(utterance);
   const r = await resp;
-  return { status: r.status(), body: await r.json() };
+  return { status: r.status(), body: await r.json(), listeningAfterResult };
 }
 const spoken = () => page.evaluate(() => window.__spoken);
 const clearSpoken = () => page.evaluate(() => { window.__spoken.length = 0; });
@@ -99,6 +109,7 @@ async function launch({ mode = "guided", color = "white", style = "mix", opening
   await page.waitForURL(/\/session\//);
   await page.getByLabel("Live captions").waitFor();
   await page.waitForTimeout(400);
+  await page.waitForFunction(() => window.__activeRec?.listening === true, null, { timeout: 30000 });
   return page.url().split("/session/")[1].split("?")[0];
 }
 
@@ -187,18 +198,22 @@ note("phase", "C: quiet mode");
 sid = await launch({ mode: "guided", style: "mainline", quiet: true });
 check((await page.getByRole("heading", { level: 1 }).innerText()).includes("quiet"), "quiet badge in the title");
 check((await page.getByLabel("Position questions").count()) === 0, "quiz card hidden in quiet mode");
+check(await page.evaluate(() => window.__activeRec?.continuous === true), "quiet mode keeps continuous recognition ready during thinking and engine processing");
 await clearSpoken();
 const quietMoves = [];
 for (const said of ["e4", "knight f3", "h4"]) {
-  const { body } = await sayAndCapture(said, /\/move$/);
-  quietMoves.push({ played: body.played_san, classification: body.classification, quiet: body.quiet, summary: body.coaching.spoken_summary, opp: body.opponent_move?.san, announcements: body.announcements });
+  const { body, listeningAfterResult } = await sayAndCapture(said, /\/move$/);
+  quietMoves.push({ played: body.played_san, classification: body.classification, quiet: body.quiet, summary: body.coaching.spoken_summary, opp: body.opponent_move?.san, announcements: body.announcements, micReadyDuringProcessing: listeningAfterResult });
   await settle();
 }
 note("quiet moves (API)", quietMoves);
 check(quietMoves.every((m) => m.quiet && m.summary === "" && m.announcements.length === 0), "API: empty coaching and no announcements for every quiet move");
+check(quietMoves.every((m) => m.micReadyDuringProcessing), "quiet microphone stays ready immediately after submission during engine processing");
 sp = await spoken();
 note("spoken (quiet)", sp);
-check(sp.length === 3 && sp.every((t) => /^Opponent plays /.test(t)), "only 'Opponent plays …' was spoken (3 moves)");
+check(sp.length === 3 && sp.every((t) => /^(Pawn|Knight|Bishop|Rook|Queen|King|Castle)\b/.test(t) && !/^Opponent plays\b/.test(t)), "quiet mode speaks only concise move announcements");
+check((await captions()).includes("opponent: Pawn") && await page.evaluate(() => window.__micTtsOverlaps === 0), "quiet captions keep speaker identity separate and TTS never overlaps recognition");
+await page.waitForFunction(() => window.__activeRec?.listening === true, null, { timeout: 30000 });
 check(!(await captions()).match(/coach:|opening:/), "no coach or opening captions");
 check((await page.getByLabel("Coach feedback").count()) === 0, "no coach card");
 const quizCalls = apiCalls.filter((x) => x.endsWith("/quiz")).length;
@@ -214,6 +229,8 @@ const legalQ = (await apiGet(`/sessions/${sid}/legal`)).legal_moves_san;
 const { body: loud } = await sayAndCapture(legalQ.includes("d4") ? "d4" : legalQ[0], /\/move$/);
 await settle();
 check(!loud.quiet && loud.coaching.spoken_summary.length > 0 && (await captions()).includes("coach:"), "coaching returns after quiet mode is turned off");
+await page.waitForFunction(() => window.__activeRec?.listening === true, null, { timeout: 30000 });
+check(await page.evaluate(() => window.__micTtsOverlaps === 0), "normal-mode coaching playback never overlaps microphone recognition");
 const patched = page.waitForResponse((r) => r.url().endsWith("/settings"));
 await page.getByLabel("Quiet mode").check();
 await patched;
@@ -266,6 +283,35 @@ await settle();
 check(qg.opponent_move.san === "c4" && qg.announcements.some((a) => a.name === "Queen's Gambit" && a.by === "opponent"), "after 1...d5 the engine played 2.c4 and 'Queen's Gambit' was announced");
 await waitSpoken("Queen's Gambit");
 await page.screenshot({ path: join(OUT, "vo_black_queens_gambit.png"), fullPage: true });
+
+// ---------------------------------------------------------------- F. Quiet, blindfold and Black share the same automatic mic lifecycle.
+note("phase", "F: quiet blindfold session as Black");
+sid = await launch({ mode: "blindfold", color: "black", style: "mainline", quiet: true });
+await clearSpoken();
+check(/Listening for your move/.test(await page.getByLabel("Microphone status").innerText()), "quiet blindfold Black automatically listens after the engine's opening move");
+check(await page.evaluate(() => window.__activeRec?.continuous === true), "quiet blindfold uses the same continuous recognition policy");
+const blackLegal = await apiGet(`/sessions/${sid}/legal`);
+const { body: blackQuiet } = await sayAndCapture(blackLegal.legal_moves_san[0], /\/move$/);
+await settle();
+const quietBlackSpeech = await spoken();
+check(blackQuiet.quiet && quietBlackSpeech.length === (blackQuiet.opponent_move ? 1 : 0), "quiet blindfold Black speaks only the opponent move");
+check(quietBlackSpeech.every((t) => /^(Pawn|Knight|Bishop|Rook|Queen|King|Castle)\b/.test(t)), "Black opponent announcement contains move text only");
+check(await page.evaluate(() => window.__activeRec?.listening === true), "quiet blindfold microphone resumes after opponent TTS");
+check((await page.getByRole("img", { name: /board hidden/i }).count()) === 1, "automatic quiet input preserves blindfold rendering");
+check(await page.evaluate(() => window.__micTtsOverlaps === 0), "no quiet-mode opponent TTS overlaps microphone recognition");
+
+// ---------------------------------------------------------------- G. Normal, full-board session as Black
+note("phase", "G: normal full-board session as Black");
+sid = await launch({ mode: "guided", color: "black", style: "mainline" });
+check(await page.locator("[data-square]").count() > 0, "full-board Black session renders the board");
+check((await spoken()).some((t) => t.startsWith("Opponent plays")), "Black opening move was announced in normal mode");
+await page.waitForFunction(() => window.__activeRec?.listening === true, null, { timeout: 30000 });
+check(/Listening for your move/.test(await page.getByLabel("Microphone status").innerText()), "normal full-board Black listens only after the engine's opening speech");
+check(await page.evaluate(() => window.__micTtsOverlaps === 0), "Black engine opening speech never overlaps recognition");
+const fullBlackLegal = await apiGet(`/sessions/${sid}/legal`);
+const { body: fullBlackMove } = await sayAndCapture(fullBlackLegal.legal_moves_san[0], /\/move$/);
+await settle();
+check(!!fullBlackMove.opponent_move && !(await page.evaluate(() => window.__micTtsOverlaps > 0)), "normal full-board Black completes opponent/coaching speech and resumes listening");
 
 writeFileSync(join(OUT, "proof_voice_openings.json"), JSON.stringify(log, null, 2));
 await browser.close();

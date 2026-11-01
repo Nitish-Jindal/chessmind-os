@@ -4,9 +4,8 @@
 //
 // The backend, Stockfish, Postgres and the app's own resolver/captions/TTS code are all real.
 // The one thing a headless browser cannot supply is a microphone and system voices, so an init
-// script installs a minimal SpeechRecognition (emits the transcript we hand it when push-to-talk
-// is released) and a fake voice list, and records every speechSynthesis.speak() call so we can
-// assert what was announced.
+// script installs automatic SpeechRecognition input and a fake voice list, and records both TTS
+// output and any overlap with an active microphone.
 import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -24,37 +23,52 @@ function check(cond, msg) { if (!cond) { console.error("FAIL:", msg); process.ex
 
 const initScript = () => {
   window.__spoken = [];
-  window.__utterance = [];
+  window.__activeRec = null;
+  window.__recognizerStarts = 0;
+  window.__micTtsOverlaps = 0;
+  window.__resultIndex = 0;
   const voices = [
     { voiceURI: "fake-en-gb", name: "Fake British", lang: "en-GB", default: false, localService: true },
     { voiceURI: "fake-en-us", name: "Fake American", lang: "en-US", default: true, localService: true },
   ];
   const synth = window.speechSynthesis;
   synth.getVoices = () => voices;
-  synth.speak = (u) => { window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 5); };
+  synth.speak = (u) => {
+    if (window.__activeRec?.listening) window.__micTtsOverlaps++;
+    window.__spoken.push(u.text);
+    setTimeout(() => u.onend && u.onend(), 5);
+  };
   setTimeout(() => synth.dispatchEvent(new Event("voiceschanged")), 50);
   class FakeRec {
-    constructor() { this.listening = false; }
-    start() {
+    constructor() { this.listening = false; this.continuous = false; }
+    start(continuous) {
       this.listening = true;
-      const first = [].concat(window.__utterance[0] ?? "")[0];
-      const words = first.split(" ");
-      this.onresult?.({ resultIndex: 0, results: { length: 1, 0: { isFinal: false, length: 1, 0: { transcript: words.slice(0, 1).join(" "), confidence: 0.5 } } } });
+      this.continuous = continuous;
+      window.__activeRec = this;
+      window.__recognizerStarts++;
     }
     stop() {
       if (!this.listening) return;
       this.listening = false;
-      const alts = window.__utterance.shift();
-      if (alts !== undefined) {
-        const list = Array.isArray(alts) ? alts : [alts];
-        const res = { isFinal: true, length: list.length };
-        list.forEach((t, i) => { res[i] = { transcript: t, confidence: 0.9 - i * 0.1 }; });
-        this.onresult?.({ resultIndex: 0, results: { length: 1, 0: res } });
-      }
+      if (window.__activeRec === this) window.__activeRec = null;
       setTimeout(() => this.onend?.(), 5);
     }
     abort() { this.stop(); }
   }
+  window.__deliverUtterance = (input) => {
+    const rec = window.__activeRec;
+    if (!rec?.listening) return false;
+    const list = Array.isArray(input) ? input : [input];
+    const index = window.__resultIndex++;
+    const words = list[0].split(" ");
+    rec.onresult?.({ resultIndex: index, results: { length: index + 1,
+      [index]: { isFinal: false, length: 1, 0: { transcript: words.slice(0, 1).join(" "), confidence: 0.5 } },
+    } });
+    const res = { isFinal: true, length: list.length };
+    list.forEach((t, i) => { res[i] = { transcript: t, confidence: 0.9 - i * 0.1 }; });
+    rec.onresult?.({ resultIndex: index, results: { length: index + 1, [index]: res } });
+    return true;
+  };
   window.SpeechRecognition = FakeRec; // newer Chromium exposes the unprefixed name, which the app prefers
   window.webkitSpeechRecognition = FakeRec;
 };
@@ -68,18 +82,17 @@ page.on("response", (r) => { const u = new URL(r.url()); if (u.port === "8000") 
 page.on("pageerror", (e) => { console.error("PAGE ERROR", e.message); process.exitCode = 1; });
 
 async function speak(utterance) {
-  await page.evaluate((u) => window.__utterance.push(u), utterance);
-  const ptt = page.getByRole("button", { name: /hold to talk|listening/i });
-  await ptt.dispatchEvent("pointerdown");
-  await page.waitForTimeout(80);
-  await ptt.dispatchEvent("pointerup");
+  await page.waitForFunction(() => window.__activeRec?.listening === true, null, { timeout: 30000 });
+  const state = await page.evaluate((u) => ({ delivered: window.__deliverUtterance(u), listeningAfterResult: window.__activeRec?.listening === true }), utterance);
+  if (!state.delivered) throw new Error("automatic microphone was not listening for the utterance");
+  return state.listeningAfterResult;
 }
 const captions = () => page.locator('[aria-label="Live captions"]').innerText();
 async function waitCaption(re, ms = 60000) {
   try {
     await page.waitForFunction(([src]) => new RegExp(src, "i").test(document.querySelector('[aria-label="Live captions"]')?.textContent ?? ""), [re.source], { timeout: ms });
   } catch (e) {
-    console.error(`timed out waiting for caption ${re}\n--- captions ---\n${await captions()}\n--- ptt ---\n${await page.getByRole("button", { name: /hold to talk|listening/i }).evaluate((b) => b.outerHTML)}`);
+    console.error(`timed out waiting for caption ${re}\n--- captions ---\n${await captions()}\n--- mic status ---\n${await page.getByLabel("Microphone status").innerText()}`);
     await page.screenshot({ path: join(OUT, "frontend_failure.png") });
     throw e;
   }
@@ -112,6 +125,9 @@ await page.getByLabel("Opponent style").selectOption("mainline");
 await page.getByRole("button", { name: "Start", exact: true }).click();
 await page.waitForURL(/\/session\//);
 await page.locator('[data-square="e2"]').first().waitFor();
+await page.waitForFunction(() => window.__activeRec?.listening === true, null, { timeout: 30000 });
+check(/Listening for your move/.test(await page.getByLabel("Microphone status").innerText()), "microphone automatically activates for White's turn");
+check(await page.evaluate(() => window.__activeRec?.continuous === false), "normal mode starts a turn-scoped recognizer");
 
 // first move by dragging on the board (still POSTs /move)
 // (HTML5 drag needs a few pauses between mouse events for react-dnd to register the hover)
@@ -132,7 +148,8 @@ note("after-drag captions", await captions());
 check(apiCalls.some((c) => c.startsWith("POST") && c.includes("/move") && c.endsWith("200")), "drag move went through POST /sessions/{id}/move");
 
 // voice move: "knight f3"
-await speak("knight f3");
+const micAfterMove = await speak("knight f3");
+check(!micAfterMove, "normal-mode recognition stops immediately after the spoken move is submitted");
 await waitCaption(/you:\s*knight f3/);
 await page.waitForFunction(() => (document.querySelector('[aria-label="Live captions"]')?.textContent.match(/Opponent plays/g) ?? []).length >= 2, null, { timeout: 60000 });
 check((await spoken()).some((t) => /^Opponent plays/.test(t)), "TTS announced the opponent reply");
@@ -141,6 +158,9 @@ const coach = await page.getByLabel("Coach feedback").innerText();
 note("coach-feedback", coach);
 check(/Stockfish/i.test(coach), "coach card shows Stockfish engine evidence");
 check((await spoken()).some((t) => t.length > 20 && !/^Opponent plays|Session started/.test(t)), "TTS announced the coach feedback");
+await page.waitForFunction(() => window.__activeRec?.listening === true, null, { timeout: 30000 });
+check(await page.evaluate(() => window.__micTtsOverlaps === 0), "normal-mode opponent and coach TTS never overlap recognition");
+check(/Listening for your move/.test(await page.getByLabel("Microphone status").innerText()), "microphone resumes after the full opponent and coaching sequence");
 await page.screenshot({ path: join(OUT, "frontend_session_full.png") });
 
 // ambiguous: both knights can go to d2 -> must ask, then confirm by voice

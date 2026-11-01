@@ -44,7 +44,7 @@ phase tracking is in [`PROGRESS.md`](PROGRESS.md).
 ```
  Browser (React 18 + Vite + TS)                       Render static site
  ├─ react-chessboard / chess.js (display only)
- ├─ Web Speech API: STT (push-to-talk) + TTS
+ ├─ Web Speech API: automatic turn-aware STT + TTS
  └─ spoken-SAN resolver, constrained to GET /sessions/{id}/legal
         │  HTTPS + JWT (VITE_API_BASE_URL)
         ▼
@@ -113,7 +113,7 @@ Tests (real Postgres and real Stockfish; SQLite is not supported anywhere):
 
 ```bash
 cd backend && pytest -q        # 194 tests; needs the chessmind_test DB and engines/stockfish-bin
-cd frontend && npm test        # 32 tests: voice resolver, question/command routing, API base URL
+cd frontend && npm test        # 39 tests: automatic mic lifecycle, voice resolver, API base URL
 ```
 
 Known wart: pytest prints `194 passed` and then the interpreter can hang on
@@ -227,7 +227,10 @@ in `engine_analysis`, so repeated positions do not hit the engine.
 Voice is the browser's Web Speech API: no server-side speech, no keys.
 
 - **STT**: `SpeechRecognition` / `webkitSpeechRecognition`, `en-US`,
-  push-to-talk, up to 5 alternatives per utterance. Works in Chrome and
+  automatic listening on the player's turn, up to 5 alternatives per
+  utterance. Normal mode pauses for the full response; quiet mode stays
+  ready through engine processing and pauses only for opponent speech.
+  Works in Chrome and
   Edge; Safari support varies; Firefox has no STT (the text box is the
   fallback). Microphone access requires a secure context: `localhost` or
   HTTPS (the Render URL is HTTPS).
@@ -237,6 +240,8 @@ Voice is the browser's Web Speech API: no server-side speech, no keys.
   every move with `python-chess`.
 - **TTS**: `speechSynthesis`; the voice dropdown is filled on
   `voiceschanged`, and the choice is stored in `player.settings_json.tts_voice`.
+  Recognition is gated until queued normal-mode speech finishes. Quiet mode
+  speaks only a concise verbalization of the opponent's returned legal SAN.
 - Blindfold reveals: `settings_json.blindfold_free_reveals_per_session`
   (default 2); extra reveals lower the visualization score.
 - **Position questions** (handoff §3.3), by voice or text, at any point in

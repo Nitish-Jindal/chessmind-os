@@ -508,13 +508,25 @@ fallback. Deviations from the plan above, kept deliberately small:
 
 MVP uses the browser Web Speech API end-to-end:
 
-- **STT:** `SpeechRecognition` streams interim results; the frontend sends
-  final hypotheses to `WS /sessions/{id}/voice`. The server resolves them
-  via `rules.resolve_spoken_move` and either commits the move or returns a
-  disambiguation prompt.
-- **TTS:** `SpeechSynthesisUtterance` on the browser. The spoken text is
-  the coach's `spoken_summary` plus the next opponent move announcement.
-  Voice selection — see §11.5.
+- **STT:** `SpeechRecognition` streams interim results and final
+  alternatives to the existing frontend resolver. It compares them with
+  `GET /sessions/{id}/legal`, surfaces ambiguity instead of guessing, then
+  submits the selected SAN/UCI through `POST /sessions/{id}/move`; the
+  backend remains authoritative.
+- **Microphone lifecycle:** a session-level controller starts recognition
+  automatically for the player's turn. Normal mode stops on a final result
+  and stays stopped through move processing, the opponent move, and the
+  complete queued speech/coaching response. Quiet mode uses continuous
+  recognition during thinking and engine processing, suppressing it only
+  while an opponent announcement plays. Browser service endings restart
+  with backoff; permission denial and unsupported recognition leave text
+  input available.
+- **TTS:** `SpeechSynthesisUtterance` on the browser. Normal mode keeps the
+  coach's `spoken_summary`, opening announcements, and full opponent move
+  sentence. Quiet mode speaks only a concise verbalization of the
+  opponent's SAN returned by the session API. Queued utterance completion
+  gates recognition so synthesized speech cannot become move input. Voice
+  selection — see §11.5.
 - **Server-side streaming** (post-MVP): the `VoiceProvider` interface is
   already present so we can swap in a server-side streaming provider
   without reshaping the orchestrator.
@@ -725,7 +737,8 @@ Called out in `README.md` under Known Gaps.
   wipe owned games and derived stats; private PGNs never bleed into the
   shared opening graph aggregates without consent (configurable).
 - **Accessibility.** Keyboard board controls; captions on every spoken
-  turn; push-to-talk and text-input fallbacks for voice sessions.
+  turn; automatic voice input with a clear listening/processing/speaking
+  status and a text-input fallback.
 - **Cost controls.** Analysis cache first; per-user Stockfish time budget
   per session; LLM token budget per session; both configurable.
 

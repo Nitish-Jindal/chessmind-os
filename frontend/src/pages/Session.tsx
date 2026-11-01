@@ -28,9 +28,11 @@ import {
   resolveAlternatives,
   resolveConfirmation,
   speakMove,
+  speakQuietMove,
   type LegalMove,
 } from "../voice/resolver";
-import { createRecognizer, sttSupported, cancelSpeech, type Recognizer } from "../voice/speech";
+import { createRecognizer, sttSupported, cancelSpeech } from "../voice/speech";
+import { AutomaticMicrophone, type MicrophonePolicy, type MicrophoneStatus } from "../voice/microphone";
 import { useVoice } from "../voice/VoiceContext";
 
 function fmtEval(cp: number | null | undefined, mate?: number | null): string {
@@ -46,7 +48,7 @@ export function Session() {
 }
 
 function SessionView({ id }: { id: string }) {
-  const { say, caption, clearCaptions } = useVoice();
+  const { say, caption, clearCaptions, speechCounts, subscribeSpeech } = useVoice();
   const { player } = useAuth();
   const nav = useNavigate();
   // ?drill=<position_id>: this session was opened from a due mastery item; show its row before/after the answer.
@@ -60,10 +62,17 @@ function SessionView({ id }: { id: string }) {
   const [last, setLast] = useState<MoveResult | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const moveSubmission = useRef(false);
+  const resumeAfterSubmit = useRef(false);
+  const [sessionReady, setSessionReady] = useState(false);
+  const sessionReadyRef = useRef(false);
+  const [micStatus, setMicStatus] = useState<MicrophoneStatus>(sttSupported ? "off" : "unavailable");
+  const [micError, setMicError] = useState<string | null>(null);
+  const mic = useRef<AutomaticMicrophone | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [pending, setPending] = useState<LegalMove[] | null>(null);
   const [interim, setInterim] = useState("");
-  const [listening, setListening] = useState(false);
   const [text, setText] = useState("");
   // Position questions (handoff §3.3): the player asks about the board, or answers a quiz about it.
   const [quiz, setQuiz] = useState<QuizQuestion | null>(null);
@@ -82,6 +91,7 @@ function SessionView({ id }: { id: string }) {
   const quiet = !!sess?.settings_json.quiet;
   const quietRef = useRef(false);
   quietRef.current = quiet;
+  const micPolicyRef = useRef<MicrophonePolicy>({ enabled: false, quiet: false, anySpeech: false, opponentSpeech: false });
 
   const refresh = useCallback(async () => {
     const [s, l] = await Promise.all([api.getSession(id), api.legal(id)]);
@@ -99,16 +109,18 @@ function SessionView({ id }: { id: string }) {
     announced.current = id;
     clearCaptions();
     refresh()
-      .then(({ s }) => {
+      .then(async ({ s }) => {
         const om = s.state_json.last_opponent_move;
-        say("system", s.mode === "blindfold" ? "Blindfold session. The board is hidden. Hold the talk button and say your move." : "Session started. Make your move on the board, or by voice.");
         if (s.settings_json.quiet) caption("system", "Quiet mode: only the opponent's moves are spoken.");
+        else await say("system", s.mode === "blindfold" ? "Blindfold session. The board is hidden. Say your move when you are ready." : "Session started. Say your move when you are ready.");
         const req = s.state_json.opening_request;
         if (req && !s.settings_json.quiet) caption("system", `Opponent's opening: ${req.label}.`);
         if (om && s.state_json.move_history_san.length === 1) {
-          say("opponent", `Opponent plays ${speakMove(om.san)}.`);
-          if (om.announcement && !s.settings_json.quiet) say("opening", om.announcement.text);
+          await say("opponent", s.settings_json.quiet ? speakQuietMove(om.san) : `Opponent plays ${speakMove(om.san)}.`);
+          if (om.announcement && !s.settings_json.quiet) await say("opening", om.announcement.text);
         }
+        sessionReadyRef.current = true;
+        setSessionReady(true);
       })
       .catch((e: Error) => setErr(e.message));
     return () => cancelSpeech();
@@ -136,27 +148,41 @@ function SessionView({ id }: { id: string }) {
   }
 
   const announce = useCallback(
-    (list: OpeningAnnouncement[]) => {
-      if (!quietRef.current) for (const a of list) say("opening", a.text);
+    async (list: OpeningAnnouncement[]) => {
+      if (!quietRef.current) for (const a of list) await say("opening", a.text);
     },
     [say],
   );
 
-  /** "Opponent plays X", then the opening it reached (if new), then a note when the requested opening ends. */
+  const respond = useCallback(
+    (who: "coach" | "system" | "opening", text: string) => {
+      if (quietRef.current) {
+        caption(who, text);
+        return Promise.resolve();
+      }
+      return say(who, text);
+    },
+    [say, caption],
+  );
+
+  /** The returned SAN is authoritative; quiet mode speaks only its concise verbalization. */
   const speakOpponent = useCallback(
-    (om: OpponentMove | null | undefined, label?: string) => {
+    async (om: OpponentMove | null | undefined, label?: string) => {
       if (!om) return;
-      say("opponent", `Opponent plays ${speakMove(om.san)}.`);
-      if (om.announcement) announce([om.announcement]);
-      if (om.request_event === "out_of_book" && label) caption("system", `Out of book for the ${label}; the opponent plays normally from here.`);
+      await say("opponent", quietRef.current ? speakQuietMove(om.san) : `Opponent plays ${speakMove(om.san)}.`);
+      if (om.announcement && !quietRef.current) await announce([om.announcement]);
+      if (om.request_event === "out_of_book" && label && !quietRef.current) caption("system", `Out of book for the ${label}; the opponent plays normally from here.`);
     },
     [say, caption, announce],
   );
 
   /** Every move — dragged, spoken or typed — goes through the backend, which is the only authority. */
   const submit = useCallback(
-    async (m: { san?: string; uci?: string }) => {
-      if (busy) return;
+    async (m: { san?: string; uci?: string }, fromVoice = false) => {
+      if (busyRef.current || moveSubmission.current) return;
+      moveSubmission.current = true;
+      busyRef.current = true;
+      mic.current?.pause();
       setBusy(true);
       setErr(null);
       setPending(null);
@@ -172,17 +198,17 @@ function SessionView({ id }: { id: string }) {
         }
         setFen(r.current_fen);
         setRevealed(false);
-        announce(r.announcements.filter((a) => a.by === "player"));
-        speakOpponent(r.opponent_move, r.opening_request?.label);
-        if (!r.quiet && r.coaching.spoken_summary) say("coach", r.coaching.spoken_summary);
-        if (r.status === "finished") say("system", "The game is over.");
+        await announce(r.announcements.filter((a) => a.by === "player"));
+        await speakOpponent(r.opponent_move, r.opening_request?.label);
+        if (!r.quiet && !quietRef.current && r.coaching.spoken_summary) await say("coach", r.coaching.spoken_summary);
+        if (r.status === "finished") await respond("system", "The game is over.");
         await refresh();
       } catch (e) {
         const bad = illegalMoveDetail(e);
         if (bad) {
           // python-chess found no legal move matching the input: say so, keep the position.
           setIllegal(bad.message);
-          say("system", bad.message);
+          await respond("system", bad.message);
         } else {
           const msg = (e as Error).message;
           setErr(msg);
@@ -190,26 +216,45 @@ function SessionView({ id }: { id: string }) {
         }
         await refresh().catch(() => {});
       } finally {
+        busyRef.current = false;
+        moveSubmission.current = false;
+        if (!fromVoice) resumeAfterSubmit.current = true;
         setBusy(false);
       }
     },
-    [busy, id, say, caption, refresh, drillPos, player, announce, speakOpponent],
+    [id, say, caption, respond, refresh, drillPos, player, announce, speakOpponent],
   );
 
   const toggleQuiet = useCallback(
     async (on: boolean) => {
       const flip = (q: boolean) => setSess((s) => (s ? { ...s, settings_json: { ...s.settings_json, quiet: q } } : s));
+      if (!on) mic.current?.pause(true);
+      quietRef.current = on;
+      const policy = {
+        ...micPolicyRef.current,
+        enabled: sessionReadyRef.current && !finished && (on || (myTurn && !busyRef.current)),
+        quiet: on,
+      };
+      micPolicyRef.current = policy;
+      mic.current?.update(policy);
       flip(on); // optimistic, so the checkbox follows the click; reverted if the PATCH fails
       try {
         setSess(await api.setQuiet(id, on));
         if (on) setQuiz(null);
-        say("system", on ? "Quiet mode on. I'll only call out the opponent's moves." : "Quiet mode off. Coaching is back on.");
+        if (on) caption("system", "Quiet mode on. Only opponent moves are spoken.");
+        else {
+          await say("system", "Quiet mode off. Coaching is back on.");
+          mic.current?.resume();
+        }
       } catch (e) {
+        quietRef.current = !on;
+        micPolicyRef.current = { ...micPolicyRef.current, quiet: !on };
+        mic.current?.update(micPolicyRef.current);
         flip(!on);
         setErr((e as Error).message);
       }
     },
-    [id, say],
+    [id, say, caption, finished, myTurn],
   );
 
   /** "Play the Caro-Kann / d4 against me": parsed and validated server-side, then followed by the sampler. */
@@ -217,19 +262,19 @@ function SessionView({ id }: { id: string }) {
     async (alts: string[]) => {
       try {
         const r = await api.openingCommand(id, alts);
-        say("system", r.message);
+        await respond("system", r.message);
         if (r.restarted) {
           setLast(null);
           setIllegal(null);
           setRevealed(false);
         }
-        speakOpponent(r.opponent_move);
+        await speakOpponent(r.opponent_move);
         await refresh();
       } catch (e) {
         setErr((e as Error).message);
       }
     },
-    [id, say, speakOpponent, refresh],
+    [id, respond, speakOpponent, refresh],
   );
 
   /** Board question → server answers from python-chess / cached Stockfish; spoken and captioned. */
@@ -237,7 +282,7 @@ function SessionView({ id }: { id: string }) {
     async (alts: string[]) => {
       try {
         const r = await api.ask(id, alts);
-        say(r.understood ? "coach" : "system", r.answer_text);
+        await say(r.understood ? "coach" : "system", r.answer_text);
         setLastAnswer(r.answer_text);
       } catch (e) {
         setErr((e as Error).message);
@@ -252,7 +297,7 @@ function SessionView({ id }: { id: string }) {
       const q = await api.quiz(id);
       setQuiz(q);
       setLastAnswer(null);
-      say("coach", q.prompt);
+      await say("coach", q.prompt);
     } catch (e) {
       setErr((e as Error).message);
     }
@@ -263,11 +308,11 @@ function SessionView({ id }: { id: string }) {
     async (q: QuizQuestion, alts: string[]) => {
       try {
         const r = await api.answerQuiz(id, q.question_id, alts);
-        if (!r.understood) return say("system", r.feedback);
+        if (!r.understood) return await say("system", r.feedback);
         setQuiz(null);
         setTally(r.tally);
         setLastAnswer(r.feedback);
-        say("coach", r.feedback);
+        await say("coach", r.feedback);
       } catch (e) {
         setErr((e as Error).message);
       }
@@ -298,105 +343,116 @@ function SessionView({ id }: { id: string }) {
 
   /** Handle one recognized/typed utterance (all STT alternatives, best first). */
   const handleUtterance = useCallback(
-    (alts: string[]) => {
-      const L = live.current;
-      const heard = alts[0];
-      caption("you", heard);
+    async (alts: string[], fromVoice = false) => {
+      if (!fromVoice && !quietRef.current) mic.current?.pause();
+      try {
+        const L = live.current;
+        const heard = alts[0];
+        caption("you", heard);
 
-      const quietCmd = parseQuietCommand(heard);
-      if (quietCmd !== null) return void toggleQuiet(quietCmd);
-      if (isOpeningRequest(heard)) return void requestOpening(alts);
+        const quietCmd = parseQuietCommand(heard);
+        if (quietCmd !== null) return await toggleQuiet(quietCmd);
+        if (quietRef.current && (!L.myTurn || L.busy || busyRef.current)) return;
+        if (isOpeningRequest(heard)) return await requestOpening(alts);
 
-      const cmd = parseCommand(heard);
-      if (cmd === "reveal" && blindfold) return void doReveal();
-      if (cmd === "repeat") {
-        const t = L.quiz ? L.quiz.prompt : L.last?.opponent_move ? `Opponent played ${speakMove(L.last.opponent_move.san)}.` : "Nothing to repeat yet.";
-        return say("system", t);
-      }
-      if (cmd === "quiz") return void startQuiz();
-      if (L.quiz) {
-        if (/\b(skip|cancel|never ?mind)\b/i.test(heard)) {
-          setQuiz(null);
-          return say("system", "Question skipped.");
+        const cmd = parseCommand(heard);
+        if (cmd === "reveal" && blindfold) return await doReveal();
+        if (quietRef.current && (cmd !== null || L.quiz || isBoardQuestion(heard))) return;
+        if (cmd === "repeat") {
+          const t = L.quiz ? L.quiz.prompt : L.last?.opponent_move ? `Opponent played ${speakMove(L.last.opponent_move.san)}.` : "Nothing to repeat yet.";
+          return await respond("system", t);
         }
-        return void answerQuiz(L.quiz, alts);
-      }
-      if (isBoardQuestion(heard)) return void askBoard(alts);
-      if (!L.myTurn || L.busy) return say("system", "It is not your turn.");
-
-      if (L.pending) {
-        let outcome = resolveConfirmation(heard, L.pending);
-        for (let i = 1; outcome.kind === "unclear" && i < alts.length; i++) outcome = resolveConfirmation(alts[i], L.pending);
-        if (outcome.kind === "chosen") return void L.submit({ san: outcome.move.san, uci: outcome.move.uci });
-        if (outcome.kind === "cancel") {
-          setPending(null);
-          return say("system", "Cancelled. Say your move again.");
+        if (cmd === "quiz") return await startQuiz();
+        if (L.quiz) {
+          if (/\b(skip|cancel|never ?mind)\b/i.test(heard)) {
+            setQuiz(null);
+            return await respond("system", "Question skipped.");
+          }
+          return await answerQuiz(L.quiz, alts);
         }
-        if (outcome.kind === "narrowed") {
-          setPending(outcome.moves);
-          return say("system", `Still ambiguous: ${outcome.moves.map((m) => speakMove(m.san)).join(", or ")}. Which one?`);
-        }
-        return say("system", `Say first, second, or the move. Options: ${L.pending.map((m) => speakMove(m.san)).join(", or ")}.`);
-      }
+        if (isBoardQuestion(heard)) return await askBoard(alts);
+        if (moveSubmission.current || busyRef.current) return;
+        if (!L.myTurn || L.busy) return await respond("system", "It is not your turn.");
 
-      const r = resolveAlternatives(alts, L.legalMoves);
-      if (r.kind === "match") return void L.submit({ san: r.move.san, uci: r.move.uci });
-      if (r.kind === "ambiguous") {
-        setPending(r.moves);
-        return say("system", `More than one move fits. Did you mean ${r.moves.map((m) => speakMove(m.san)).join(", or ")}?`);
+        if (L.pending) {
+          let outcome = resolveConfirmation(heard, L.pending);
+          for (let i = 1; outcome.kind === "unclear" && i < alts.length; i++) outcome = resolveConfirmation(alts[i], L.pending);
+          if (outcome.kind === "chosen") return await L.submit({ san: outcome.move.san, uci: outcome.move.uci }, fromVoice);
+          if (outcome.kind === "cancel") {
+            setPending(null);
+            return await respond("system", "Cancelled. Say your move again.");
+          }
+          if (outcome.kind === "narrowed") {
+            setPending(outcome.moves);
+            return await respond("system", `Still ambiguous: ${outcome.moves.map((m) => speakMove(m.san)).join(", or ")}. Which one?`);
+          }
+          return await respond("system", `Say first, second, or the move. Options: ${L.pending.map((m) => speakMove(m.san)).join(", or ")}.`);
+        }
+
+        const r = resolveAlternatives(alts, L.legalMoves);
+        if (r.kind === "match") return await L.submit({ san: r.move.san, uci: r.move.uci }, fromVoice);
+        if (r.kind === "ambiguous") {
+          setPending(r.moves);
+          return await respond("system", `More than one move fits. Did you mean ${r.moves.map((m) => speakMove(m.san)).join(", or ")}?`);
+        }
+        if (alts.some(looksLikeMove)) {
+          setIllegal("That's an illegal move, try again.");
+          return await respond("system", "That's an illegal move, try again.");
+        }
+        await respond("system", `I didn't catch a move in "${heard}". Try again.`);
+      } finally {
+        if (!fromVoice && !moveSubmission.current && !resumeAfterSubmit.current && !quietRef.current) mic.current?.resume();
       }
-      if (alts.some(looksLikeMove)) {
-        // A move was said, but python-chess lists no legal move that matches it here.
-        setIllegal("That's an illegal move, try again.");
-        return say("system", "That's an illegal move, try again.");
-      }
-      say("system", `I didn't catch a move in "${heard}". Try again.`);
     },
-    [blindfold, caption, say, doReveal, startQuiz, answerQuiz, askBoard, toggleQuiet, requestOpening],
+    [blindfold, caption, respond, doReveal, startQuiz, answerQuiz, askBoard, toggleQuiet, requestOpening],
   );
   const onUtterance = useRef(handleUtterance);
   onUtterance.current = handleUtterance;
 
-  // Push-to-talk recognizer.
-  const rec = useRef<Recognizer | null>(null);
+  const speechActive = speechCounts.you + speechCounts.opponent + speechCounts.coach + speechCounts.opening + speechCounts.system > 0;
+  const microphonePolicy = useMemo<MicrophonePolicy>(() => ({
+    enabled: sessionReady && !finished && (quiet || (myTurn && !busy)),
+    quiet,
+    anySpeech: speechActive,
+    opponentSpeech: speechCounts.opponent > 0,
+  }), [sessionReady, finished, quiet, myTurn, busy, speechActive, speechCounts.opponent]);
+  micPolicyRef.current = microphonePolicy;
+
   useEffect(() => {
-    rec.current = createRecognizer({
-      onInterim: setInterim,
-      onFinal: (alts) => {
+    const controller = new AutomaticMicrophone(
+      createRecognizer,
+      (alts) => {
         setInterim("");
-        onUtterance.current(alts);
+        return onUtterance.current(alts, true);
       },
-      onState: setListening,
-      onError: (m) => caption("system", m),
+      (status) => {
+        setMicStatus(status);
+        if (status === "listening") setMicError(null);
+      },
+      (message, denied) => setMicError(denied ? "Microphone permission was denied. Allow microphone access for this site, then reload the session." : message),
+      setInterim,
+    );
+    mic.current = controller;
+    const unsubscribe = subscribeSpeech((counts) => {
+      const total = counts.you + counts.opponent + counts.coach + counts.opening + counts.system;
+      controller.update({ ...micPolicyRef.current, anySpeech: total > 0, opponentSpeech: counts.opponent > 0 });
     });
-    return () => rec.current?.stop();
-  }, [caption]);
-
-  const startTalking = useCallback(() => {
-    cancelSpeech(); // never let TTS leak into the mic
-    rec.current?.start();
-  }, []);
-  const stopTalking = useCallback(() => rec.current?.stop(), []);
-
-  // Space bar = push-to-talk when not typing.
-  useEffect(() => {
-    const typing = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
-    const down = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !e.repeat && !typing(e.target)) {
-        e.preventDefault();
-        startTalking();
-      }
-    };
-    const up = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !typing(e.target)) stopTalking();
-    };
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
+    controller.update(micPolicyRef.current);
     return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
+      unsubscribe();
+      controller.dispose();
+      cancelSpeech();
+      mic.current = null;
     };
-  }, [startTalking, stopTalking]);
+  }, [subscribeSpeech]);
+
+  useEffect(() => {
+    mic.current?.update(microphonePolicy);
+    if (resumeAfterSubmit.current && !busy) {
+      resumeAfterSubmit.current = false;
+      mic.current?.resume();
+    }
+  }, [microphonePolicy, busy]);
 
   // Board drag: chess.js only pre-checks so illegal drops snap back; the POST is authoritative.
   function onDrop(from: string, to: string): boolean {
@@ -422,6 +478,23 @@ function SessionView({ id }: { id: string }) {
 
   if (!sess || !legal) return <p>{err ?? "Loading session…"}</p>;
   const ev = last?.best_lines[0];
+  const opponentSpeaking = speechCounts.opponent > 0;
+  const applicationSpeaking = speechActive && (!quiet || opponentSpeaking);
+  const microphoneMessage = !sttSupported
+    ? "Microphone unavailable in this browser; use the text box."
+    : micStatus === "denied"
+      ? "Microphone permission denied. Use the text box or allow microphone access and reload."
+      : micStatus === "unavailable"
+        ? "Speech recognition is unavailable; use the text box."
+        : finished
+          ? "Session complete · microphone off"
+        : applicationSpeaking
+          ? quiet ? "Opponent speaking · microphone paused" : "ChessMind is speaking or coaching · microphone paused"
+          : !quiet && busy
+            ? "Processing your move · microphone paused"
+            : micStatus === "listening"
+              ? "Listening for your move"
+              : sessionReady ? "Preparing microphone…" : "Starting session…";
 
   return (
     <>
@@ -475,20 +548,10 @@ function SessionView({ id }: { id: string }) {
 
         <div>
           <section className="card" aria-label="Voice controls">
-            <div className="row">
-              <button
-                className={`ptt ${listening ? "on" : ""}`}
-                disabled={!sttSupported || busy}
-                onPointerDown={startTalking}
-                onPointerUp={stopTalking}
-                onPointerLeave={() => listening && stopTalking()}
-                onKeyDown={(e) => e.key === "Enter" && (listening ? stopTalking() : startTalking())}
-                aria-pressed={listening}
-              >
-                {listening ? "Listening… release to send" : "Hold to talk (or hold Space)"}
-              </button>
-              {!sttSupported && <span className="muted">Speech recognition isn't available in this browser — use the text box.</span>}
-            </div>
+            <p className={`mic-status ${micStatus === "denied" || micStatus === "unavailable" ? "error" : ""}`} role="status" aria-live="polite" aria-label="Microphone status" data-state={micStatus}>
+              {microphoneMessage}
+            </p>
+            {micError && micStatus !== "denied" && <p className="muted" role="status">{micError}</p>}
             <form className="row" onSubmit={onText} style={{ marginTop: ".5rem" }}>
               <input
                 value={text}
@@ -519,7 +582,7 @@ function SessionView({ id }: { id: string }) {
             <p className="muted" style={{ marginBottom: 0 }}>
               Set the opponent's opening: say “play the Caro-Kann against me” or “play d4 against me”.
             </p>
-            <VoicePicker />
+            <VoicePicker quiet={quiet} />
           </section>
 
           {!quiet && <section className="card" aria-label="Position questions">

@@ -1,7 +1,7 @@
 import { useVoice } from "../voice/VoiceContext";
 import { ttsSupported } from "../voice/speech";
 
-export function VoicePicker() {
+export function VoicePicker({ quiet = false }: { quiet?: boolean }) {
   const { voices, voiceURI, setVoiceURI, ttsEnabled, setTtsEnabled, say } = useVoice();
   if (!ttsSupported) return <p className="muted">Speech synthesis is not available in this browser; captions are shown instead.</p>;
   return (
@@ -23,9 +23,9 @@ export function VoicePicker() {
           ))}
         </select>
       </label>
-      <button type="button" onClick={() => say("system", "This is how I will sound.")}>
+      {!quiet && <button type="button" onClick={() => say("system", "This is how I will sound.")}>
         Test voice
-      </button>
+      </button>}
       <label>
         <input type="checkbox" checked={ttsEnabled} onChange={(e) => setTtsEnabled(e.target.checked)} /> Speak aloud
       </label>

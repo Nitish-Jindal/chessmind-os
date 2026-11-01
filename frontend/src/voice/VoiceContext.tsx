@@ -9,17 +9,22 @@ export interface Caption {
   text: string;
 }
 
+export type SpeechCounts = Record<Caption["who"], number>;
+const emptySpeechCounts = (): SpeechCounts => ({ you: 0, opponent: 0, coach: 0, opening: 0, system: 0 });
+
 interface VoiceCtx {
   voices: SpeechSynthesisVoice[];
   voiceURI: string | null;
   setVoiceURI(uri: string): void;
   ttsEnabled: boolean;
   setTtsEnabled(on: boolean): void;
-  /** Speak and caption. Captions are always written, even when TTS is off or unsupported. */
-  say(who: Caption["who"], text: string): void;
+  /** Speak and caption; resolves only after this utterance has finished playback. */
+  say(who: Caption["who"], text: string): Promise<void>;
   caption(who: Caption["who"], text: string): void;
   captions: Caption[];
   clearCaptions(): void;
+  speechCounts: SpeechCounts;
+  subscribeSpeech(listener: (counts: SpeechCounts) => void): () => void;
 }
 
 const Ctx = createContext<VoiceCtx | null>(null);
@@ -29,8 +34,11 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [captions, setCaptions] = useState<Caption[]>([]);
+  const [speechCounts, setSpeechCounts] = useState<SpeechCounts>(emptySpeechCounts);
   const [localURI, setLocalURI] = useState<string | null>(null);
   const nextId = useRef(1);
+  const speechCountsRef = useRef<SpeechCounts>(emptySpeechCounts());
+  const speechListeners = useRef(new Set<(counts: SpeechCounts) => void>());
 
   useEffect(() => watchVoices(setVoices), []);
 
@@ -59,12 +67,32 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     setCaptions((c) => [...c.slice(-39), { id: nextId.current++, who, text }]);
   }, []);
 
+  const updateSpeechCount = useCallback((who: Caption["who"], delta: number) => {
+    const next = { ...speechCountsRef.current, [who]: Math.max(0, speechCountsRef.current[who] + delta) };
+    speechCountsRef.current = next;
+    setSpeechCounts(next);
+    for (const listener of speechListeners.current) listener(next);
+  }, []);
+
+  const subscribeSpeech = useCallback((listener: (counts: SpeechCounts) => void) => {
+    speechListeners.current.add(listener);
+    listener(speechCountsRef.current);
+    return () => speechListeners.current.delete(listener);
+  }, []);
+
   const say = useCallback(
-    (who: Caption["who"], text: string) => {
+    async (who: Caption["who"], text: string) => {
       caption(who, text);
-      if (enabledRef.current && ttsSupported) void speakText(text, uriRef.current);
+      if (!enabledRef.current || !ttsSupported || !text.trim()) return;
+      // Notify the session synchronously so recognition stops before queued TTS can begin.
+      updateSpeechCount(who, 1);
+      try {
+        await speakText(text, uriRef.current);
+      } finally {
+        updateSpeechCount(who, -1);
+      }
     },
-    [caption],
+    [caption, updateSpeechCount],
   );
 
   useEffect(() => () => cancelSpeech(), []);
@@ -80,8 +108,10 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
       caption,
       captions,
       clearCaptions: () => setCaptions([]),
+      speechCounts,
+      subscribeSpeech,
     }),
-    [voices, voiceURI, setVoiceURI, ttsEnabled, say, caption, captions],
+    [voices, voiceURI, setVoiceURI, ttsEnabled, say, caption, captions, speechCounts, subscribeSpeech],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Chess } from "chess.js";
-import { buildLegalMoves, isBoardQuestion, isOpeningRequest, looksLikeMove, parseCommand, parseQuietCommand, resolveConfirmation, resolveMove, speakMove } from "./resolver";
+import { buildLegalMoves, isBoardQuestion, isOpeningRequest, looksLikeMove, parseCommand, parseQuietCommand, resolveConfirmation, resolveMove, speakMove, speakQuietMove } from "./resolver";
 
 // Legal lists built from chess.js stand in for the backend's python-chess output;
 // the resolver only ever consumes the {san, uci} arrays, same as GET /legal.
@@ -105,6 +105,17 @@ describe("misc", () => {
     expect(speakMove("Nbd2")).toBe("knight from b, d2");
     expect(speakMove("O-O")).toBe("castles kingside");
     expect(speakMove("Qh5+")).toBe("queen h5, check");
+  });
+
+  it("uses concise, move-only wording for quiet opponent announcements", () => {
+    expect(speakQuietMove("e5")).toBe("Pawn e5");
+    expect(speakQuietMove("Nf6")).toBe("Knight f6");
+    expect(speakQuietMove("Bb5")).toBe("Bishop b5");
+    expect(speakQuietMove("Qxd4")).toBe("Queen takes d4");
+    expect(speakQuietMove("O-O")).toBe("Castle kingside");
+    expect(speakQuietMove("O-O-O")).toBe("Castle queenside");
+    expect(speakQuietMove("exd8=Q+")).toBe("Pawn takes d8 promotes to queen, check");
+    expect(speakQuietMove("Qh7#")).toBe("Queen h7, checkmate");
   });
 });
 
