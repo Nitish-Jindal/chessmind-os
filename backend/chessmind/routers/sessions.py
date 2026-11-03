@@ -6,11 +6,12 @@ from uuid import UUID
 
 import chess
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chessmind.db import get_session
 from chessmind.deps import get_current_player
-from chessmind.models import Player, PositionQuestion, TrainingSession
+from chessmind.models import Player, PositionQuestion, TrainingAttempt, TrainingSession
 from chessmind.schemas.sessions import (
     AskResponse,
     CoachingPayload,
@@ -29,6 +30,7 @@ from chessmind.schemas.sessions import (
     RevealRequest,
     RevealResponse,
     SessionCreate,
+    SessionEvaluationResponse,
     SessionSettingsPatch,
     SessionState,
     UtteranceRequest,
@@ -45,6 +47,7 @@ from chessmind.services.session import (
     set_opening_request,
     set_quiet,
 )
+from chessmind.services.engine import get_cached_analysis
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -161,6 +164,40 @@ async def get_legal_moves(
         reveals_used=int(ts.state_json.get("reveals_used", 0)),
         reveals_budget=budget,
         hints_used=int(ts.state_json.get("hints_used", 0)),
+    )
+
+
+@router.get("/{session_id}/evaluation", response_model=SessionEvaluationResponse)
+async def get_session_evaluation(
+    session_id,
+    player: Player = Depends(get_current_player),
+    session: AsyncSession = Depends(get_session, scope="function"),
+) -> SessionEvaluationResponse:
+    """Read cached Stockfish evidence for the current FEN; this endpoint never starts a search."""
+    ts = await _owned(session, session_id, player)
+    current_fen = ts.state_json["current_fen"]
+    analysis = await get_cached_analysis(session, chess.Board(current_fen))
+    last_attempt = (
+        await session.execute(
+            select(TrainingAttempt.classification)
+            .where(TrainingAttempt.session_id == ts.id)
+            .order_by(desc(TrainingAttempt.created_at), desc(TrainingAttempt.id))
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    top_line = analysis.results_json[0] if analysis and analysis.results_json else {}
+    return SessionEvaluationResponse(
+        session_id=ts.id,
+        current_fen=current_fen,
+        analysis_available=analysis is not None,
+        eval_cp_white=top_line.get("cp"),
+        mate_white=top_line.get("mate"),
+        depth=analysis.depth if analysis else None,
+        nodes=analysis.nodes if analysis else None,
+        engine_version=analysis.engine_version if analysis else None,
+        perspective=analysis.perspective if analysis else None,
+        analyzed_at=analysis.cached_at if analysis else None,
+        latest_move_classification=last_attempt,
     )
 
 

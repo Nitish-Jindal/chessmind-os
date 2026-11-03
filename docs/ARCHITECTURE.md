@@ -372,6 +372,7 @@ sane default; **we do not use cursor pagination in the MVP** (see §11.4).
 | `GET  /openings/tree?eco=&depth=&popularity=&rating=` | universal opening graph query |
 | `GET  /positions/{canonical_key}` | legal moves + stats + preferred repertoire + cached eval |
 | `POST /sessions` | start a session (mode, opening scope, opponent, seed) |
+| `GET /sessions/{id}/evaluation` | return persisted Stockfish evidence for the exact current FEN; a cache miss returns unavailable without searching or writing |
 | `POST /sessions/{id}/move` | validate move; return board state, classification, feedback, next opponent move |
 | `WS   /sessions/{id}/voice` | streaming turn-based voice; messages carry recognized SAN candidates + spoken response payloads |
 | `POST /sessions/{id}/reveal` | consume a blindfold reveal (free up to budget; beyond that increments `hints_used`) |

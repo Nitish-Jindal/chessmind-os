@@ -20,6 +20,7 @@ export interface LegalMove {
 export type Resolution =
   | { kind: "match"; move: LegalMove }
   | { kind: "ambiguous"; moves: LegalMove[] }
+  | { kind: "castle-unavailable" }
   | { kind: "none" };
 
 /** Build structured moves from the two parallel arrays the backend returns. */
@@ -72,7 +73,8 @@ const NUMBER_WORDS: Record<string, string> = {
 const DROP = new Set(["the", "a", "an", "move", "play", "my", "i", "will", "and", "check", "checkmate", "mate", "plus", "please", "go", "on", "at", "square", "with"]);
 
 export interface Descriptor {
-  castle?: "k" | "q";
+  castle?: "k" | "q" | "any";
+  invalidCastle?: boolean;
   piece?: LegalMove["piece"];
   capture: boolean;
   promotion?: LegalMove["promotion"];
@@ -84,7 +86,8 @@ export interface Descriptor {
 
 /** Lowercase, strip punctuation, and expand SAN glued together ("Nf3", "exd5", "e8=Q"). */
 function tokenize(raw: string): string[] {
-  let t = raw.toLowerCase().replace(/[.,!?;:]/g, " ");
+  let t = raw.toLowerCase().replace(/[’']/g, "").replace(/[.,!?;:]/g, " ");
+  t = t.replace(/\bkings\s+side\b/g, "king side").replace(/\bqueens\s+side\b/g, "queen side");
   t = t.replace(/zero zero zero|oh oh oh/g, "0-0-0").replace(/zero zero|oh oh/g, "0-0");
   t = t.replace(/0-0-0|o-o-o|0 0 0|o o o/g, " castle queenside ").replace(/0-0|o-o|0 0|o o/g, " castle kingside ");
   t = t.replace(/[-_]/g, " ").replace(/=/g, " equals ").replace(/x/g, (m, i, s) => {
@@ -102,8 +105,43 @@ function tokenize(raw: string): string[] {
   return t.split(/\s+/).filter(Boolean);
 }
 
+type CastleIntent = "k" | "q" | "any" | "invalid" | undefined;
+
+/** Recognize only clear castling language; an unfamiliar modifier must never choose a side. */
+function castleIntent(raw: string): CastleIntent {
+  const words = tokenize(raw);
+  const castleWords = new Set(["castle", "castles", "castling", "casteling", "castled"]);
+  const hasCastleWord = words.some((word) => castleWords.has(word));
+  const hasSidePhrase = words.some((word) => ["kingside", "queenside", "short", "long"].includes(word))
+    || (words.includes("king") && words.includes("side"))
+    || (words.includes("queen") && words.includes("side"));
+  if (!hasCastleWord && !hasSidePhrase) return undefined;
+
+  const kingSide = words.some((word) => ["king", "kingside", "short"].includes(word));
+  const queenSide = words.some((word) => ["queen", "queenside", "long"].includes(word));
+  const allowed = new Set([
+    ...castleWords,
+    "king", "kingside", "queen", "queenside", "short", "long", "side",
+    "the", "a", "an", "on", "to", "please", "my", "i", "want", "would",
+    "like", "can", "you", "make", "do", "it", "go", "with", "me",
+  ]);
+  if (kingSide && queenSide || words.some((word) => !allowed.has(word))) return "invalid";
+  if (queenSide) return "q";
+  if (kingSide) return "k";
+  return "any";
+}
+
 export function describe(raw: string): Descriptor {
   const d: Descriptor = { capture: false, files: [], squares: [], ranks: [] };
+  const castle = castleIntent(raw);
+  if (castle === "invalid") {
+    d.invalidCastle = true;
+    return d;
+  }
+  if (castle) {
+    d.castle = castle;
+    return d;
+  }
   const toks = tokenize(raw);
   // Convert "e four"/"f three" spoken forms: file word followed by number word.
   const out: string[] = [];
@@ -121,16 +159,6 @@ export function describe(raw: string): Descriptor {
   let fromNext = false;
   for (let i = 0; i < out.length; i++) {
     const tk = out[i];
-    if (tk === "castle" || tk === "castles" || tk === "castling") {
-      const rest = out.slice(i + 1).join(" ");
-      if (/queen|long/.test(rest)) d.castle = "q";
-      else if (/king|short/.test(rest)) d.castle = "k";
-      else if (!d.castle) d.castle = undefined;
-      if (d.castle) return d;
-      continue;
-    }
-    if (tk === "long" && out[i + 1] === "castle") { d.castle = "q"; return d; }
-    if (tk === "short" && out[i + 1] === "castle") { d.castle = "k"; return d; }
     if (tk === "takes" || tk === "capture" || tk === "captures" || tk === "taking" || tk === "x") { d.capture = true; continue; }
     if (tk === "equals" || tk === "promotes" || tk === "promote" || tk === "promoting") { promoNext = true; continue; }
     if (tk === "from") { fromNext = true; continue; }
@@ -167,9 +195,10 @@ export function describe(raw: string): Descriptor {
 export function resolveMove(transcript: string, legal: LegalMove[]): Resolution {
   const d = describe(transcript);
 
+  if (d.invalidCastle) return { kind: "none" };
   if (d.castle) {
-    const m = legal.filter((l) => l.castle === d.castle);
-    return pick(m);
+    const m = legal.filter((l) => l.castle && (d.castle === "any" || l.castle === d.castle));
+    return m.length ? pick(m) : { kind: "castle-unavailable" };
   }
 
   let pool = legal.filter((l) => !l.castle);
@@ -215,11 +244,13 @@ function pick(m: LegalMove[]): Resolution {
 
 /** Try each STT alternative in order; first that yields a hit wins. */
 export function resolveAlternatives(alts: string[], legal: LegalMove[]): Resolution {
+  let castleUnavailable = false;
   for (const a of alts) {
     const r = resolveMove(a, legal);
-    if (r.kind !== "none") return r;
+    if (r.kind === "castle-unavailable") castleUnavailable = true;
+    else if (r.kind !== "none") return r;
   }
-  return { kind: "none" };
+  return castleUnavailable ? { kind: "castle-unavailable" } : { kind: "none" };
 }
 
 const ORDINALS: Record<string, number> = {
@@ -321,5 +352,5 @@ export function isOpeningRequest(transcript: string): boolean {
 /** True when an utterance has the shape of a move (a square, castling, or a piece + square), legal or not. */
 export function looksLikeMove(transcript: string): boolean {
   const d = describe(transcript);
-  return !!d.castle || d.squares.length > 0 || !!d.fromSquare;
+  return !!d.castle || !!d.invalidCastle || d.squares.length > 0 || !!d.fromSquare;
 }

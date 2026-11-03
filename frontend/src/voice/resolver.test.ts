@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Chess } from "chess.js";
-import { buildLegalMoves, isBoardQuestion, isOpeningRequest, looksLikeMove, parseCommand, parseQuietCommand, resolveConfirmation, resolveMove, speakMove, speakQuietMove } from "./resolver";
+import { buildLegalMoves, isBoardQuestion, isOpeningRequest, looksLikeMove, parseCommand, parseQuietCommand, resolveAlternatives, resolveConfirmation, resolveMove, speakMove, speakQuietMove } from "./resolver";
 
 // Legal lists built from chess.js stand in for the backend's python-chess output;
 // the resolver only ever consumes the {san, uci} arrays, same as GET /legal.
@@ -33,14 +33,61 @@ describe("resolveMove", () => {
     expect(resolveMove("banana", start).kind).toBe("none");
   });
 
-  it("castling phrasings", () => {
-    const fen = "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1";
-    const l = legalFor(fen);
-    expect(sanOf(resolveMove("castle kingside", l))).toBe("O-O");
-    expect(sanOf(resolveMove("short castle", l))).toBe("O-O");
-    expect(sanOf(resolveMove("castles queenside", l))).toBe("O-O-O");
-    expect(sanOf(resolveMove("O-O-O", l))).toBe("O-O-O");
-    expect(sanOf(resolveMove("zero zero", l))).toBe("O-O");
+  it("resolves spoken and SAN castling forms only to legal backend-list candidates", () => {
+    const fen = "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1";
+    const whiteLegal = legalFor(fen);
+    const phrases: Array<[string, string]> = [
+      ["castle kingside", "O-O"],
+      ["short castle", "O-O"],
+      ["king side castle", "O-O"],
+      ["castle on the king side", "O-O"],
+      ["castle king's side", "O-O"],
+      ["castle queenside", "O-O-O"],
+      ["long castle", "O-O-O"],
+      ["queen side castle", "O-O-O"],
+      ["castle on the queen side", "O-O-O"],
+      ["castling queen side", "O-O-O"],
+      ["castle queen's side", "O-O-O"],
+      ["O-O", "O-O"],
+      ["O-O-O", "O-O-O"],
+      ["zero zero", "O-O"],
+      ["oh oh oh", "O-O-O"],
+    ];
+    for (const [said, expected] of phrases) {
+      const result = resolveMove(said, whiteLegal);
+      expect(sanOf(result), said).toBe(expected);
+      if (result.kind === "match") expect(whiteLegal.some((move) => move.uci === result.move.uci)).toBe(true);
+    }
+
+    const blackLegal = legalFor(fen.replace(" w ", " b "));
+    expect(sanOf(resolveMove("castle kingside", blackLegal))).toBe("O-O");
+    expect(sanOf(resolveMove("castle queenside", blackLegal))).toBe("O-O-O");
+  });
+
+  it("resolves generic castle only when one legal side exists and clarifies when both do", () => {
+    const whiteKingSideOnly = legalFor("4k3/8/8/8/8/8/8/4K2R w K - 0 1");
+    expect(sanOf(resolveMove("Castle", whiteKingSideOnly))).toBe("O-O");
+
+    const blackQueenSideOnly = legalFor("r3k3/8/8/8/8/8/8/4K3 b q - 0 1");
+    expect(sanOf(resolveMove("castling", blackQueenSideOnly))).toBe("O-O-O");
+
+    const bothSides = legalFor("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
+    const ambiguous = resolveMove("castle", bothSides);
+    expect(ambiguous.kind).toBe("ambiguous");
+    if (ambiguous.kind === "ambiguous") expect(ambiguous.moves.map((move) => move.san).sort()).toEqual(["O-O", "O-O-O"]);
+    const clarified = resolveConfirmation("queenside", bothSides.filter((move) => move.castle));
+    expect(clarified.kind).toBe("chosen");
+    if (clarified.kind === "chosen") expect(clarified.move.san).toBe("O-O-O");
+  });
+
+  it("reports unavailable castling clearly and rejects incorrect phrases", () => {
+    const startPosition = legalFor();
+    expect(resolveMove("castle", startPosition).kind).toBe("castle-unavailable");
+    expect(resolveMove("castle kingside", startPosition).kind).toBe("castle-unavailable");
+    expect(resolveMove("long castle", startPosition).kind).toBe("castle-unavailable");
+    expect(resolveAlternatives(["castling", "banana"], startPosition).kind).toBe("castle-unavailable");
+    expect(resolveMove("castle west", legalFor("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1")).kind).toBe("none");
+    expect(resolveMove("castle kingside queenside", startPosition).kind).toBe("none");
   });
 
   it("captures, pawn captures, bishop vs b-pawn", () => {

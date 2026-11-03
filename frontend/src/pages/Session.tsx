@@ -11,12 +11,14 @@ import {
   type OpponentMove,
   type QuestionTally,
   type QuizQuestion,
+  type SessionEvaluation,
   type SessionState,
 } from "../api";
 import { useAuth } from "../auth";
 import { Board } from "../components/Board";
 import { Captions } from "../components/Captions";
 import { MasteryDelta } from "../components/MasteryDelta";
+import { EvaluationBar } from "../components/EvaluationBar";
 import { VoicePicker } from "../components/VoicePicker";
 import {
   buildLegalMoves,
@@ -62,6 +64,9 @@ function SessionView({ id }: { id: string }) {
   const [legal, setLegal] = useState<LegalMoves | null>(null);
   const [fen, setFen] = useState<string>("");
   const [last, setLast] = useState<MoveResult | null>(null);
+  const [evaluation, setEvaluation] = useState<SessionEvaluation | null>(null);
+  const [evaluationLoading, setEvaluationLoading] = useState(false);
+  const [evaluationError, setEvaluationError] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
@@ -158,6 +163,34 @@ function SessionView({ id }: { id: string }) {
       cancelQueuedSpeech();
     };
   }, [id, cancelQueuedSpeech]);
+
+  // Read only persisted analysis for this exact FEN. The endpoint never starts an engine search.
+  useEffect(() => {
+    if (!fen) {
+      setEvaluation(null);
+      setEvaluationLoading(false);
+      setEvaluationError(null);
+      return;
+    }
+    const generation = sessionGeneration.current.capture();
+    let active = true;
+    setEvaluation(null);
+    setEvaluationError(null);
+    setEvaluationLoading(true);
+    api.sessionEvaluation(id)
+      .then((result) => {
+        if (!active || !isCurrentSession(generation)) return;
+        if (result.current_fen !== fen) return;
+        setEvaluation(result);
+      })
+      .catch(() => {
+        if (active && isCurrentSession(generation)) setEvaluationError("Saved Stockfish analysis is unavailable right now.");
+      })
+      .finally(() => {
+        if (active && isCurrentSession(generation)) setEvaluationLoading(false);
+      });
+    return () => { active = false; };
+  }, [id, fen, isCurrentSession]);
 
   // Initial load; announce an opening opponent move (player is black).
   useEffect(() => {
@@ -535,8 +568,17 @@ function SessionView({ id }: { id: string }) {
 
       const r = resolveAlternatives(alts, L.legalMoves);
       if (r.kind === "match") return void L.submit({ san: r.move.san, uci: r.move.uci });
+      if (r.kind === "castle-unavailable") {
+        const message = "Castling is unavailable in the current position.";
+        setIllegal(null);
+        setErr(message);
+        return say("system", message);
+      }
       if (r.kind === "ambiguous") {
         setPending(r.moves);
+        if (r.moves.every((move) => move.castle)) {
+          return say("system", "Both castling sides are legal. Which side do you mean: kingside or queenside?");
+        }
         return say("system", `More than one move fits. Did you mean ${r.moves.map((m) => speakMove(m.san)).join(", or ")}?`);
       }
       if (alts.some(looksLikeMove)) {
@@ -653,6 +695,12 @@ function SessionView({ id }: { id: string }) {
         <span className="badge">{color}</span>
         {quiet && <> <span className="badge">quiet</span></>}
       </h1>
+      <EvaluationBar
+        evaluation={evaluation}
+        loading={evaluationLoading}
+        error={evaluationError}
+        classificationFallback={last?.classification}
+      />
       <div className="grid">
         <div>
           {illegal && (

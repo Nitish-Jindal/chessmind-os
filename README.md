@@ -285,6 +285,17 @@ Voice is the browser's Web Speech API: no server-side speech, no keys.
   plus a red alert above the board, or above the hidden board in
   blindfold. The game does not advance. The API answers an illegal SAN/UCI
   with 422 `{code: "illegal_move"}`.
+- **Castling by voice or text**: "castle", "short castle", "long castle",
+  "king side castle" and "queen side castle" resolve only against the legal
+  move list. A generic castle is submitted only when one side is legal; if
+  both are legal, ChessMind asks which side. If neither is legal, it explains
+  that castling is unavailable.
+- **Position evaluation**: the session shows White and Black's score, a
+  relative evaluation bar, and saved Stockfish depth, nodes and version when
+  available. `GET /sessions/{id}/evaluation` reads analysis already persisted
+  for the exact current position; it does not start another search. Scores
+  keep the engine's White-centric convention, and blindfold sessions retain
+  the hidden board.
 - **Setting the opponent's opening**: say "play the London System /
   Caro-Kann / Spanish (Ruy Lopez) / Italian / Queen's Gambit / Sicilian
   against me", or any other taxonomy family by name, or a move: "play d4

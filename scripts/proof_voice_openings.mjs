@@ -119,6 +119,19 @@ async function apiGet(path) {
     return (await fetch(base + p, { headers: { Authorization: `Bearer ${t.access_token}` } })).json();
   }, [API, path]);
 }
+async function apiPost(path, body) {
+  return page.evaluate(async ([base, p, payload]) => {
+    const t = JSON.parse(localStorage.getItem("chessmind.tokens"));
+    const response = await fetch(base + p, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${t.access_token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(`${p} returned ${response.status}: ${JSON.stringify(result)}`);
+    return result;
+  }, [API, path, body]);
+}
 async function settle() { await page.waitForFunction(() => !document.querySelector('input[aria-label="Type a move"]')?.disabled, null, { timeout: 60000 }); await page.waitForTimeout(150); }
 async function launch({ mode = "guided", color = "white", style = "mix", opening = "", quiet = false }) {
   await page.goto(FE);
@@ -179,6 +192,17 @@ const hist = (await apiGet(`/sessions/${sid}`)).state_json.move_history_san;
 const c = new Chess(); for (const m of hist) c.move(m);
 note("history", hist.join(" "));
 check(hist.slice(0, 5).join(" ") === "e4 e5 Nf3 Nc6 Bb5", "server history starts 1.e4 e5 2.Nf3 Nc6 3.Bb5 (replayed by chess.js)");
+const currentFenForEval = (await apiGet(`/sessions/${sid}`)).state_json.current_fen;
+const savedAnalysis = await apiPost("/analysis/position", { fen: currentFenForEval, depth: 8, multipv: 1 });
+await page.reload();
+const evalPanel = page.getByLabel("Position evaluation");
+await evalPanel.getByText(`Depth ${savedAnalysis.depth}`, { exact: true }).waitFor();
+check((await evalPanel.innerText()).includes("White") && (await evalPanel.innerText()).includes("Black"), "evaluation bar shows both sides for the current position");
+const evaluationText = await evalPanel.innerText();
+const displayedNodes = evaluationText.match(/([\d,.\u00a0]+) nodes/)?.[1].replace(/\D/g, "");
+check(evaluationText.includes(savedAnalysis.engine_version) && displayedNodes === String(savedAnalysis.nodes), "evaluation bar shows the persisted Stockfish version, depth and nodes");
+check(await evalPanel.locator(".evaluation-track").count() === 1, "evaluation bar scales the persisted White-centric score");
+check(/Latest move: (Best|Good|Inaccuracy|Mistake|Blunder)/.test(await evalPanel.innerText()), "evaluation bar shows the backend's latest deterministic move quality");
 // No LLM_API_KEY in this stack: the optional LLM layer is off and the template is used.
 check((await page.getByLabel("Coach feedback").innerText()).includes("wording: deterministic template"), "coach card: wording from the deterministic template (LLM layer off without a key)");
 await page.screenshot({ path: join(OUT, "vo_ruy_lopez_announced.png"), fullPage: true });
@@ -328,6 +352,34 @@ const blackListening = await page.evaluate(() => window.__moveListeningSamples);
 check(blackListening.length > 0 && blackListening.every(Boolean), "quiet Black recognition stayed ready during backend processing");
 check((await page.evaluate(() => window.__ttsMicLeaks)).length === 0, "quiet Black recognition paused through TTS");
 await page.screenshot({ path: join(OUT, "vo_quiet_black_blindfold.png"), fullPage: true });
+
+// ---------------------------------------------------------------- G. Generic castling asks only when both legal sides exist.
+note("phase", "G: generic castling clarification, legal SAN submission, and hidden-board evaluation compatibility");
+sid = (await apiPost("/sessions", {
+  mode: "blindfold", player_color: "white", sampler_mode: "mainline", seed: 73,
+  starting_fen: "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",
+})).id;
+await page.goto(new URL(`/session/${sid}`, FE).href);
+await page.getByLabel("Position evaluation").waitFor();
+check(await page.getByRole("img", { name: /board hidden/i }).count() === 1, "blindfold evaluation remains visible without revealing the board");
+const movesBeforeCastle = apiCalls.filter((call) => call.endsWith("/move")).length;
+await speak("castle");
+await waitSpoken("Both castling sides are legal");
+check(apiCalls.filter((call) => call.endsWith("/move")).length === movesBeforeCastle, "generic castle asks which side instead of guessing");
+const castleResponse = page.waitForResponse((response) => new URL(response.url()).pathname.endsWith("/move") && response.request().method() === "POST");
+await speak("queenside");
+const castleMove = await (await castleResponse).json();
+check(castleMove.played_san === "O-O-O", "queenside clarification submits the backend-listed legal castle");
+await settle();
+sid = (await apiPost("/sessions", {
+  mode: "guided", player_color: "white", sampler_mode: "mainline", seed: 74,
+  starting_fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+})).id;
+await page.goto(new URL(`/session/${sid}`, FE).href);
+const movesBeforeUnavailableCastle = apiCalls.filter((call) => call.endsWith("/move")).length;
+await speak("castle");
+await waitSpoken("Castling is unavailable in the current position");
+check(apiCalls.filter((call) => call.endsWith("/move")).length === movesBeforeUnavailableCastle, "unavailable castling gives clear feedback and submits no move");
 
 writeFileSync(join(OUT, "proof_voice_openings.json"), JSON.stringify(log, null, 2));
 await browser.close();
