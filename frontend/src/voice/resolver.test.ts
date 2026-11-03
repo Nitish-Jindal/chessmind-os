@@ -80,6 +80,15 @@ describe("resolveMove", () => {
     if (clarified.kind === "chosen") expect(clarified.move.san).toBe("O-O-O");
   });
 
+  it("never interprets an incomplete side-only phrase as castling, even when one side is legal", () => {
+    const onlyKingside = legalFor("4k3/8/8/8/8/8/8/4K2R w K - 0 1");
+    for (const phrase of ["short", "long", "kingside", "queenside"]) {
+      const result = resolveMove(phrase, onlyKingside);
+      expect(result.kind, phrase).toBe("none");
+      expect(looksLikeMove(phrase), phrase).toBe(false);
+    }
+  });
+
   it("reports unavailable castling clearly and rejects incorrect phrases", () => {
     const startPosition = legalFor();
     expect(resolveMove("castle", startPosition).kind).toBe("castle-unavailable");

@@ -81,3 +81,34 @@ async def test_session_evaluation_reports_missing_analysis_without_fabricating_v
     assert result["depth"] is None
     assert result["nodes"] is None
     assert result["engine_version"] is None
+
+
+async def test_session_evaluation_uses_latest_classification_from_same_session_position(client, db):
+    headers = await _player(db, "session-evaluation-classification@example.com")
+    created = await client.post(
+        "/sessions",
+        json={"mode": "guided", "player_color": "white", "sampler_mode": "mainline", "seed": 23},
+        headers=headers,
+    )
+    assert created.status_code == 201, created.text
+    session_id = created.json()["id"]
+
+    move_response = await client.post(f"/sessions/{session_id}/move", json={"san": "e4"}, headers=headers)
+    assert move_response.status_code == 200, move_response.text
+    move = move_response.json()
+    session_state = await client.get(f"/sessions/{session_id}", headers=headers)
+    current_fen = session_state.json()["state_json"]["current_fen"]
+    assert move["current_fen"] == current_fen
+
+    # Make exact-current-position evidence available using real Stockfish; GET evaluation must not search.
+    analyzed = await client.post(
+        "/analysis/position",
+        json={"fen": current_fen, "depth": 8, "multipv": 1},
+        headers=headers,
+    )
+    assert analyzed.status_code == 200, analyzed.text
+    result = await client.get(f"/sessions/{session_id}/evaluation", headers=headers)
+    assert result.status_code == 200, result.text
+    evaluation = result.json()
+    assert evaluation["current_fen"] == current_fen
+    assert evaluation["latest_move_classification"] == move["classification"]

@@ -3,16 +3,18 @@ import { formatMoveClassification, formatSideEvaluation, whiteEvaluationPercent 
 
 interface Props {
   evaluation: SessionEvaluation | null;
+  currentFen: string;
   loading: boolean;
   error?: string | null;
   classificationFallback?: string | null;
 }
 
-export function EvaluationBar({ evaluation, loading, error, classificationFallback }: Props) {
-  const percent = whiteEvaluationPercent(evaluation);
-  const white = formatSideEvaluation(evaluation, "white");
-  const black = formatSideEvaluation(evaluation, "black");
-  const classification = formatMoveClassification(evaluation?.latest_move_classification ?? classificationFallback);
+export function EvaluationBar({ evaluation, currentFen, loading, error, classificationFallback }: Props) {
+  const currentEvaluation = evaluation?.current_fen === currentFen ? evaluation : null;
+  const percent = whiteEvaluationPercent(currentEvaluation);
+  const white = formatSideEvaluation(currentEvaluation, "white");
+  const black = formatSideEvaluation(currentEvaluation, "black");
+  const classification = formatMoveClassification(currentEvaluation?.latest_move_classification ?? classificationFallback);
 
   return (
     <section className="card evaluation" aria-label="Position evaluation">
@@ -40,9 +42,9 @@ export function EvaluationBar({ evaluation, loading, error, classificationFallba
             <i style={{ width: `${percent}%` }} />
           </div>
           <div className="evaluation-meta muted">
-            {evaluation?.engine_version && <span>{/stockfish/i.test(evaluation.engine_version) ? evaluation.engine_version : `Stockfish ${evaluation.engine_version}`}</span>}
-            {evaluation?.depth != null && <span>Depth {evaluation.depth}</span>}
-            {evaluation?.nodes != null && <span>{evaluation.nodes.toLocaleString()} nodes</span>}
+            {currentEvaluation?.engine_version && <span>{/stockfish/i.test(currentEvaluation.engine_version) ? currentEvaluation.engine_version : `Stockfish ${currentEvaluation.engine_version}`}</span>}
+            {currentEvaluation?.depth != null && <span>Depth {currentEvaluation.depth}</span>}
+            {currentEvaluation?.nodes != null && <span>{currentEvaluation.nodes.toLocaleString()} nodes</span>}
           </div>
         </>
       )}

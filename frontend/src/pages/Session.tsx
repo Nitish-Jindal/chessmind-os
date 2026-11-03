@@ -696,7 +696,8 @@ function SessionView({ id }: { id: string }) {
         {quiet && <> <span className="badge">quiet</span></>}
       </h1>
       <EvaluationBar
-        evaluation={evaluation}
+        evaluation={evaluation?.current_fen === fen ? evaluation : null}
+        currentFen={fen}
         loading={evaluationLoading}
         error={evaluationError}
         classificationFallback={last?.classification}

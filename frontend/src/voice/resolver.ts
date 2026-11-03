@@ -112,10 +112,9 @@ function castleIntent(raw: string): CastleIntent {
   const words = tokenize(raw);
   const castleWords = new Set(["castle", "castles", "castling", "casteling", "castled"]);
   const hasCastleWord = words.some((word) => castleWords.has(word));
-  const hasSidePhrase = words.some((word) => ["kingside", "queenside", "short", "long"].includes(word))
-    || (words.includes("king") && words.includes("side"))
-    || (words.includes("queen") && words.includes("side"));
-  if (!hasCastleWord && !hasSidePhrase) return undefined;
+  // A side by itself is not an instruction to castle. Require an explicit
+  // castling word; SAN spellings have already been normalized to "castle ...".
+  if (!hasCastleWord) return undefined;
 
   const kingSide = words.some((word) => ["king", "kingside", "short"].includes(word));
   const queenSide = words.some((word) => ["queen", "queenside", "long"].includes(word));
@@ -269,6 +268,16 @@ export function resolveConfirmation(transcript: string, options: LegalMove[]): C
   const t = transcript.toLowerCase().replace(/[.,!?]/g, " ").trim();
   const words = t.split(/\s+/);
   if (/^(no|nope|cancel|never mind|nevermind|neither|stop)\b/.test(t)) return { kind: "cancel" };
+  if (options.length > 0 && options.every((move) => !!move.castle)) {
+    const kingSide = words.some((word) => ["king", "kingside", "short"].includes(word));
+    const queenSide = words.some((word) => ["queen", "queenside", "long"].includes(word));
+    if (kingSide !== queenSide) {
+      const side = kingSide ? "k" : "q";
+      const matching = options.filter((move) => move.castle === side);
+      if (matching.length === 1) return { kind: "chosen", move: matching[0] };
+      if (matching.length > 1) return { kind: "narrowed", moves: matching };
+    }
+  }
   if (options.length === 1 && /^(yes|yeah|yep|yup|correct|confirm|right|ok|okay|sure)\b/.test(t)) {
     return { kind: "chosen", move: options[0] };
   }
