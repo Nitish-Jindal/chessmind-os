@@ -28,9 +28,13 @@ import {
   resolveAlternatives,
   resolveConfirmation,
   speakMove,
+  speakQuietMove,
   type LegalMove,
 } from "../voice/resolver";
-import { createRecognizer, sttSupported, cancelSpeech, type Recognizer } from "../voice/speech";
+import { createRecognizer, sttSupported, type Recognizer } from "../voice/speech";
+import { SessionGeneration } from "../voice/sessionGeneration";
+import { MoveRecovery } from "../voice/moveRecovery";
+import { shouldListen } from "../voice/turnPolicy";
 import { useVoice } from "../voice/VoiceContext";
 
 function fmtEval(cp: number | null | undefined, mate?: number | null): string {
@@ -46,7 +50,7 @@ export function Session() {
 }
 
 function SessionView({ id }: { id: string }) {
-  const { say, caption, clearCaptions } = useVoice();
+  const { say, caption, clearCaptions, registerSpeechGate, speechPending, cancelQueuedSpeech } = useVoice();
   const { player } = useAuth();
   const nav = useNavigate();
   // ?drill=<position_id>: this session was opened from a due mastery item; show its row before/after the answer.
@@ -60,6 +64,18 @@ function SessionView({ id }: { id: string }) {
   const [last, setLast] = useState<MoveResult | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const [syncPending, setSyncPending] = useState(false);
+  const [syncBusy, setSyncBusy] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const syncPendingRef = useRef(false);
+  const authoritativePlayerTurn = useRef(false);
+  const [commandBusy, setCommandBusy] = useState(false);
+  const commandBusyRef = useRef(false);
+  const moveRecovery = useRef(new MoveRecovery());
+  const [speechGateClosed, setSpeechGateClosed] = useState(false);
+  const speechGateRef = useRef(false);
+  const [micError, setMicError] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [pending, setPending] = useState<LegalMove[] | null>(null);
   const [interim, setInterim] = useState("");
@@ -72,6 +88,24 @@ function SessionView({ id }: { id: string }) {
   // Set when the last move attempt matched no legal move; cleared by the next accepted move.
   const [illegal, setIllegal] = useState<string | null>(null);
   const turnStart = useRef(Date.now());
+  const sessionGeneration = useRef(new SessionGeneration());
+
+  const isCurrentSession = useCallback(
+    (generation: number) => sessionGeneration.current.isCurrent(generation),
+    [],
+  );
+
+  const beginCommand = useCallback(() => {
+    if (commandBusyRef.current || busyRef.current || syncPendingRef.current) return false;
+    commandBusyRef.current = true;
+    setCommandBusy(true);
+    return true;
+  }, []);
+  const endCommand = useCallback((generation?: number) => {
+    if (generation !== undefined && !sessionGeneration.current.isCurrent(generation)) return;
+    commandBusyRef.current = false;
+    setCommandBusy(false);
+  }, []);
 
   const legalMoves = useMemo(() => (legal ? buildLegalMoves(legal.legal_moves_san, legal.legal_moves_uci) : []), [legal]);
   const blindfold = sess?.mode === "blindfold";
@@ -83,47 +117,86 @@ function SessionView({ id }: { id: string }) {
   const quietRef = useRef(false);
   quietRef.current = quiet;
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (generation: number) => {
     const [s, l] = await Promise.all([api.getSession(id), api.legal(id)]);
+    if (!sessionGeneration.current.isCurrent(generation)) return null;
     setSess(s);
     setLegal(l);
     setFen(l.current_fen);
+    authoritativePlayerTurn.current = l.status === "active" && l.next_to_move === "player";
     turnStart.current = Date.now();
     return { s, l };
   }, [id]);
 
-  // Initial load; announce an opening opponent move (player is black).
-  const announced = useRef<string | null>(null);
+  const retrySynchronization = useCallback(async () => {
+    if (!syncPendingRef.current || syncBusy) return;
+    const generation = sessionGeneration.current.capture();
+    setSyncBusy(true);
+    try {
+      await moveRecovery.current.retrySynchronization(async () => {
+        const result = await refresh(generation);
+        if (!result) throw new Error("The session changed before synchronization finished.");
+        return result;
+      });
+      if (!isCurrentSession(generation)) return;
+      syncPendingRef.current = false;
+      setSyncPending(false);
+      setSyncError(null);
+    } catch {
+      if (!isCurrentSession(generation)) return;
+      setSyncError("ChessMind OS still cannot confirm the current position. Retry synchronization before making another move.");
+    } finally {
+      if (isCurrentSession(generation)) setSyncBusy(false);
+    }
+  }, [refresh, isCurrentSession, syncBusy]);
+
+  // Async callbacks capture this generation; cleanup invalidates it on unmount or session change.
   useEffect(() => {
-    if (announced.current === id) return; // StrictMode runs effects twice in dev
-    announced.current = id;
+    const generation = sessionGeneration.current.activate();
+    return () => {
+      sessionGeneration.current.invalidate(generation);
+      cancelQueuedSpeech();
+    };
+  }, [id, cancelQueuedSpeech]);
+
+  // Initial load; announce an opening opponent move (player is black).
+  useEffect(() => {
+    const generation = sessionGeneration.current.capture();
     clearCaptions();
-    refresh()
-      .then(({ s }) => {
+    refresh(generation)
+      .then((result) => {
+        if (!result || !isCurrentSession(generation)) return;
+        const { s } = result;
         const om = s.state_json.last_opponent_move;
-        say("system", s.mode === "blindfold" ? "Blindfold session. The board is hidden. Hold the talk button and say your move." : "Session started. Make your move on the board, or by voice.");
-        if (s.settings_json.quiet) caption("system", "Quiet mode: only the opponent's moves are spoken.");
+        if (!s.settings_json.quiet) {
+          void say("system", s.mode === "blindfold" ? "Blindfold session. The board is hidden. Your moves are listening automatically." : "Session started. Make your move on the board, or by voice.");
+        } else caption("system", "Quiet mode: only the opponent's moves are spoken.");
         const req = s.state_json.opening_request;
         if (req && !s.settings_json.quiet) caption("system", `Opponent's opening: ${req.label}.`);
         if (om && s.state_json.move_history_san.length === 1) {
-          say("opponent", `Opponent plays ${speakMove(om.san)}.`);
-          if (om.announcement && !s.settings_json.quiet) say("opening", om.announcement.text);
+          void say("opponent", s.settings_json.quiet ? speakQuietMove(om.san) : `Opponent plays ${speakMove(om.san)}.`);
+          if (om.announcement && !s.settings_json.quiet) void say("opening", om.announcement.text);
         }
       })
-      .catch((e: Error) => setErr(e.message));
-    return () => cancelSpeech();
+      .catch((e: Error) => { if (isCurrentSession(generation)) setErr(e.message); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
     if (!drillPos || !player) return;
-    api.masteryRow(player.id, drillPos).then((before) => setDrill({ before, after: null })).catch((e: Error) => setErr(e.message));
-  }, [drillPos, player]);
+    const generation = sessionGeneration.current.capture();
+    api.masteryRow(player.id, drillPos)
+      .then((before) => { if (isCurrentSession(generation)) setDrill({ before, after: null }); })
+      .catch((e: Error) => { if (isCurrentSession(generation)) setErr(e.message); });
+  }, [drillPos, player, isCurrentSession]);
 
   async function nextDrill() {
     if (!player) return;
+    const generation = sessionGeneration.current.capture();
     await api.finish(id).catch(() => {});
+    if (!isCurrentSession(generation)) return;
     const n = await api.nextDrill(player.id);
+    if (!isCurrentSession(generation)) return;
     if (!n.row || !n.due_now) return nav("/mastery");
     const s = await api.createSession({
       mode: "guided",
@@ -132,147 +205,258 @@ function SessionView({ id }: { id: string }) {
       novelty_prob: 0,
       starting_fen: n.row.fen,
     });
+    if (!isCurrentSession(generation)) return;
     nav(`/session/${s.id}?drill=${n.row.position_id}`);
   }
 
   const announce = useCallback(
-    (list: OpeningAnnouncement[]) => {
-      if (!quietRef.current) for (const a of list) say("opening", a.text);
+    async (list: OpeningAnnouncement[], generation: number) => {
+      if (!quietRef.current) for (const a of list) {
+        if (!isCurrentSession(generation)) return;
+        await say("opening", a.text);
+        if (!isCurrentSession(generation)) return;
+      }
     },
-    [say],
+    [say, isCurrentSession],
   );
 
   /** "Opponent plays X", then the opening it reached (if new), then a note when the requested opening ends. */
   const speakOpponent = useCallback(
-    (om: OpponentMove | null | undefined, label?: string) => {
-      if (!om) return;
-      say("opponent", `Opponent plays ${speakMove(om.san)}.`);
-      if (om.announcement) announce([om.announcement]);
-      if (om.request_event === "out_of_book" && label) caption("system", `Out of book for the ${label}; the opponent plays normally from here.`);
+    async (om: OpponentMove | null | undefined, label: string | undefined, generation: number) => {
+      if (!om || !isCurrentSession(generation)) return;
+      const quietNow = quietRef.current;
+      await say("opponent", quietNow ? speakQuietMove(om.san) : `Opponent plays ${speakMove(om.san)}.`);
+      if (!isCurrentSession(generation)) return;
+      if (om.announcement && !quietRef.current) await announce([om.announcement], generation);
+      if (!isCurrentSession(generation)) return;
+      if (!quietRef.current && om.request_event === "out_of_book" && label) caption("system", `Out of book for the ${label}; the opponent plays normally from here.`);
     },
-    [say, caption, announce],
+    [say, caption, announce, isCurrentSession],
   );
 
   /** Every move — dragged, spoken or typed — goes through the backend, which is the only authority. */
   const submit = useCallback(
     async (m: { san?: string; uci?: string }) => {
-      if (busy) return;
+      if (busyRef.current || commandBusyRef.current || syncPendingRef.current || !authoritativePlayerTurn.current) return;
+      const generation = sessionGeneration.current.capture();
+      if (!isCurrentSession(generation)) {
+        return;
+      }
+      busyRef.current = true;
       setBusy(true);
       setErr(null);
       setPending(null);
+      let accepted = false;
+      let authoritativeRecovered = false;
       try {
-        const r = await api.move(id, { ...m, latency_ms: Date.now() - turnStart.current });
+        const submission = await moveRecovery.current.submitOnce(
+          () => api.move(id, { ...m, latency_ms: Date.now() - turnStart.current }),
+          async () => {
+            const result = await refresh(generation);
+            if (!result) throw new Error("The session changed before synchronization finished.");
+            return result;
+          },
+        );
+        if (!submission) return;
+        if (!isCurrentSession(generation)) return;
+        accepted = true;
+        const r = submission.move;
         setLast(r);
         setIllegal(null);
         if (drillPos && player && !drillAnswered.current) {
           // First answer in a drill session is the graded recall of the drilled position.
           drillAnswered.current = true;
-          const after = await api.masteryRow(player.id, drillPos);
-          setDrill((d) => (d ? { ...d, after } : d));
+          try {
+            const after = await api.masteryRow(player.id, drillPos);
+            if (!isCurrentSession(generation)) return;
+            setDrill((d) => (d ? { ...d, after } : d));
+          } catch (e) {
+            if (!isCurrentSession(generation)) return;
+            setErr((e as Error).message);
+          }
         }
         setFen(r.current_fen);
         setRevealed(false);
-        announce(r.announcements.filter((a) => a.by === "player"));
-        speakOpponent(r.opponent_move, r.opening_request?.label);
-        if (!r.quiet && r.coaching.spoken_summary) say("coach", r.coaching.spoken_summary);
-        if (r.status === "finished") say("system", "The game is over.");
-        await refresh();
+        let refreshed = submission.state;
+        if (!refreshed) {
+          try {
+            refreshed = await moveRecovery.current.reconcile(async () => {
+              const result = await refresh(generation);
+              if (!result) throw new Error("The session changed before synchronization finished.");
+              return result;
+            });
+          } catch {
+            if (!isCurrentSession(generation)) return;
+            syncPendingRef.current = true;
+            setSyncPending(true);
+            setSyncError("Your move was accepted, but ChessMind OS could not confirm the current position. Retry synchronization before making another move.");
+            void rec.current?.setDesired(false, quietRef.current);
+            return;
+          }
+        }
+        if (!refreshed || !isCurrentSession(generation)) return;
+        authoritativeRecovered = true;
+        syncPendingRef.current = false;
+        setSyncPending(false);
+        setSyncError(null);
+        await announce(r.announcements.filter((a) => a.by === "player"), generation);
+        if (!isCurrentSession(generation)) return;
+        await speakOpponent(r.opponent_move, r.opening_request?.label, generation);
+        if (!isCurrentSession(generation)) return;
+        if (!quietRef.current && !r.quiet && r.coaching.spoken_summary) await say("coach", r.coaching.spoken_summary);
+        if (!isCurrentSession(generation)) return;
+        if (r.status === "finished") await say("system", "The game is over.");
+        if (!isCurrentSession(generation)) return;
       } catch (e) {
+        if (!isCurrentSession(generation)) return;
+        if (accepted) {
+          setErr(`Move accepted, but the response sequence could not finish: ${(e as Error).message}`);
+          return;
+        }
         const bad = illegalMoveDetail(e);
         if (bad) {
           // python-chess found no legal move matching the input: say so, keep the position.
           setIllegal(bad.message);
-          say("system", bad.message);
+          await say("system", bad.message);
+          if (!isCurrentSession(generation)) return;
         } else {
           const msg = (e as Error).message;
           setErr(msg);
           caption("system", `Move rejected: ${msg}`);
         }
-        await refresh().catch(() => {});
+        if (!isCurrentSession(generation)) return;
+        const refreshed = await refresh(generation).catch(() => null);
+        if (!isCurrentSession(generation)) return;
+        if (refreshed) moveRecovery.current.finishSequence();
       } finally {
-        setBusy(false);
+        if (isCurrentSession(generation)) {
+          busyRef.current = false;
+          setBusy(false);
+          if (accepted && authoritativeRecovered) moveRecovery.current.finishSequence();
+        }
       }
     },
-    [busy, id, say, caption, refresh, drillPos, player, announce, speakOpponent],
+    [id, say, caption, refresh, drillPos, player, announce, speakOpponent, isCurrentSession],
   );
 
   const toggleQuiet = useCallback(
     async (on: boolean) => {
+      if (!beginCommand()) return;
+      const generation = sessionGeneration.current.capture();
       const flip = (q: boolean) => setSess((s) => (s ? { ...s, settings_json: { ...s.settings_json, quiet: q } } : s));
+      quietRef.current = on;
       flip(on); // optimistic, so the checkbox follows the click; reverted if the PATCH fails
+      if (on) cancelQueuedSpeech();
       try {
-        setSess(await api.setQuiet(id, on));
+        const updated = await api.setQuiet(id, on);
+        if (!isCurrentSession(generation)) return;
+        setSess(updated);
         if (on) setQuiz(null);
-        say("system", on ? "Quiet mode on. I'll only call out the opponent's moves." : "Quiet mode off. Coaching is back on.");
+        await say("system", on ? "Quiet mode on. I'll only call out the opponent's moves." : "Quiet mode off. Coaching is back on.");
       } catch (e) {
+        if (!isCurrentSession(generation)) return;
+        quietRef.current = !on;
         flip(!on);
         setErr((e as Error).message);
+      } finally {
+        endCommand(generation);
       }
     },
-    [id, say],
+    [id, say, cancelQueuedSpeech, beginCommand, endCommand, isCurrentSession],
   );
 
   /** "Play the Caro-Kann / d4 against me": parsed and validated server-side, then followed by the sampler. */
   const requestOpening = useCallback(
     async (alts: string[]) => {
+      if (!beginCommand()) return;
+      const generation = sessionGeneration.current.capture();
       try {
         const r = await api.openingCommand(id, alts);
-        say("system", r.message);
+        if (!isCurrentSession(generation)) return;
+        await say("system", r.message);
+        if (!isCurrentSession(generation)) return;
         if (r.restarted) {
           setLast(null);
           setIllegal(null);
           setRevealed(false);
         }
-        speakOpponent(r.opponent_move);
-        await refresh();
+        await speakOpponent(r.opponent_move, undefined, generation);
+        if (!isCurrentSession(generation)) return;
+        await refresh(generation);
       } catch (e) {
+        if (!isCurrentSession(generation)) return;
         setErr((e as Error).message);
+      } finally {
+        endCommand(generation);
       }
     },
-    [id, say, speakOpponent, refresh],
+    [id, say, speakOpponent, refresh, beginCommand, endCommand, isCurrentSession],
   );
 
   /** Board question → server answers from python-chess / cached Stockfish; spoken and captioned. */
   const askBoard = useCallback(
     async (alts: string[]) => {
+      if (!beginCommand()) return;
+      const generation = sessionGeneration.current.capture();
       try {
         const r = await api.ask(id, alts);
-        say(r.understood ? "coach" : "system", r.answer_text);
+        if (!isCurrentSession(generation)) return;
+        await say(r.understood ? "coach" : "system", r.answer_text);
+        if (!isCurrentSession(generation)) return;
         setLastAnswer(r.answer_text);
       } catch (e) {
+        if (!isCurrentSession(generation)) return;
         setErr((e as Error).message);
+      } finally {
+        endCommand(generation);
       }
     },
-    [id, say],
+    [id, say, beginCommand, endCommand, isCurrentSession],
   );
 
   const startQuiz = useCallback(async () => {
     if (quietRef.current) return caption("system", "Quiet mode is on: no quizzes. Say \"quiet mode off\" to turn coaching back on.");
+    if (!beginCommand()) return;
+    const generation = sessionGeneration.current.capture();
     try {
       const q = await api.quiz(id);
+      if (!isCurrentSession(generation)) return;
       setQuiz(q);
       setLastAnswer(null);
-      say("coach", q.prompt);
+      await say("coach", q.prompt);
+      if (!isCurrentSession(generation)) return;
     } catch (e) {
+      if (!isCurrentSession(generation)) return;
       setErr((e as Error).message);
+    } finally {
+      endCommand(generation);
     }
-  }, [id, say, caption]);
+  }, [id, say, caption, beginCommand, endCommand, isCurrentSession]);
 
   /** Quiz answer → scored server-side against the board captured when the question was asked. */
   const answerQuiz = useCallback(
     async (q: QuizQuestion, alts: string[]) => {
+      if (!beginCommand()) return;
+      const generation = sessionGeneration.current.capture();
       try {
         const r = await api.answerQuiz(id, q.question_id, alts);
-        if (!r.understood) return say("system", r.feedback);
+        if (!isCurrentSession(generation)) return;
+        if (!r.understood) {
+          await say("system", r.feedback);
+          return;
+        }
         setQuiz(null);
         setTally(r.tally);
         setLastAnswer(r.feedback);
-        say("coach", r.feedback);
+        await say("coach", r.feedback);
       } catch (e) {
+        if (!isCurrentSession(generation)) return;
         setErr((e as Error).message);
+      } finally {
+        endCommand(generation);
       }
     },
-    [id, say],
+    [id, say, beginCommand, endCommand, isCurrentSession],
   );
 
   // Mutable view of state for callbacks owned by the recognizer.
@@ -280,8 +464,11 @@ function SessionView({ id }: { id: string }) {
   live.current = { legalMoves, pending, myTurn, busy, submit, last, quiz };
 
   const doReveal = useCallback(async () => {
+    if (!beginCommand()) return;
+    const generation = sessionGeneration.current.capture();
     try {
       const r = await api.reveal(id, "voice-or-button");
+      if (!isCurrentSession(generation)) return;
       setFen(r.current_fen);
       setRevealed(true);
       setLegal((l) => (l ? { ...l, reveals_used: r.reveals_used, reveals_budget: r.reveals_budget, hints_used: r.hints_used } : l));
@@ -292,14 +479,21 @@ function SessionView({ id }: { id: string }) {
           : `Board revealed — beyond the free budget, this counts against your visualization score (hints used: ${r.hints_used}).`,
       );
     } catch (e) {
+      if (!isCurrentSession(generation)) return;
       setErr((e as Error).message);
+    } finally {
+      endCommand(generation);
     }
-  }, [id, caption]);
+  }, [id, caption, beginCommand, endCommand, isCurrentSession]);
 
   /** Handle one recognized/typed utterance (all STT alternatives, best first). */
   const handleUtterance = useCallback(
     (alts: string[]) => {
       const L = live.current;
+      if (syncPendingRef.current) return;
+      // Quiet mode keeps the service armed during Stockfish and opponent selection, but a
+      // second transcript during that turn can never trigger another move or narration.
+      if (quietRef.current && (busyRef.current || commandBusyRef.current || syncPendingRef.current || moveRecovery.current.isLocked)) return;
       const heard = alts[0];
       caption("you", heard);
 
@@ -322,7 +516,7 @@ function SessionView({ id }: { id: string }) {
         return void answerQuiz(L.quiz, alts);
       }
       if (isBoardQuestion(heard)) return void askBoard(alts);
-      if (!L.myTurn || L.busy) return say("system", "It is not your turn.");
+      if (!L.myTurn || L.busy || busyRef.current || commandBusyRef.current || syncPendingRef.current || moveRecovery.current.isLocked) return say("system", "It is not your turn.");
 
       if (L.pending) {
         let outcome = resolveConfirmation(heard, L.pending);
@@ -357,50 +551,75 @@ function SessionView({ id }: { id: string }) {
   const onUtterance = useRef(handleUtterance);
   onUtterance.current = handleUtterance;
 
-  // Push-to-talk recognizer.
+  // One recognizer manager owns all automatic recognition runs for this session.
   const rec = useRef<Recognizer | null>(null);
   useEffect(() => {
+    const generation = sessionGeneration.current.capture();
+    let disposed = false;
+    const activeSession = () => !disposed && isCurrentSession(generation);
     rec.current = createRecognizer({
-      onInterim: setInterim,
+      isSessionActive: activeSession,
+      onInterim: (text) => { if (activeSession()) setInterim(text); },
       onFinal: (alts) => {
+        if (!activeSession()) return;
         setInterim("");
+        if (quietRef.current && (busyRef.current || commandBusyRef.current || syncPendingRef.current || moveRecovery.current.isLocked)) return;
         onUtterance.current(alts);
       },
-      onState: setListening,
-      onError: (m) => caption("system", m),
+      onState: (state) => {
+        if (!activeSession()) return;
+        setListening(state);
+        if (state) setMicError(null);
+      },
+      onError: (m, code) => {
+        if (!activeSession()) return;
+        setMicError(code === "not-allowed" || code === "service-not-allowed"
+          ? "Microphone permission is blocked. Allow microphone access, then retry."
+          : m);
+        caption("system", m);
+      },
     });
-    return () => rec.current?.stop();
-  }, [caption]);
-
-  const startTalking = useCallback(() => {
-    cancelSpeech(); // never let TTS leak into the mic
-    rec.current?.start();
-  }, []);
-  const stopTalking = useCallback(() => rec.current?.stop(), []);
-
-  // Space bar = push-to-talk when not typing.
-  useEffect(() => {
-    const typing = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
-    const down = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !e.repeat && !typing(e.target)) {
-        e.preventDefault();
-        startTalking();
-      }
-    };
-    const up = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !typing(e.target)) stopTalking();
-    };
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
     return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
+      disposed = true;
+      void rec.current?.stop();
+      cancelQueuedSpeech();
+      rec.current = null;
     };
-  }, [startTalking, stopTalking]);
+  }, [caption, isCurrentSession]);
+
+  // Every speech source in VoiceContext (including VoicePicker) closes this gate synchronously.
+  useEffect(() => {
+    const generation = sessionGeneration.current.capture();
+    return registerSpeechGate(async (blocked) => {
+      if (!isCurrentSession(generation)) return;
+      speechGateRef.current = blocked;
+      setSpeechGateClosed(blocked);
+      if (blocked) await rec.current?.setDesired(false, quietRef.current);
+    });
+  }, [registerSpeechGate, isCurrentSession]);
+
+  // The server-reported turn is authoritative. Normal mode is one-shot and turn-gated;
+  // quiet mode stays continuously armed while the player thinks or the backend processes.
+  useEffect(() => {
+    const desired = shouldListen({
+      active: !!sess && !finished && !syncPending,
+      quiet,
+      playerTurn: myTurn,
+      processing: busy || commandBusy,
+      speechPending,
+      speechGateClosed: speechGateRef.current,
+    });
+    void rec.current?.setDesired(desired, quiet);
+  }, [sess, finished, quiet, myTurn, busy, commandBusy, speechPending, speechGateClosed, syncPending]);
+
+  const retryMicrophone = useCallback(() => {
+    setMicError(null);
+    rec.current?.retry();
+  }, []);
 
   // Board drag: chess.js only pre-checks so illegal drops snap back; the POST is authoritative.
   function onDrop(from: string, to: string): boolean {
-    if (!myTurn || busy) return false;
+    if (!myTurn || busy || commandBusy || syncPending) return false;
     try {
       const c = new Chess(fen);
       const m = c.move({ from, to, promotion: "q" });
@@ -442,7 +661,7 @@ function SessionView({ id }: { id: string }) {
             </p>
           )}
           {showBoard ? (
-            <Board fen={fen} orientation={color} interactive={!!myTurn && !busy} onDrop={onDrop} />
+            <Board fen={fen} orientation={color} interactive={!!myTurn && !busy && !commandBusy && !syncPending} onDrop={onDrop} />
           ) : (
             <div className="blind" role="img" aria-label="Board hidden for blindfold play">
               <div>
@@ -475,37 +694,42 @@ function SessionView({ id }: { id: string }) {
 
         <div>
           <section className="card" aria-label="Voice controls">
-            <div className="row">
-              <button
-                className={`ptt ${listening ? "on" : ""}`}
-                disabled={!sttSupported || busy}
-                onPointerDown={startTalking}
-                onPointerUp={stopTalking}
-                onPointerLeave={() => listening && stopTalking()}
-                onKeyDown={(e) => e.key === "Enter" && (listening ? stopTalking() : startTalking())}
-                aria-pressed={listening}
-              >
-                {listening ? "Listening… release to send" : "Hold to talk (or hold Space)"}
-              </button>
-              {!sttSupported && <span className="muted">Speech recognition isn't available in this browser — use the text box.</span>}
-            </div>
+            {syncPending && (
+              <div role="alert" className="row">
+                <span className="error">{syncError ?? "The accepted move still needs synchronization."}</span>
+                <button type="button" onClick={() => void retrySynchronization()} disabled={syncBusy}>
+                  {syncBusy ? "Synchronizing…" : "Retry synchronization"}
+                </button>
+              </div>
+            )}
+            {sttSupported ? (
+              <p className="muted" role="status" aria-live="polite">
+                {listening ? "Listening automatically" : speechPending || speechGateClosed ? "Waiting for speech to finish" : busy && quiet ? "Ready for your next turn" : "Microphone paused"}
+              </p>
+            ) : <p className="muted">Speech recognition isn't available in this browser — use the text box.</p>}
+            {micError && (
+              <div role="alert" className="row">
+                <span className="error">{micError}</span>
+                <button type="button" onClick={retryMicrophone}>Retry microphone</button>
+              </div>
+            )}
             <form className="row" onSubmit={onText} style={{ marginTop: ".5rem" }}>
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder={pending ? "first / second / the move" : quiz ? "Your answer: f3 and c3 · white knight · none" : "Type a move (Nf3) or ask: where is my knight?"}
                 aria-label="Type a move"
-                disabled={busy}
+                disabled={busy || commandBusy || syncPending}
                 style={{ flex: 1 }}
                 autoComplete="off"
               />
-              <button type="submit" disabled={busy || !text.trim()}>Send</button>
+              <button type="submit" disabled={busy || commandBusy || syncPending || !text.trim()}>Send</button>
             </form>
             {pending && (
               <div className="row" role="group" aria-label="Confirm move" style={{ marginTop: ".5rem" }}>
                 <span>Did you mean:</span>
                 {pending.map((m) => (
-                  <button key={m.uci} onClick={() => void submit({ san: m.san, uci: m.uci })}>{m.san}</button>
+                  <button key={m.uci} disabled={syncPending} onClick={() => void submit({ san: m.san, uci: m.uci })}>{m.san}</button>
                 ))}
                 <button onClick={() => setPending(null)}>Cancel</button>
               </div>

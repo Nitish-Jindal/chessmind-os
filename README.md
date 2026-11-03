@@ -44,7 +44,7 @@ phase tracking is in [`PROGRESS.md`](PROGRESS.md).
 ```
  Browser (React 18 + Vite + TS)                       Render static site
  ├─ react-chessboard / chess.js (display only)
- ├─ Web Speech API: STT (push-to-talk) + TTS
+ ├─ Web Speech API: automatic turn-based STT + queued TTS
  └─ spoken-SAN resolver, constrained to GET /sessions/{id}/legal
         │  HTTPS + JWT (VITE_API_BASE_URL)
         ▼
@@ -120,11 +120,13 @@ Known wart: pytest prints `194 passed` and then the interpreter can hang on
 exit (pre-existing; the engine/DB background threads are not torn down).
 Run it under `timeout` in scripts.
 
-Browser proofs (headless Chromium against the running stack; only the
+Browser proofs (headless Chromium against an isolated test stack; only the
 microphone/system voices are stubbed): `node scripts/proof_frontend.mjs`,
-`node scripts/proof_ui_flows.mjs`, `node scripts/proof_voice_openings.mjs`
+`node scripts/proof_ui_flows.mjs`,
+`node scripts/proof_voice_openings.mjs http://localhost:5174 http://127.0.0.1:8001`
 (opening announcements, quiet mode, illegal moves, "play … against me",
-playing Black), `node scripts/proof_opponent_prep.mjs` (150 real games →
+playing Black). The voice proof requires an explicit isolated loopback API URL
+and refuses the production `localhost:8000` backend. `node scripts/proof_opponent_prep.mjs` (150 real games →
 prep report → blindfold game vs the twin) and
 `node scripts/proof_position_questions.mjs`. The last one needs a fresh
 database, the backend started with
@@ -133,6 +135,10 @@ and a production frontend build (`npx vite build && npx vite preview --port 5173
 Under the dev server, React StrictMode runs effects twice, so the masters
 panel reads "cached" instead of "fetched just now". API proofs: `scripts/day1_proof.py`,
 `proof_italian_session.py`, `proof_mastery.py`, `proof_opponent.py`.
+
+The older `proof_frontend.mjs`, `proof_ui_flows.mjs`, and position/opponent
+proofs still default to or hard-code `localhost:8000`. Do not run them until
+they are configured for the approved isolated test backend.
 
 ## Configuration
 
@@ -227,7 +233,10 @@ in `engine_analysis`, so repeated positions do not hit the engine.
 Voice is the browser's Web Speech API: no server-side speech, no keys.
 
 - **STT**: `SpeechRecognition` / `webkitSpeechRecognition`, `en-US`,
-  push-to-talk, up to 5 alternatives per utterance. Works in Chrome and
+  automatically listens on the player's turn in normal mode and continuously
+  in quiet mode, with up to 5 alternatives per result. Normal mode pauses
+  through engine work and all queued speech; quiet mode stays ready during
+  engine work and pauses for any app speech. Works in Chrome and
   Edge; Safari support varies; Firefox has no STT (the text box is the
   fallback). Microphone access requires a secure context: `localhost` or
   HTTPS (the Render URL is HTTPS).
@@ -235,7 +244,8 @@ Voice is the browser's Web Speech API: no server-side speech, no keys.
   "castle kingside", raw SAN, etc. onto the server's legal-move list and
   asks "Did you mean A or B?" instead of guessing. The backend re-validates
   every move with `python-chess`.
-- **TTS**: `speechSynthesis`; the voice dropdown is filled on
+- **TTS**: a shared `speechSynthesis` queue; recognition waits for every
+  utterance to finish or settle before resuming. The voice dropdown is filled on
   `voiceschanged`, and the choice is stored in `player.settings_json.tts_voice`.
 - Blindfold reveals: `settings_json.blindfold_free_reveals_per_session`
   (default 2); extra reveals lower the visualization score.
@@ -266,8 +276,9 @@ Voice is the browser's Web Speech API: no server-side speech, no keys.
   King's Knight Opening) are skipped. The session page shows the current
   opening.
 - **Quiet mode**: a launcher checkbox, a session checkbox, or saying "quiet
-  mode on/off" (`PATCH /sessions/{id}/settings`). Only the opponent's moves
-  are spoken; no coaching, quizzes or announcements. Moves are still
+  mode on/off" (`PATCH /sessions/{id}/settings`). Only a concise callout of
+  the actual opponent move is spoken (for example, "Pawn e5" or "Queen takes
+  d4"); no coaching, quizzes or opening announcements. Moves are still
   validated, and still graded for the mastery schedule.
 - **Illegal moves**: a move-shaped utterance or entry that matches no legal
   move gets "That's an illegal move, try again." (spoken and captioned),

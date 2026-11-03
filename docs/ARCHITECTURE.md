@@ -508,13 +508,18 @@ fallback. Deviations from the plan above, kept deliberately small:
 
 MVP uses the browser Web Speech API end-to-end:
 
-- **STT:** `SpeechRecognition` streams interim results; the frontend sends
-  final hypotheses to `WS /sessions/{id}/voice`. The server resolves them
-  via `rules.resolve_spoken_move` and either commits the move or returns a
-  disambiguation prompt.
+- **STT:** the frontend automatically listens on the player's turn. Normal
+  mode uses one final result per recognition run and pauses through backend
+  processing and all queued speech. Quiet mode uses continuous recognition,
+  deduplicates final results, and stays ready during backend processing while
+  still pausing for every app utterance. Final hypotheses are resolved against
+  `GET /sessions/{id}/legal`; accepted moves go through the authoritative
+  `POST /sessions/{id}/move` path. Ambiguity remains a spoken clarification.
 - **TTS:** `SpeechSynthesisUtterance` on the browser. The spoken text is
-  the coach's `spoken_summary` plus the next opponent move announcement.
-  Voice selection — see §11.5.
+  serialized through one shared queue. The queue gates recognition from enqueue
+  until each utterance ends, errors, or is cancelled. Normal mode preserves
+  opponent, opening, and coach speech; quiet mode uses concise opponent SAN
+  callouts only. Voice selection — see §11.5.
 - **Server-side streaming** (post-MVP): the `VoiceProvider` interface is
   already present so we can swap in a server-side streaming provider
   without reshaping the orchestrator.
@@ -725,7 +730,8 @@ Called out in `README.md` under Known Gaps.
   wipe owned games and derived stats; private PGNs never bleed into the
   shared opening graph aggregates without consent (configurable).
 - **Accessibility.** Keyboard board controls; captions on every spoken
-  turn; push-to-talk and text-input fallbacks for voice sessions.
+  turn; automatic voice turns with text-input fallback when recognition is
+  unavailable or permission is denied.
 - **Cost controls.** Analysis cache first; per-user Stockfish time budget
   per session; LLM token budget per session; both configurable.
 

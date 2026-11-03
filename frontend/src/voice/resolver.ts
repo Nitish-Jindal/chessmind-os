@@ -293,6 +293,15 @@ export function speakMove(san: string): string {
   return `${piece ?? "pawn"} ${s}`.replace(/\s+/g, " ").trim() + promo + suffix;
 }
 
+/** Concise quiet-mode callout for the backend-returned opponent SAN. */
+export function speakQuietMove(san: string): string {
+  const suffix = san.endsWith("#") ? ", checkmate" : san.endsWith("+") ? ", check" : "";
+  if (san.startsWith("O-O-O")) return `Castle queenside${suffix}`;
+  if (san.startsWith("O-O")) return `Castle kingside${suffix}`;
+  return `${speakMove(san).replace(/, (check|checkmate)$/, "")}${suffix}`
+    .replace(/^./, (first) => first.toUpperCase());
+}
+
 /** "quiet mode on" / "be quiet" → true; "quiet mode off" / "coach me" → false; anything else → null. */
 export function parseQuietCommand(transcript: string): boolean | null {
   const t = transcript.toLowerCase().replace(/[.,!?]/g, " ").trim();
