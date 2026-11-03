@@ -5,6 +5,10 @@
   },
   {
     "k": "ok",
+    "v": "automatic voice mode has no push-to-talk control"
+  },
+  {
+    "k": "ok",
     "v": "blindfold: board hidden"
   },
   {
@@ -56,12 +60,20 @@
       "Ruy Lopez",
       "Opponent plays pawn a6.",
       "Ruy Lopez: Morphy Defense",
-      "Bb5 is playable — about +0.26 off the top line. Better was d4, planning d4 exd4 Nxd4 Nf6."
+      "Bb5 is the top choice."
     ]
   },
   {
     "k": "ok",
     "v": "TTS spoke 'Ruy Lopez' exactly once"
+  },
+  {
+    "k": "ok",
+    "v": "normal mode stayed silent through every backend move request"
+  },
+  {
+    "k": "ok",
+    "v": "normal mode muted recognition for all queued speech"
   },
   {
     "k": "ok",
@@ -144,6 +156,10 @@
   },
   {
     "k": "ok",
+    "v": "automatic voice mode has no push-to-talk control"
+  },
+  {
+    "k": "ok",
     "v": "quiet badge in the title"
   },
   {
@@ -174,7 +190,7 @@
         "classification": "inaccuracy",
         "quiet": true,
         "summary": "",
-        "opp": "f5",
+        "opp": "Nf6",
         "announcements": []
       }
     ]
@@ -186,18 +202,30 @@
   {
     "k": "spoken (quiet)",
     "v": [
-      "Opponent plays pawn e5.",
-      "Opponent plays knight c6.",
-      "Opponent plays pawn f5."
+      "Pawn e5",
+      "Knight c6",
+      "Knight f6"
     ]
   },
   {
     "k": "ok",
-    "v": "only 'Opponent plays …' was spoken (3 moves)"
+    "v": "quiet mode speaks concise moves without an 'Opponent plays' prefix"
+  },
+  {
+    "k": "ok",
+    "v": "quiet-mode move announcements are concise and capitalized"
+  },
+  {
+    "k": "ok",
+    "v": "quiet mode stayed recognition-ready during backend move processing"
   },
   {
     "k": "ok",
     "v": "no coach or opening captions"
+  },
+  {
+    "k": "ok",
+    "v": "recognition was stopped for every TTS utterance"
   },
   {
     "k": "ok",
@@ -224,9 +252,13 @@
     "v": "D: Caro-Kann requested by voice as White"
   },
   {
+    "k": "ok",
+    "v": "automatic voice mode has no push-to-talk control"
+  },
+  {
     "k": "opening command",
     "v": {
-      "session_id": "05b46ca7-5844-4069-b97f-c133c44c4375",
+      "session_id": "6653ed2a-7260-482a-a112-731ae4e37fa1",
       "understood": true,
       "accepted": true,
       "message": "I'll play the Caro-Kann Defense (B10: 1. e4 c6) where the position allows.",
@@ -255,7 +287,7 @@
       "uci": "c7c6",
       "source_tier": "requested_opening",
       "confidence": 1,
-      "sample_size": 27,
+      "sample_size": 18,
       "announcement": {
         "eco": "B10",
         "name": "Caro-Kann Defense",
@@ -289,6 +321,10 @@
     "v": "E: playing Black — engine opens and announces; 'play d4 against me'"
   },
   {
+    "k": "ok",
+    "v": "automatic voice mode has no push-to-talk control"
+  },
+  {
     "k": "engine's first move",
     "v": [
       "e4"
@@ -301,7 +337,7 @@
   {
     "k": "play d4 against me",
     "v": {
-      "session_id": "9daad21c-f48c-461c-bcdc-d0845ffa4c4c",
+      "session_id": "7aac1b40-9327-4e64-b640-94a433eea73f",
       "understood": true,
       "accepted": true,
       "message": "Restarted. I play d4.",
@@ -339,10 +375,50 @@
   },
   {
     "k": "ok",
+    "v": "automatic voice mode has no push-to-talk control"
+  },
+  {
+    "k": "ok",
     "v": "launcher 'Queen's Gambit' as Black → engine opened 1.d4"
   },
   {
     "k": "ok",
     "v": "after 1...d5 the engine played 2.c4 and 'Queen's Gambit' was announced"
+  },
+  {
+    "k": "phase",
+    "v": "F: quiet mode as Black — blindfold, engine opens, then a legal move"
+  },
+  {
+    "k": "ok",
+    "v": "automatic voice mode has no push-to-talk control"
+  },
+  {
+    "k": "ok",
+    "v": "quiet Black session is blindfolded"
+  },
+  {
+    "k": "ok",
+    "v": "engine opened and Black is to move"
+  },
+  {
+    "k": "ok",
+    "v": "quiet engine opening was announced as concise SAN wording"
+  },
+  {
+    "k": "ok",
+    "v": "Black's quiet-mode move was accepted"
+  },
+  {
+    "k": "ok",
+    "v": "quiet Black reply is one concise announcement with no prefix"
+  },
+  {
+    "k": "ok",
+    "v": "quiet Black recognition stayed ready during backend processing"
+  },
+  {
+    "k": "ok",
+    "v": "quiet Black recognition paused through TTS"
   }
 ]

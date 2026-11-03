@@ -19,7 +19,12 @@ const { chromium } = require("playwright");
 const { Chess } = createRequire(join(ROOT, "frontend", "package.json"))("chess.js");
 
 const FE = process.argv[2] ?? "http://localhost:5173";
-const API = process.argv[3] ?? "http://localhost:8000";
+const API = process.argv[3];
+if (!API) throw new Error("Pass the isolated test API URL explicitly; this proof will not default to localhost:8000.");
+const apiUrl = new URL(API);
+if (!(["localhost", "127.0.0.1"].includes(apiUrl.hostname)) || !apiUrl.port || apiUrl.port === "8000") {
+  throw new Error("Voice proof requires an explicitly isolated loopback test backend, never the production localhost:8000 backend.");
+}
 const OUT = join(ROOT, "scripts", "data");
 mkdirSync(OUT, { recursive: true });
 const log = [];
@@ -29,27 +34,58 @@ function check(cond, msg) { if (!cond) { console.error("FAIL:", msg); process.ex
 const initScript = () => {
   window.__spoken = [];
   window.__utterance = [];
+  window.__recognizers = [];
+  window.__ttsMicLeaks = [];
+  window.__moveListeningSamples = [];
+  window.__moveInFlight = 0;
   const synth = window.speechSynthesis;
   synth.getVoices = () => [{ voiceURI: "fake-en-us", name: "Fake American", lang: "en-US", default: true, localService: true }];
-  synth.speak = (u) => { window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 5); };
+  synth.speak = (u) => {
+    window.__spoken.push(u.text);
+    if (window.__recognizers.some((r) => r.listening)) window.__ttsMicLeaks.push(u.text);
+    u.onstart?.();
+    setTimeout(() => u.onend && u.onend(), 30);
+  };
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async (...args) => {
+    const raw = typeof args[0] === "string" ? args[0] : args[0]?.url;
+    const isMove = new URL(raw, location.href).pathname.endsWith("/move") && args[1]?.method === "POST";
+    if (isMove) {
+      window.__moveInFlight++;
+      window.__moveListeningSamples.push(window.__recognizers.some((r) => r.listening));
+    }
+    try { return await nativeFetch(...args); }
+    finally { if (isMove) window.__moveInFlight--; }
+  };
+  window.__sampler = setInterval(() => {
+    if (window.__moveInFlight) window.__moveListeningSamples.push(window.__recognizers.some((r) => r.listening));
+  }, 2);
   class FakeRec {
-    start() { this.listening = true; }
-    stop() {
+    constructor() { this.listening = false; this.resultIndex = 0; window.__recognizers.push(this); }
+    start() { this.listening = true; setTimeout(() => this.onstart?.(), 0); }
+    stop() { this.finish(); }
+    abort() { this.finish(); }
+    finish() {
       if (!this.listening) return;
       this.listening = false;
-      const alts = window.__utterance.shift();
-      if (alts !== undefined) {
-        const list = Array.isArray(alts) ? alts : [alts];
-        const res = { isFinal: true, length: list.length };
-        list.forEach((t, i) => { res[i] = { transcript: t, confidence: 0.9 - i * 0.1 }; });
-        this.onresult?.({ resultIndex: 0, results: { length: 1, 0: res } });
-      }
       setTimeout(() => this.onend?.(), 5);
     }
-    abort() { this.stop(); }
+    emit(alts) {
+      if (!this.listening) throw new Error("No active automatic recognizer");
+      const list = Array.isArray(alts) ? alts : [alts];
+      const res = { isFinal: true, length: list.length };
+      list.forEach((t, i) => { res[i] = { transcript: t, confidence: 0.9 - i * 0.1 }; });
+      const index = this.resultIndex++;
+      this.onresult?.({ resultIndex: index, results: { length: index + 1, [index]: res } });
+    }
   }
   window.SpeechRecognition = FakeRec;
   window.webkitSpeechRecognition = FakeRec;
+  window.__emitFinal = (alts) => {
+    const active = [...window.__recognizers].reverse().find((r) => r.listening);
+    if (!active) throw new Error("Automatic recognition is not active");
+    active.emit(alts);
+  };
 };
 
 const browser = await chromium.launch();
@@ -61,11 +97,8 @@ const apiCalls = [];
 page.on("request", (r) => { const u = new URL(r.url()); if (u.origin === new URL(API).origin) apiCalls.push(`${r.method()} ${u.pathname}`); });
 
 async function speak(utterance) {
-  await page.evaluate((u) => window.__utterance.push(u), utterance);
-  const ptt = page.getByRole("button", { name: /hold to talk|listening/i });
-  await ptt.dispatchEvent("pointerdown");
-  await page.waitForTimeout(60);
-  await ptt.dispatchEvent("pointerup");
+  await page.waitForFunction(() => window.__recognizers.some((r) => r.listening), null, { timeout: 15000 });
+  await page.evaluate((u) => window.__emitFinal(u), utterance);
 }
 /** Say something and return the JSON (and status) of the API call it triggers. */
 async function sayAndCapture(utterance, urlRe) {
@@ -99,6 +132,7 @@ async function launch({ mode = "guided", color = "white", style = "mix", opening
   await page.waitForURL(/\/session\//);
   await page.getByLabel("Live captions").waitFor();
   await page.waitForTimeout(400);
+  check(await page.getByRole("button", { name: /hold to talk/i }).count() === 0, "automatic voice mode has no push-to-talk control");
   return page.url().split("/session/")[1].split("?")[0];
 }
 
@@ -116,7 +150,9 @@ await page.getByRole("heading", { name: "Start a session" }).waitFor();
 note("phase", "A: opening announcement — 1.e4 e5 2.Nf3 Nc6 3.Bb5, blindfold, mainline sampler over the seeded graph");
 let sid = await launch({ mode: "blindfold", style: "mainline" });
 check((await page.locator("chessboard-board, [data-boardid], .board").count()) === 0 || (await page.getByRole("img", { name: /board hidden/i }).count()) === 1, "blindfold: board hidden");
+await page.waitForFunction(() => window.__recognizers.some((r) => r.listening), null, { timeout: 15000 });
 await clearSpoken();
+await page.evaluate(() => { window.__moveListeningSamples.length = 0; window.__ttsMicLeaks.length = 0; });
 const annByPly = [];
 for (const [said, expectOpp] of [["e four", "e5"], ["knight f3", "Nc6"], ["bishop b5", null]]) {
   const { body } = await sayAndCapture(said, /\/move$/);
@@ -131,6 +167,9 @@ await waitSpoken("Ruy Lopez");
 let sp = await spoken();
 note("spoken (phase A)", sp);
 check(sp.filter((t) => t === "Ruy Lopez").length === 1, "TTS spoke 'Ruy Lopez' exactly once");
+const normalListening = await page.evaluate(() => window.__moveListeningSamples);
+check(normalListening.length > 0 && normalListening.every((active) => !active), "normal mode stayed silent through every backend move request");
+check((await page.evaluate(() => window.__ttsMicLeaks)).length === 0, "normal mode muted recognition for all queued speech");
 check((await captions()).includes("opening: Ruy Lopez"), "caption 'opening: Ruy Lopez' shown");
 // The page shows the latest named position: after 3...a6 that is C70 "Ruy Lopez: Morphy Defense".
 const openingLine = await page.getByLabel("Opening").innerText();
@@ -198,8 +237,12 @@ note("quiet moves (API)", quietMoves);
 check(quietMoves.every((m) => m.quiet && m.summary === "" && m.announcements.length === 0), "API: empty coaching and no announcements for every quiet move");
 sp = await spoken();
 note("spoken (quiet)", sp);
-check(sp.length === 3 && sp.every((t) => /^Opponent plays /.test(t)), "only 'Opponent plays …' was spoken (3 moves)");
+check(sp.length === 3 && sp.every((t) => !/^Opponent plays /.test(t)), "quiet mode speaks concise moves without an 'Opponent plays' prefix");
+check(sp.every((t) => /^[A-Z]/.test(t)), "quiet-mode move announcements are concise and capitalized");
+const listeningDuringMoves = await page.evaluate(() => window.__moveListeningSamples);
+check(listeningDuringMoves.length > 0 && listeningDuringMoves.every(Boolean), "quiet mode stayed recognition-ready during backend move processing");
 check(!(await captions()).match(/coach:|opening:/), "no coach or opening captions");
+check((await page.evaluate(() => window.__ttsMicLeaks)).length === 0, "recognition was stopped for every TTS utterance");
 check((await page.getByLabel("Coach feedback").count()) === 0, "no coach card");
 const quizCalls = apiCalls.filter((x) => x.endsWith("/quiz")).length;
 await speak("quiz me");
@@ -266,6 +309,25 @@ await settle();
 check(qg.opponent_move.san === "c4" && qg.announcements.some((a) => a.name === "Queen's Gambit" && a.by === "opponent"), "after 1...d5 the engine played 2.c4 and 'Queen's Gambit' was announced");
 await waitSpoken("Queen's Gambit");
 await page.screenshot({ path: join(OUT, "vo_black_queens_gambit.png"), fullPage: true });
+
+// ---------------------------------------------------------------- F. Quiet mode as Black in a blindfold session
+note("phase", "F: quiet mode as Black — blindfold, engine opens, then a legal move");
+sid = await launch({ mode: "blindfold", color: "black", style: "mainline", quiet: true });
+check((await page.getByRole("img", { name: /board hidden/i }).count()) === 1, "quiet Black session is blindfolded");
+const quietBlackState = (await apiGet(`/sessions/${sid}`)).state_json;
+check(quietBlackState.player_color === "black" && quietBlackState.move_history_san.length === 1, "engine opened and Black is to move");
+check((await spoken()).includes("Pawn e4"), "quiet engine opening was announced as concise SAN wording");
+await clearSpoken();
+await page.evaluate(() => { window.__moveListeningSamples.length = 0; window.__ttsMicLeaks.length = 0; });
+const { body: quietBlackMove } = await sayAndCapture("e5", /\/move$/);
+await settle();
+check(quietBlackMove.quiet && quietBlackMove.played_san === "e5", "Black's quiet-mode move was accepted");
+sp = await spoken();
+check(sp.length === 1 && !/^Opponent plays /.test(sp[0]), "quiet Black reply is one concise announcement with no prefix");
+const blackListening = await page.evaluate(() => window.__moveListeningSamples);
+check(blackListening.length > 0 && blackListening.every(Boolean), "quiet Black recognition stayed ready during backend processing");
+check((await page.evaluate(() => window.__ttsMicLeaks)).length === 0, "quiet Black recognition paused through TTS");
+await page.screenshot({ path: join(OUT, "vo_quiet_black_blindfold.png"), fullPage: true });
 
 writeFileSync(join(OUT, "proof_voice_openings.json"), JSON.stringify(log, null, 2));
 await browser.close();
