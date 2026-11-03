@@ -172,6 +172,14 @@ for (const [said, expectOpp] of [["e four", "e5"], ["knight f3", "Nc6"], ["bisho
   annByPly.push({ played: body.played_san, opponent: body.opponent_move?.san, announcements: body.announcements.map((a) => `${a.name} (${a.eco}, ply ${a.ply}, by ${a.by})`) });
   if (expectOpp) check(body.opponent_move?.san === expectOpp, `after ${body.played_san} the mainline opponent played ${expectOpp} (got ${body.opponent_move?.san}, ${body.opponent_move?.source_tier})`);
   await settle();
+  if (said === "bishop b5") {
+    const coachCard = page.getByLabel("Coach feedback");
+    await coachCard.waitFor({ state: "visible" });
+    const coachText = (await coachCard.innerText()).trim();
+    check(coachText.length > 0, "coach feedback is visible with non-empty text after the move");
+    check(coachText.includes("wording: deterministic template"), "coach card uses the deterministic template");
+    await page.screenshot({ path: join(OUT, "vo_ruy_lopez_announced.png"), fullPage: true });
+  }
 }
 note("announcements per move", annByPly);
 check(annByPly[0].announcements.length === 0 && annByPly[1].announcements.length === 0, "no announcement for 1.e4 e5 2.Nf3 Nc6 (generic King's Pawn / King's Knight names)");
@@ -203,9 +211,6 @@ const displayedNodes = evaluationText.match(/([\d,.\u00a0]+) nodes/)?.[1].replac
 check(evaluationText.includes(savedAnalysis.engine_version) && displayedNodes === String(savedAnalysis.nodes), "evaluation bar shows the persisted Stockfish version, depth and nodes");
 check(await evalPanel.locator(".evaluation-track").count() === 1, "evaluation bar scales the persisted White-centric score");
 check(/Latest move: (Best|Good|Inaccuracy|Mistake|Blunder)/.test(await evalPanel.innerText()), "evaluation bar shows the backend's latest deterministic move quality");
-// No LLM_API_KEY in this stack: the optional LLM layer is off and the template is used.
-check((await page.getByLabel("Coach feedback").innerText()).includes("wording: deterministic template"), "coach card: wording from the deterministic template (LLM layer off without a key)");
-await page.screenshot({ path: join(OUT, "vo_ruy_lopez_announced.png"), fullPage: true });
 
 // ---------------------------------------------------------------- B. Illegal move in blindfold
 note("phase", "B: illegal move in blindfold");
