@@ -205,6 +205,7 @@ export interface SessionEvaluation {
   session_id: string;
   current_fen: string;
   analysis_available: boolean;
+  analysis_pending: boolean;
   eval_cp_white: number | null;
   mate_white: number | null;
   depth: number | null;

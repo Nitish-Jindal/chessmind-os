@@ -48,6 +48,7 @@ from chessmind.services.session import (
     set_quiet,
 )
 from chessmind.services.engine import get_cached_analysis
+from chessmind.services.session_evaluation import is_position_analysis_pending, schedule_position_analysis
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -88,6 +89,7 @@ async def post_session(
         )
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    schedule_position_analysis(ts.state_json["current_fen"])
     return ts
 
 
@@ -130,6 +132,8 @@ async def post_opening_command(
             message=error or (out["message"] if out else "I didn't understand that."),
             current_fen=ts.state_json["current_fen"],
         )
+    if out.get("restarted"):
+        schedule_position_analysis(ts.state_json["current_fen"])
     return OpeningCommandResponse(session_id=ts.id, accepted=True, current_fen=ts.state_json["current_fen"], **out)
 
 
@@ -176,7 +180,9 @@ async def get_session_evaluation(
     """Read cached Stockfish evidence for the current FEN; this endpoint never starts a search."""
     ts = await _owned(session, session_id, player)
     current_fen = ts.state_json["current_fen"]
-    analysis = await get_cached_analysis(session, chess.Board(current_fen))
+    board = chess.Board(current_fen)
+    analysis = await get_cached_analysis(session, board)
+    analysis_pending = analysis is None and is_position_analysis_pending(current_fen)
     last_attempt = (
         await session.execute(
             select(TrainingAttempt.classification)
@@ -190,6 +196,7 @@ async def get_session_evaluation(
         session_id=ts.id,
         current_fen=current_fen,
         analysis_available=analysis is not None,
+        analysis_pending=analysis_pending,
         eval_cp_white=top_line.get("cp"),
         mate_white=top_line.get("mate"),
         depth=analysis.depth if analysis else None,
@@ -223,6 +230,9 @@ async def post_move(
         raise HTTPException(422, detail.model_dump()) from exc
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+    if outcome.opponent_move is not None:
+        schedule_position_analysis(outcome.current_fen)
 
     engine_lines = [
         EngineLine(

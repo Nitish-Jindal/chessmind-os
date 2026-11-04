@@ -1,5 +1,6 @@
 import type { SessionEvaluation } from "../api";
 import { formatMoveClassification, formatSideEvaluation, whiteEvaluationPercent } from "../analysis/evaluation";
+import { evaluationForFen } from "../analysis/sessionEvaluation";
 
 interface Props {
   evaluation: SessionEvaluation | null;
@@ -7,10 +8,11 @@ interface Props {
   loading: boolean;
   error?: string | null;
   classificationFallback?: string | null;
+  onRetry?: () => void;
 }
 
-export function EvaluationBar({ evaluation, currentFen, loading, error, classificationFallback }: Props) {
-  const currentEvaluation = evaluation?.current_fen === currentFen ? evaluation : null;
+export function EvaluationBar({ evaluation, currentFen, loading, error, classificationFallback, onRetry }: Props) {
+  const currentEvaluation = evaluationForFen(evaluation, currentFen);
   const percent = whiteEvaluationPercent(currentEvaluation);
   const white = formatSideEvaluation(currentEvaluation, "white");
   const black = formatSideEvaluation(currentEvaluation, "black");
@@ -26,6 +28,10 @@ export function EvaluationBar({ evaluation, currentFen, loading, error, classifi
         <p className="muted" role="status">Loading saved Stockfish analysis…</p>
       ) : error ? (
         <p className="muted" role="status">{error}</p>
+      ) : currentEvaluation?.analysis_pending ? (
+        <p className="muted" role="status">
+          Stockfish analysis is in progress. {onRetry && <button type="button" onClick={onRetry}>Check again</button>}
+        </p>
       ) : percent == null || white == null || black == null ? (
         <p className="muted" role="status">No saved analysis for this position.</p>
       ) : (

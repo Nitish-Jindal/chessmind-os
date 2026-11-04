@@ -7,6 +7,7 @@ function analysis(overrides: Partial<SessionEvaluation> = {}): SessionEvaluation
     session_id: "session",
     current_fen: "fen",
     analysis_available: true,
+    analysis_pending: false,
     eval_cp_white: 125,
     mate_white: null,
     depth: 18,

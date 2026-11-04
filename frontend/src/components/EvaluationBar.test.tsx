@@ -7,6 +7,7 @@ const base: SessionEvaluation = {
   session_id: "session",
   current_fen: "fen",
   analysis_available: true,
+  analysis_pending: false,
   eval_cp_white: 125,
   mate_white: null,
   depth: 18,
@@ -49,6 +50,18 @@ describe("EvaluationBar", () => {
     const error = plainText(renderToStaticMarkup(<EvaluationBar evaluation={null} currentFen="fen" loading={false} error="Analysis unavailable" />));
     expect(error).toContain("Analysis unavailable");
     expect(error).not.toContain("evaluation-track");
+  });
+
+  it("shows pending analysis instead of claiming that saved analysis is missing", () => {
+    const text = plainText(renderToStaticMarkup(
+      <EvaluationBar
+        evaluation={{ ...base, analysis_available: false, analysis_pending: true, eval_cp_white: null }}
+        currentFen="fen"
+        loading={false}
+      />,
+    ));
+    expect(text).toContain("Stockfish analysis is in progress.");
+    expect(text).not.toContain("No saved analysis");
   });
 
   it("hides the previous position's score during the render before the next fetch completes", () => {

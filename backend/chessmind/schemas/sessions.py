@@ -66,6 +66,7 @@ class SessionEvaluationResponse(BaseModel):
     session_id: UUID
     current_fen: str
     analysis_available: bool
+    analysis_pending: bool = False
     eval_cp_white: int | None = None
     mate_white: int | None = None
     depth: int | None = None

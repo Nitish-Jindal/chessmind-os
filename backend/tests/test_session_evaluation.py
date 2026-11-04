@@ -21,6 +21,8 @@ async def _player(db, email: str) -> dict[str, str]:
 
 
 async def test_session_evaluation_reads_real_cached_stockfish_data_without_search(client, db):
+    from chessmind.services.session_evaluation import wait_for_position_analysis
+
     headers = await _player(db, "session-evaluation@example.com")
     created = await client.post(
         "/sessions",
@@ -30,6 +32,7 @@ async def test_session_evaluation_reads_real_cached_stockfish_data_without_searc
     assert created.status_code == 201, created.text
     session_id = created.json()["id"]
     current_fen = created.json()["state_json"]["current_fen"]
+    await wait_for_position_analysis(current_fen)
 
     # Populate a persisted result through the real Stockfish-backed analysis endpoint.
     analyzed = await client.post(
@@ -62,7 +65,10 @@ async def test_session_evaluation_reads_real_cached_stockfish_data_without_searc
     assert after_count == before_count
 
 
-async def test_session_evaluation_reports_missing_analysis_without_fabricating_values(client, db):
+async def test_session_evaluation_reports_missing_analysis_without_fabricating_values(client, db, monkeypatch):
+    from chessmind.routers import sessions as sessions_router
+
+    monkeypatch.setattr(sessions_router, "schedule_position_analysis", lambda _fen: None)
     headers = await _player(db, "session-evaluation-empty@example.com")
     created = await client.post(
         "/sessions",
@@ -76,6 +82,7 @@ async def test_session_evaluation_reports_missing_analysis_without_fabricating_v
     assert response.status_code == 200, response.text
     result = response.json()
     assert result["analysis_available"] is False
+    assert result["analysis_pending"] is False
     assert result["eval_cp_white"] is None
     assert result["mate_white"] is None
     assert result["depth"] is None
@@ -83,7 +90,173 @@ async def test_session_evaluation_reports_missing_analysis_without_fabricating_v
     assert result["engine_version"] is None
 
 
+async def test_background_session_analysis_reuses_saved_cache_without_stockfish(db, monkeypatch):
+    import chess
+
+    from chessmind.models import Position
+    from chessmind.services.canonical_fen import canonical_key
+    from chessmind.services.engine import analyze_board
+    from chessmind.services import session_evaluation
+
+    board = chess.Board()
+    seeded = await analyze_board(db, board=board, depth=10, multipv=3)
+    await db.commit()
+    before = await db.scalar(select(func.count()).select_from(EngineAnalysis))
+
+    async def fail_if_cache_is_ignored(*_args, **_kwargs):
+        raise AssertionError("background analysis must reuse any persisted Stockfish row")
+
+    monkeypatch.setattr(session_evaluation, "analyze_board", fail_if_cache_is_ignored)
+    session_evaluation.schedule_position_analysis(board.fen())
+    await session_evaluation.wait_for_position_analysis(board.fen())
+
+    after = await db.scalar(select(func.count()).select_from(EngineAnalysis))
+    position = (
+        await db.execute(select(Position).where(Position.canonical_key == canonical_key(board)))
+    ).scalar_one()
+    assert position.id == seeded.position_id
+    assert after == before
+
+
+async def test_session_evaluation_transitions_from_pending_to_real_stockfish_result(
+    client, db, monkeypatch
+):
+    import asyncio
+
+    from chessmind.services import session_evaluation
+
+    headers = await _player(db, "session-evaluation-pending@example.com")
+    entered = asyncio.Event()
+    release = asyncio.Event()
+    real_analyze = session_evaluation.analyze_board
+
+    async def wait_then_analyze(session, *, board, depth=None, multipv=None):
+        entered.set()
+        await release.wait()
+        return await real_analyze(session, board=board, depth=depth, multipv=multipv)
+
+    monkeypatch.setattr(session_evaluation, "analyze_board", wait_then_analyze)
+    created = await client.post(
+        "/sessions",
+        json={"mode": "guided", "player_color": "white", "sampler_mode": "mainline", "seed": 24},
+        headers=headers,
+    )
+    assert created.status_code == 201, created.text
+    session_id = created.json()["id"]
+    current_fen = created.json()["state_json"]["current_fen"]
+    await asyncio.wait_for(entered.wait(), timeout=5)
+
+    try:
+        pending = await client.get(f"/sessions/{session_id}/evaluation", headers=headers)
+        assert pending.status_code == 200, pending.text
+        assert pending.json()["analysis_available"] is False
+        assert pending.json()["analysis_pending"] is True
+    finally:
+        release.set()
+    await session_evaluation.wait_for_position_analysis(current_fen)
+    complete = await client.get(f"/sessions/{session_id}/evaluation", headers=headers)
+    assert complete.status_code == 200, complete.text
+    assert complete.json()["current_fen"] == current_fen
+    assert complete.json()["analysis_available"] is True
+    assert complete.json()["analysis_pending"] is False
+    assert complete.json()["depth"] >= 10
+    assert complete.json()["nodes"] > 0
+    assert complete.json()["perspective"] == "white"
+
+
+async def test_session_evaluation_is_persisted_after_opponent_reply(client, db):
+    from chessmind.services.session_evaluation import wait_for_position_analysis
+
+    headers = await _player(db, "session-evaluation-opponent-reply@example.com")
+    created = await client.post(
+        "/sessions",
+        json={"mode": "guided", "player_color": "white", "sampler_mode": "mainline", "seed": 25},
+        headers=headers,
+    )
+    assert created.status_code == 201, created.text
+    initial_fen = created.json()["state_json"]["current_fen"]
+    await wait_for_position_analysis(initial_fen)
+
+    moved = await client.post(
+        f"/sessions/{created.json()['id']}/move", json={"san": "e4"}, headers=headers
+    )
+    assert moved.status_code == 200, moved.text
+    body = moved.json()
+    assert body["opponent_move"] is not None
+    assert body["current_fen"]
+    await wait_for_position_analysis(body["current_fen"])
+
+    evaluation = await client.get(
+        f"/sessions/{created.json()['id']}/evaluation", headers=headers
+    )
+    assert evaluation.status_code == 200, evaluation.text
+    result = evaluation.json()
+    assert result["current_fen"] == body["current_fen"]
+    assert result["analysis_available"] is True
+    assert result["analysis_pending"] is False
+    assert result["depth"] >= 10
+    assert result["nodes"] > 0
+
+
+async def test_session_evaluation_is_persisted_after_opponent_opening(client, db):
+    from chessmind.services.session_evaluation import wait_for_position_analysis
+
+    headers = await _player(db, "session-evaluation-opponent-opening@example.com")
+    created = await client.post(
+        "/sessions",
+        json={"mode": "guided", "player_color": "black", "sampler_mode": "mainline", "seed": 26},
+        headers=headers,
+    )
+    assert created.status_code == 201, created.text
+    session_id = created.json()["id"]
+    current_fen = created.json()["state_json"]["current_fen"]
+    assert created.json()["state_json"]["move_history_san"]
+    await wait_for_position_analysis(current_fen)
+
+    evaluation = await client.get(f"/sessions/{session_id}/evaluation", headers=headers)
+    assert evaluation.status_code == 200, evaluation.text
+    result = evaluation.json()
+    assert result["current_fen"] == current_fen
+    assert result["analysis_available"] is True
+    assert result["analysis_pending"] is False
+    assert result["depth"] >= 10
+    assert result["nodes"] > 0
+
+
+async def test_failed_background_analysis_does_not_fail_move_or_opponent_response(
+    client, db, monkeypatch
+):
+    from chessmind.services import session_evaluation
+
+    headers = await _player(db, "session-evaluation-background-failure@example.com")
+
+    async def fail_background_analysis(*_args, **_kwargs):
+        raise RuntimeError("simulated background Stockfish failure")
+
+    monkeypatch.setattr(session_evaluation, "analyze_board", fail_background_analysis)
+    created = await client.post(
+        "/sessions",
+        json={"mode": "guided", "player_color": "white", "sampler_mode": "mainline", "seed": 27},
+        headers=headers,
+    )
+    assert created.status_code == 201, created.text
+    from chessmind.services.session_evaluation import wait_for_position_analysis
+
+    await wait_for_position_analysis(created.json()["state_json"]["current_fen"])
+    moved = await client.post(
+        f"/sessions/{created.json()['id']}/move", json={"san": "e4"}, headers=headers
+    )
+    assert moved.status_code == 200, moved.text
+    body = moved.json()
+    assert body["played_san"] == "e4"
+    assert body["classification"]
+    assert body["opponent_move"]["san"]
+    await wait_for_position_analysis(body["current_fen"])
+
+
 async def test_session_evaluation_uses_latest_classification_from_same_session_position(client, db):
+    from chessmind.services.session_evaluation import wait_for_position_analysis
+
     headers = await _player(db, "session-evaluation-classification@example.com")
     created = await client.post(
         "/sessions",
@@ -92,6 +265,7 @@ async def test_session_evaluation_uses_latest_classification_from_same_session_p
     )
     assert created.status_code == 201, created.text
     session_id = created.json()["id"]
+    await wait_for_position_analysis(created.json()["state_json"]["current_fen"])
 
     move_response = await client.post(f"/sessions/{session_id}/move", json={"san": "e4"}, headers=headers)
     assert move_response.status_code == 200, move_response.text

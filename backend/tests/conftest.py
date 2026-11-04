@@ -64,6 +64,14 @@ def _schema() -> None:
     _reset_schema_sync()
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _shutdown_stockfish_after_suite():
+    yield
+    from chessmind.services.engine import engine_client
+
+    engine_client.shutdown()
+
+
 _TABLES_TO_TRUNCATE = [
     "position_question",
     "master_explorer_cache",
@@ -109,7 +117,13 @@ async def db() -> AsyncIterator[AsyncSession]:
         try:
             yield session
         finally:
+            # Release the fixture's transaction before waiting for background
+            # analysis: its Position inserts may be waiting on this session's
+            # uncommitted rows.
             await session.rollback()
+            from chessmind.services.session_evaluation import wait_for_pending_analyses
+
+            await wait_for_pending_analyses()
     await engine.dispose()
 
 

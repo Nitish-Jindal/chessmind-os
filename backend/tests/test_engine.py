@@ -33,7 +33,7 @@ async def player(db) -> Player:
     return p
 
 
-async def test_analyze_startpos_runs_and_caches(db, player):
+async def test_analyze_startpos_runs_and_caches(db, player, monkeypatch):
     board = chess.Board()
     first = await analyze_board(db, board=board, depth=6, multipv=1)
     await db.commit()
@@ -50,10 +50,17 @@ async def test_analyze_startpos_runs_and_caches(db, player):
     assert len(top["pv_uci"]) >= 1
     assert len(top["pv_san"]) == len(top["pv_uci"])
 
-    # Second call at the same depth hits the cache.
+    async def fail_if_engine_runs(*args, **kwargs):
+        raise AssertionError("a persisted cache hit must not start Stockfish")
+
+    monkeypatch.setattr(engine_client, "analyze", fail_if_engine_runs)
     second = await analyze_board(db, board=board, depth=6, multipv=1)
     assert second.cached is True
     assert second.engine_version == first.engine_version
+    persisted = (
+        await db.execute(select(EngineAnalysis).where(EngineAnalysis.position_id == first.position_id))
+    ).scalar_one()
+    assert persisted.results_json == first.results
 
 
 async def test_analyze_higher_depth_adds_row_lower_depth_still_hits_cache(db, player):

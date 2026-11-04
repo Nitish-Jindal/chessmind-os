@@ -20,6 +20,7 @@ import { Captions } from "../components/Captions";
 import { MasteryDelta } from "../components/MasteryDelta";
 import { EvaluationBar } from "../components/EvaluationBar";
 import { VoicePicker } from "../components/VoicePicker";
+import { evaluationForFen, watchSessionEvaluation } from "../analysis/sessionEvaluation";
 import {
   buildLegalMoves,
   isBoardQuestion,
@@ -67,6 +68,7 @@ function SessionView({ id }: { id: string }) {
   const [evaluation, setEvaluation] = useState<SessionEvaluation | null>(null);
   const [evaluationLoading, setEvaluationLoading] = useState(false);
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
+  const [evaluationRetryKey, setEvaluationRetryKey] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
@@ -164,7 +166,7 @@ function SessionView({ id }: { id: string }) {
     };
   }, [id, cancelQueuedSpeech]);
 
-  // Read only persisted analysis for this exact FEN. The endpoint never starts an engine search.
+  // Read persisted analysis and briefly poll while the background Stockfish job is pending.
   useEffect(() => {
     if (!fen) {
       setEvaluation(null);
@@ -173,24 +175,31 @@ function SessionView({ id }: { id: string }) {
       return;
     }
     const generation = sessionGeneration.current.capture();
-    let active = true;
     setEvaluation(null);
     setEvaluationError(null);
     setEvaluationLoading(true);
-    api.sessionEvaluation(id)
-      .then((result) => {
-        if (!active || !isCurrentSession(generation)) return;
-        if (result.current_fen !== fen) return;
+    return watchSessionEvaluation({
+      sessionId: id,
+      currentFen: fen,
+      fetchEvaluation: api.sessionEvaluation,
+      isCurrent: () => isCurrentSession(generation),
+      onResult: (result) => {
         setEvaluation(result);
-      })
-      .catch(() => {
-        if (active && isCurrentSession(generation)) setEvaluationError("Saved Stockfish analysis is unavailable right now.");
-      })
-      .finally(() => {
-        if (active && isCurrentSession(generation)) setEvaluationLoading(false);
-      });
-    return () => { active = false; };
-  }, [id, fen, isCurrentSession]);
+        setEvaluationError(null);
+        setEvaluationLoading(false);
+      },
+      onError: () => {
+        setEvaluationError("Saved Stockfish analysis is unavailable right now.");
+        setEvaluationLoading(false);
+      },
+      onStopped: (reason) => {
+        setEvaluationLoading(false);
+        if (reason === "fen-mismatch") {
+          setEvaluationError("Waiting for the session position to synchronize. Check again shortly.");
+        }
+      },
+    });
+  }, [id, fen, isCurrentSession, evaluationRetryKey]);
 
   // Initial load; announce an opening opponent move (player is black).
   useEffect(() => {
@@ -696,11 +705,12 @@ function SessionView({ id }: { id: string }) {
         {quiet && <> <span className="badge">quiet</span></>}
       </h1>
       <EvaluationBar
-        evaluation={evaluation?.current_fen === fen ? evaluation : null}
+        evaluation={evaluationForFen(evaluation, fen)}
         currentFen={fen}
         loading={evaluationLoading}
         error={evaluationError}
         classificationFallback={last?.classification}
+        onRetry={() => setEvaluationRetryKey((key) => key + 1)}
       />
       <div className="grid">
         <div>
