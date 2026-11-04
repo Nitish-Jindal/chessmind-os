@@ -6,11 +6,12 @@ from uuid import UUID
 
 import chess
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chessmind.db import get_session
 from chessmind.deps import get_current_player
-from chessmind.models import Player, PositionQuestion, TrainingSession
+from chessmind.models import Player, PositionQuestion, TrainingAttempt, TrainingSession
 from chessmind.schemas.sessions import (
     AskResponse,
     CoachingPayload,
@@ -29,6 +30,7 @@ from chessmind.schemas.sessions import (
     RevealRequest,
     RevealResponse,
     SessionCreate,
+    SessionEvaluationResponse,
     SessionSettingsPatch,
     SessionState,
     UtteranceRequest,
@@ -45,6 +47,8 @@ from chessmind.services.session import (
     set_opening_request,
     set_quiet,
 )
+from chessmind.services.engine import get_cached_analysis
+from chessmind.services.session_evaluation import is_position_analysis_pending, schedule_position_analysis
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -85,6 +89,7 @@ async def post_session(
         )
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    schedule_position_analysis(ts.state_json["current_fen"])
     return ts
 
 
@@ -127,6 +132,8 @@ async def post_opening_command(
             message=error or (out["message"] if out else "I didn't understand that."),
             current_fen=ts.state_json["current_fen"],
         )
+    if out.get("restarted"):
+        schedule_position_analysis(ts.state_json["current_fen"])
     return OpeningCommandResponse(session_id=ts.id, accepted=True, current_fen=ts.state_json["current_fen"], **out)
 
 
@@ -164,6 +171,43 @@ async def get_legal_moves(
     )
 
 
+@router.get("/{session_id}/evaluation", response_model=SessionEvaluationResponse)
+async def get_session_evaluation(
+    session_id,
+    player: Player = Depends(get_current_player),
+    session: AsyncSession = Depends(get_session, scope="function"),
+) -> SessionEvaluationResponse:
+    """Read cached Stockfish evidence for the current FEN; this endpoint never starts a search."""
+    ts = await _owned(session, session_id, player)
+    current_fen = ts.state_json["current_fen"]
+    board = chess.Board(current_fen)
+    analysis = await get_cached_analysis(session, board)
+    analysis_pending = analysis is None and is_position_analysis_pending(current_fen)
+    last_attempt = (
+        await session.execute(
+            select(TrainingAttempt.classification)
+            .where(TrainingAttempt.session_id == ts.id)
+            .order_by(desc(TrainingAttempt.created_at), desc(TrainingAttempt.id))
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    top_line = analysis.results_json[0] if analysis and analysis.results_json else {}
+    return SessionEvaluationResponse(
+        session_id=ts.id,
+        current_fen=current_fen,
+        analysis_available=analysis is not None,
+        analysis_pending=analysis_pending,
+        eval_cp_white=top_line.get("cp"),
+        mate_white=top_line.get("mate"),
+        depth=analysis.depth if analysis else None,
+        nodes=analysis.nodes if analysis else None,
+        engine_version=analysis.engine_version if analysis else None,
+        perspective=analysis.perspective if analysis else None,
+        analyzed_at=analysis.cached_at if analysis else None,
+        latest_move_classification=last_attempt,
+    )
+
+
 @router.post("/{session_id}/move", response_model=MoveResponse)
 async def post_move(
     session_id,
@@ -186,6 +230,9 @@ async def post_move(
         raise HTTPException(422, detail.model_dump()) from exc
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+    if outcome.opponent_move is not None:
+        schedule_position_analysis(outcome.current_fen)
 
     engine_lines = [
         EngineLine(

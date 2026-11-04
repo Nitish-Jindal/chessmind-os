@@ -11,13 +11,16 @@ import {
   type OpponentMove,
   type QuestionTally,
   type QuizQuestion,
+  type SessionEvaluation,
   type SessionState,
 } from "../api";
 import { useAuth } from "../auth";
 import { Board } from "../components/Board";
 import { Captions } from "../components/Captions";
 import { MasteryDelta } from "../components/MasteryDelta";
+import { EvaluationBar } from "../components/EvaluationBar";
 import { VoicePicker } from "../components/VoicePicker";
+import { evaluationForFen, watchSessionEvaluation } from "../analysis/sessionEvaluation";
 import {
   buildLegalMoves,
   isBoardQuestion,
@@ -62,6 +65,10 @@ function SessionView({ id }: { id: string }) {
   const [legal, setLegal] = useState<LegalMoves | null>(null);
   const [fen, setFen] = useState<string>("");
   const [last, setLast] = useState<MoveResult | null>(null);
+  const [evaluation, setEvaluation] = useState<SessionEvaluation | null>(null);
+  const [evaluationLoading, setEvaluationLoading] = useState(false);
+  const [evaluationError, setEvaluationError] = useState<string | null>(null);
+  const [evaluationRetryKey, setEvaluationRetryKey] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
@@ -158,6 +165,41 @@ function SessionView({ id }: { id: string }) {
       cancelQueuedSpeech();
     };
   }, [id, cancelQueuedSpeech]);
+
+  // Read persisted analysis and briefly poll while the background Stockfish job is pending.
+  useEffect(() => {
+    if (!fen) {
+      setEvaluation(null);
+      setEvaluationLoading(false);
+      setEvaluationError(null);
+      return;
+    }
+    const generation = sessionGeneration.current.capture();
+    setEvaluation(null);
+    setEvaluationError(null);
+    setEvaluationLoading(true);
+    return watchSessionEvaluation({
+      sessionId: id,
+      currentFen: fen,
+      fetchEvaluation: api.sessionEvaluation,
+      isCurrent: () => isCurrentSession(generation),
+      onResult: (result) => {
+        setEvaluation(result);
+        setEvaluationError(null);
+        setEvaluationLoading(false);
+      },
+      onError: () => {
+        setEvaluationError("Saved Stockfish analysis is unavailable right now.");
+        setEvaluationLoading(false);
+      },
+      onStopped: (reason) => {
+        setEvaluationLoading(false);
+        if (reason === "fen-mismatch") {
+          setEvaluationError("Waiting for the session position to synchronize. Check again shortly.");
+        }
+      },
+    });
+  }, [id, fen, isCurrentSession, evaluationRetryKey]);
 
   // Initial load; announce an opening opponent move (player is black).
   useEffect(() => {
@@ -535,8 +577,17 @@ function SessionView({ id }: { id: string }) {
 
       const r = resolveAlternatives(alts, L.legalMoves);
       if (r.kind === "match") return void L.submit({ san: r.move.san, uci: r.move.uci });
+      if (r.kind === "castle-unavailable") {
+        const message = "Castling is unavailable in the current position.";
+        setIllegal(null);
+        setErr(message);
+        return say("system", message);
+      }
       if (r.kind === "ambiguous") {
         setPending(r.moves);
+        if (r.moves.every((move) => move.castle)) {
+          return say("system", "Both castling sides are legal. Which side do you mean: kingside or queenside?");
+        }
         return say("system", `More than one move fits. Did you mean ${r.moves.map((m) => speakMove(m.san)).join(", or ")}?`);
       }
       if (alts.some(looksLikeMove)) {
@@ -653,6 +704,14 @@ function SessionView({ id }: { id: string }) {
         <span className="badge">{color}</span>
         {quiet && <> <span className="badge">quiet</span></>}
       </h1>
+      <EvaluationBar
+        evaluation={evaluationForFen(evaluation, fen)}
+        currentFen={fen}
+        loading={evaluationLoading}
+        error={evaluationError}
+        classificationFallback={last?.classification}
+        onRetry={() => setEvaluationRetryKey((key) => key + 1)}
+      />
       <div className="grid">
         <div>
           {illegal && (

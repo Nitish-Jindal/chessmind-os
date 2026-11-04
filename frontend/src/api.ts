@@ -201,6 +201,21 @@ export interface LegalMoves {
   hints_used: number;
 }
 
+export interface SessionEvaluation {
+  session_id: string;
+  current_fen: string;
+  analysis_available: boolean;
+  analysis_pending: boolean;
+  eval_cp_white: number | null;
+  mate_white: number | null;
+  depth: number | null;
+  nodes: number | null;
+  engine_version: string | null;
+  perspective: string | null;
+  analyzed_at: string | null;
+  latest_move_classification: string | null;
+}
+
 export interface MoveResult {
   played_san: string;
   played_uci: string;
@@ -475,6 +490,7 @@ export const api = {
     request<OpeningCommandResult>("POST", `/sessions/${id}/opening`, { text: alts[0], alternatives: alts.slice(1) }),
   getSession: (id: string) => request<SessionState>("GET", `/sessions/${id}`),
   legal: (id: string) => request<LegalMoves>("GET", `/sessions/${id}/legal`),
+  sessionEvaluation: (id: string) => request<SessionEvaluation>("GET", `/sessions/${id}/evaluation`),
   move: (id: string, body: { san?: string; uci?: string; latency_ms?: number }) =>
     request<MoveResult>("POST", `/sessions/${id}/move`, body),
   reveal: (id: string, reason?: string) => request<RevealResult>("POST", `/sessions/${id}/reveal`, { reason }),

@@ -14,9 +14,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const require = createRequire(import.meta.url);
+const require = createRequire(join(ROOT, "frontend", "package.json"));
 const { chromium } = require("playwright");
-const { Chess } = createRequire(join(ROOT, "frontend", "package.json"))("chess.js");
+const { Chess } = require("chess.js");
 
 const FE = process.argv[2] ?? "http://localhost:5173";
 const API = process.argv[3];
@@ -25,11 +25,16 @@ const apiUrl = new URL(API);
 if (!(["localhost", "127.0.0.1"].includes(apiUrl.hostname)) || !apiUrl.port || apiUrl.port === "8000") {
   throw new Error("Voice proof requires an explicitly isolated loopback test backend, never the production localhost:8000 backend.");
 }
-const OUT = join(ROOT, "scripts", "data");
+const OUT = process.env.CHESSMIND_PROOF_OUT_DIR ?? join(ROOT, "scripts", "data");
 mkdirSync(OUT, { recursive: true });
 const log = [];
+const skipped = [];
+const consoleErrors = [];
+const failedRequests = [];
+const apiErrorResponses = [];
 const note = (k, v) => { log.push({ k, v }); console.log(k, typeof v === "string" ? v : JSON.stringify(v)); };
 function check(cond, msg) { if (!cond) { console.error("FAIL:", msg); process.exitCode = 1; note("FAIL", msg); } else note("ok", msg); }
+function skip(msg) { skipped.push(msg); note("SKIP", msg); }
 
 const initScript = () => {
   window.__spoken = [];
@@ -92,9 +97,18 @@ const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1100, height: 1000 } });
 await ctx.addInitScript(initScript);
 const page = await ctx.newPage();
-page.on("pageerror", (e) => { console.error("PAGE ERROR", e.message); process.exitCode = 1; });
+page.on("pageerror", (e) => { console.error("PAGE ERROR", e.message); consoleErrors.push(e.message); process.exitCode = 1; });
+page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
 const apiCalls = [];
 page.on("request", (r) => { const u = new URL(r.url()); if (u.origin === new URL(API).origin) apiCalls.push(`${r.method()} ${u.pathname}`); });
+page.on("requestfailed", (r) => {
+  const u = new URL(r.url());
+  if (u.origin === new URL(API).origin) failedRequests.push(`${r.method()} ${u.pathname}: ${r.failure()?.errorText ?? "request failed"}`);
+});
+page.on("response", (r) => {
+  const u = new URL(r.url());
+  if (u.origin === new URL(API).origin && r.status() >= 400) apiErrorResponses.push(`${r.request().method()} ${u.pathname} ${r.status()}`);
+});
 
 async function speak(utterance) {
   await page.waitForFunction(() => window.__recognizers.some((r) => r.listening), null, { timeout: 15000 });
@@ -118,6 +132,67 @@ async function apiGet(path) {
     const t = JSON.parse(localStorage.getItem("chessmind.tokens"));
     return (await fetch(base + p, { headers: { Authorization: `Bearer ${t.access_token}` } })).json();
   }, [API, path]);
+}
+async function apiPost(path, body) {
+  return page.evaluate(async ([base, p, payload]) => {
+    const t = JSON.parse(localStorage.getItem("chessmind.tokens"));
+    const response = await fetch(base + p, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${t.access_token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(`${p} returned ${response.status}: ${JSON.stringify(result)}`);
+    return result;
+  }, [API, path, body]);
+}
+async function verifyEvaluationForFen(sessionId, expectedFen, label) {
+  const panel = page.getByLabel("Position evaluation");
+  await panel.locator(".evaluation-track").waitFor({ state: "visible", timeout: 60000 });
+  const [session, evaluation] = await Promise.all([
+    apiGet(`/sessions/${sessionId}`),
+    apiGet(`/sessions/${sessionId}/evaluation`),
+  ]);
+  check(session.state_json.current_fen === expectedFen, `${label}: settled session FEN matches the expected position`);
+  check(evaluation.current_fen === expectedFen, `${label}: evaluation response matches the exact current FEN`);
+  check(evaluation.analysis_available && !evaluation.analysis_pending, `${label}: persisted Stockfish evaluation is ready`);
+  check(evaluation.perspective === "white" && evaluation.depth >= 10 && evaluation.nodes > 0 && Boolean(evaluation.engine_version), `${label}: real White-centric Stockfish metadata is present`);
+  const text = await panel.innerText();
+  check(text.includes("White") && text.includes("Black") && text.includes(evaluation.engine_version ?? "") && text.includes(`Depth ${evaluation.depth}`), `${label}: UI displays both sides and this position's engine metadata`);
+  check(!text.includes("No saved analysis"), `${label}: UI does not show the missing-analysis fallback`);
+  return evaluation;
+}
+function holdNextSessionEvaluation(sessionId) {
+  let captured = false;
+  let resolveCaptured;
+  let releaseHeld;
+  let resolveCompleted;
+  const capturedPromise = new Promise((resolve) => { resolveCaptured = resolve; });
+  const released = new Promise((resolve) => { releaseHeld = resolve; });
+  const completed = new Promise((resolve) => { resolveCompleted = resolve; });
+  const pattern = `**/sessions/${sessionId}/evaluation`;
+  const handler = async (route) => {
+    if (captured) return route.continue();
+    captured = true;
+    const response = await route.fetch();
+    const body = await response.body();
+    let payload = null;
+    try { payload = JSON.parse(body.toString("utf8")); } catch { /* reported by the assertion */ }
+    resolveCaptured({ response, body, payload });
+    await released;
+    try {
+      await route.fulfill({ response, body });
+    } finally {
+      resolveCompleted();
+    }
+  };
+  return {
+    pattern,
+    handler,
+    captured: capturedPromise,
+    release: releaseHeld,
+    completed,
+  };
 }
 async function settle() { await page.waitForFunction(() => !document.querySelector('input[aria-label="Type a move"]')?.disabled, null, { timeout: 60000 }); await page.waitForTimeout(150); }
 async function launch({ mode = "guided", color = "white", style = "mix", opening = "", quiet = false }) {
@@ -149,6 +224,8 @@ await page.getByRole("heading", { name: "Start a session" }).waitFor();
 // ---------------------------------------------------------------- A. Ruy Lopez announced once (blindfold)
 note("phase", "A: opening announcement — 1.e4 e5 2.Nf3 Nc6 3.Bb5, blindfold, mainline sampler over the seeded graph");
 let sid = await launch({ mode: "blindfold", style: "mainline" });
+let sessionSnapshot = await apiGet(`/sessions/${sid}`);
+await verifyEvaluationForFen(sid, sessionSnapshot.state_json.current_fen, "session creation");
 check((await page.locator("chessboard-board, [data-boardid], .board").count()) === 0 || (await page.getByRole("img", { name: /board hidden/i }).count()) === 1, "blindfold: board hidden");
 await page.waitForFunction(() => window.__recognizers.some((r) => r.listening), null, { timeout: 15000 });
 await clearSpoken();
@@ -159,6 +236,16 @@ for (const [said, expectOpp] of [["e four", "e5"], ["knight f3", "Nc6"], ["bisho
   annByPly.push({ played: body.played_san, opponent: body.opponent_move?.san, announcements: body.announcements.map((a) => `${a.name} (${a.eco}, ply ${a.ply}, by ${a.by})`) });
   if (expectOpp) check(body.opponent_move?.san === expectOpp, `after ${body.played_san} the mainline opponent played ${expectOpp} (got ${body.opponent_move?.san}, ${body.opponent_move?.source_tier})`);
   await settle();
+  if (said === "bishop b5") {
+    const coachCard = page.getByLabel("Coach feedback");
+    await coachCard.waitFor({ state: "visible" });
+    const coachText = (await coachCard.innerText()).trim();
+    check(coachText.length > 0, "coach feedback is visible with non-empty text after the move");
+    check(coachText.includes("wording: deterministic template"), "coach card uses the deterministic template");
+    await page.screenshot({ path: join(OUT, "vo_ruy_lopez_announced.png"), fullPage: true });
+  }
+  check(body.opponent_move?.san, `player ${body.played_san} received the opponent reply before evaluation refresh`);
+  await verifyEvaluationForFen(sid, body.current_fen, `after ${body.played_san} and opponent ${body.opponent_move?.san}`);
 }
 note("announcements per move", annByPly);
 check(annByPly[0].announcements.length === 0 && annByPly[1].announcements.length === 0, "no announcement for 1.e4 e5 2.Nf3 Nc6 (generic King's Pawn / King's Knight names)");
@@ -179,9 +266,76 @@ const hist = (await apiGet(`/sessions/${sid}`)).state_json.move_history_san;
 const c = new Chess(); for (const m of hist) c.move(m);
 note("history", hist.join(" "));
 check(hist.slice(0, 5).join(" ") === "e4 e5 Nf3 Nc6 Bb5", "server history starts 1.e4 e5 2.Nf3 Nc6 3.Bb5 (replayed by chess.js)");
-// No LLM_API_KEY in this stack: the optional LLM layer is off and the template is used.
-check((await page.getByLabel("Coach feedback").innerText()).includes("wording: deterministic template"), "coach card: wording from the deterministic template (LLM layer off without a key)");
-await page.screenshot({ path: join(OUT, "vo_ruy_lopez_announced.png"), fullPage: true });
+const currentFenForEval = (await apiGet(`/sessions/${sid}`)).state_json.current_fen;
+const savedAnalysis = await apiPost("/analysis/position", { fen: currentFenForEval, depth: 8, multipv: 1 });
+await page.reload();
+const evalPanel = page.getByLabel("Position evaluation");
+await evalPanel.getByText(`Depth ${savedAnalysis.depth}`, { exact: true }).waitFor();
+check((await evalPanel.innerText()).includes("White") && (await evalPanel.innerText()).includes("Black"), "evaluation bar shows both sides for the current position");
+const evaluationText = await evalPanel.innerText();
+const displayedNodes = evaluationText.match(/([\d,.\u00a0]+) nodes/)?.[1].replace(/\D/g, "");
+check(evaluationText.includes(savedAnalysis.engine_version) && displayedNodes === String(savedAnalysis.nodes), "evaluation bar shows the persisted Stockfish version, depth and nodes");
+check(await evalPanel.locator(".evaluation-track").count() === 1, "evaluation bar scales the persisted White-centric score");
+check(/Latest move: (Best|Good|Inaccuracy|Mistake|Blunder)/.test(await evalPanel.innerText()), "evaluation bar shows the backend's latest deterministic move quality");
+
+// A fresh session on the already persisted FEN must reuse the same saved analysis.
+note("phase", "evaluation cache hit reuses persisted Stockfish analysis");
+const cachedSession = await apiPost("/sessions", {
+  mode: "guided", player_color: "white", sampler_mode: "mainline", seed: 811,
+  starting_fen: currentFenForEval,
+});
+await page.goto(new URL(`/session/${cachedSession.id}`, FE).href);
+const cachedSessionEval = await verifyEvaluationForFen(cachedSession.id, currentFenForEval, "cache-hit session creation");
+check(cachedSessionEval.eval_cp_white === savedAnalysis.results[0].cp && cachedSessionEval.engine_version === savedAnalysis.engine_version && cachedSessionEval.nodes === savedAnalysis.nodes, "cache hit reuses the persisted Stockfish score and metadata");
+
+// Hold the real GET response for the next FEN while the UI changes positions.
+// This proves the old evaluation is hidden until the new position's response arrives.
+const cacheHitLegal = await apiGet(`/sessions/${cachedSession.id}/legal`);
+check(cacheHitLegal.legal_moves_san.includes("a3"), "cache-hit session can submit the legal voice move a3");
+const heldNext = holdNextSessionEvaluation(cachedSession.id);
+await page.route(heldNext.pattern, heldNext.handler);
+const { body: cacheMove } = await sayAndCapture("a3", /\/move$/);
+await settle();
+const delayedCurrentEvaluation = await Promise.race([
+  heldNext.captured,
+  new Promise((_, reject) => setTimeout(() => reject(new Error("timed out waiting for the current-FEN evaluation response")), 15000)),
+]);
+check(delayedCurrentEvaluation.payload?.current_fen === cacheMove.current_fen, "delayed evaluation response belongs to the new settled FEN");
+check(await page.getByLabel("Position evaluation").locator(".evaluation-track").count() === 0, "previous evaluation is cleared while the new FEN response is pending");
+heldNext.release();
+await heldNext.completed;
+await page.unroute(heldNext.pattern, heldNext.handler);
+await verifyEvaluationForFen(cachedSession.id, cacheMove.current_fen, "after cached-session player move and opponent reply");
+
+// Deliver a real response for the old FEN only after the new FEN has rendered.
+// The watcher must ignore this stale response after its FEN generation is invalidated.
+note("phase", "stale evaluation response rejection");
+const staleSession = await apiPost("/sessions", {
+  mode: "guided", player_color: "white", sampler_mode: "mainline", seed: 811,
+  starting_fen: currentFenForEval,
+});
+await page.goto(new URL(`/session/${staleSession.id}`, FE).href);
+await verifyEvaluationForFen(staleSession.id, currentFenForEval, "stale-response session initial cached FEN");
+const heldOld = holdNextSessionEvaluation(staleSession.id);
+await page.route(heldOld.pattern, heldOld.handler);
+await page.reload({ waitUntil: "domcontentloaded" });
+const delayedOldEvaluation = await Promise.race([
+  heldOld.captured,
+  new Promise((_, reject) => setTimeout(() => reject(new Error("timed out waiting for the old-FEN evaluation response")), 15000)),
+]);
+check(delayedOldEvaluation.payload?.current_fen === currentFenForEval && delayedOldEvaluation.payload?.analysis_available, "held stale response contains real saved analysis for the old FEN");
+const staleLegal = await apiGet(`/sessions/${staleSession.id}/legal`);
+check(staleLegal.legal_moves_san.includes("a3"), "stale-response session can submit the legal voice move a3");
+const { body: staleMove } = await sayAndCapture("a3", /\/move$/);
+await settle();
+await verifyEvaluationForFen(staleSession.id, staleMove.current_fen, "new FEN before stale response release");
+heldOld.release();
+await heldOld.completed;
+await page.unroute(heldOld.pattern, heldOld.handler);
+await page.waitForTimeout(250);
+const afterStale = await apiGet(`/sessions/${staleSession.id}/evaluation`);
+check(afterStale.current_fen === staleMove.current_fen && (await page.getByLabel("Position evaluation").locator(".evaluation-track").count()) === 1, "late old-FEN response is rejected and the new evaluation remains visible");
+await page.goto(new URL(`/session/${sid}`, FE).href);
 
 // ---------------------------------------------------------------- B. Illegal move in blindfold
 note("phase", "B: illegal move in blindfold");
@@ -284,6 +438,7 @@ await page.screenshot({ path: join(OUT, "vo_caro_kann_request.png"), fullPage: t
 note("phase", "E: playing Black — engine opens and announces; 'play d4 against me'");
 sid = await launch({ mode: "blindfold", color: "black", style: "mainline" });
 const first = (await apiGet(`/sessions/${sid}`)).state_json;
+await verifyEvaluationForFen(sid, first.current_fen, "opponent opening during session creation");
 await waitSpoken("Opponent plays");
 note("engine's first move", first.move_history_san);
 check(first.move_history_san.length === 1 && (await spoken()).includes(`Opponent plays ${first.move_history_san[0] === "e4" ? "pawn e4" : ""}`.trim()) || (await spoken()).some((t) => t.startsWith("Opponent plays")), "engine opened as White and its first move was spoken");
@@ -297,6 +452,7 @@ check(st.move_history_san.join(" ") === "d4" && st.next_to_move === "player", "s
 const { body: bl } = await sayAndCapture("d5", /\/move$/);
 await settle();
 check(bl.played_san === "d5" && !!bl.opponent_move, `player's 1...d5 accepted; engine replied ${bl.opponent_move?.san}`);
+await verifyEvaluationForFen(sid, bl.current_fen, "after Black's move and White's opponent reply");
 await page.screenshot({ path: join(OUT, "vo_black_play_d4.png"), fullPage: true });
 
 // Named opening from the launcher as Black: the engine opens the Queen's Gambit.
@@ -322,6 +478,7 @@ await page.evaluate(() => { window.__moveListeningSamples.length = 0; window.__t
 const { body: quietBlackMove } = await sayAndCapture("e5", /\/move$/);
 await settle();
 check(quietBlackMove.quiet && quietBlackMove.played_san === "e5", "Black's quiet-mode move was accepted");
+await verifyEvaluationForFen(sid, quietBlackMove.current_fen, "quiet blindfold move and opponent reply");
 sp = await spoken();
 check(sp.length === 1 && !/^Opponent plays /.test(sp[0]), "quiet Black reply is one concise announcement with no prefix");
 const blackListening = await page.evaluate(() => window.__moveListeningSamples);
@@ -329,6 +486,114 @@ check(blackListening.length > 0 && blackListening.every(Boolean), "quiet Black r
 check((await page.evaluate(() => window.__ttsMicLeaks)).length === 0, "quiet Black recognition paused through TTS");
 await page.screenshot({ path: join(OUT, "vo_quiet_black_blindfold.png"), fullPage: true });
 
-writeFileSync(join(OUT, "proof_voice_openings.json"), JSON.stringify(log, null, 2));
+// ---------------------------------------------------------------- G. Generic castling asks only when both legal sides exist.
+note("phase", "G: generic castling clarification, legal SAN submission, and hidden-board evaluation compatibility");
+sid = (await apiPost("/sessions", {
+  mode: "blindfold", player_color: "white", sampler_mode: "mainline", seed: 73,
+  starting_fen: "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",
+})).id;
+await page.goto(new URL(`/session/${sid}`, FE).href);
+const blindfoldEvaluation = page.getByLabel("Position evaluation");
+await blindfoldEvaluation.waitFor();
+check(await page.getByRole("img", { name: /board hidden/i }).count() === 1, "blindfold evaluation remains visible without revealing the board");
+await blindfoldEvaluation.locator(".evaluation-track").waitFor({ timeout: 30000 });
+check(await blindfoldEvaluation.getByText(/Stockfish/i).count() === 1, "blindfold position receives its background Stockfish evaluation");
+const movesBeforeCastle = apiCalls.filter((call) => call.endsWith("/move")).length;
+await speak("castle");
+await waitSpoken("Both castling sides are legal");
+check(apiCalls.filter((call) => call.endsWith("/move")).length === movesBeforeCastle, "generic castle asks which side instead of guessing");
+const castleResponse = page.waitForResponse((response) => new URL(response.url()).pathname.endsWith("/move") && response.request().method() === "POST");
+await speak("queenside");
+const castleMove = await (await castleResponse).json();
+check(castleMove.played_san === "O-O-O", "queenside clarification submits the backend-listed legal castle");
+await settle();
+await verifyEvaluationForFen(sid, castleMove.current_fen, "after queenside castling");
+
+sid = (await apiPost("/sessions", {
+  mode: "blindfold", player_color: "white", sampler_mode: "mainline", seed: 75,
+  starting_fen: "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1",
+})).id;
+await page.goto(new URL(`/session/${sid}`, FE).href);
+sessionSnapshot = await apiGet(`/sessions/${sid}`);
+await verifyEvaluationForFen(sid, sessionSnapshot.state_json.current_fen, "blindfold evaluation before kingside castling");
+const kingsideResponse = page.waitForResponse((response) => new URL(response.url()).pathname.endsWith("/move") && response.request().method() === "POST");
+await speak("castle kingside");
+const kingsideMove = await (await kingsideResponse).json();
+check(kingsideMove.played_san === "O-O", "kingside castling submits the backend-listed legal castle");
+await settle();
+await verifyEvaluationForFen(sid, kingsideMove.current_fen, "after kingside castling");
+
+sid = (await apiPost("/sessions", {
+  mode: "guided", player_color: "white", sampler_mode: "mainline", seed: 74,
+  starting_fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+})).id;
+await page.goto(new URL(`/session/${sid}`, FE).href);
+const movesBeforeUnavailableCastle = apiCalls.filter((call) => call.endsWith("/move")).length;
+await speak("castle");
+await waitSpoken("Castling is unavailable in the current position");
+check(apiCalls.filter((call) => call.endsWith("/move")).length === movesBeforeUnavailableCastle, "unavailable castling gives clear feedback and submits no move");
+
+// A position reached through an uncommon but legal line exercises the cache-miss path.
+note("phase", "cache miss, pending evaluation, and voice interaction during real Stockfish analysis");
+const missBoard = new Chess();
+for (const san of ["b3", "Nf6", "Bb2", "g6", "Nf3", "Bg7"]) missBoard.move(san);
+const missFen = missBoard.fen();
+const missSession = await apiPost("/sessions", {
+  mode: "blindfold", player_color: "white", sampler_mode: "mainline", seed: 913,
+  starting_fen: missFen, quiet: true,
+});
+const initialMissEvaluation = await apiGet(`/sessions/${missSession.id}/evaluation`);
+check(initialMissEvaluation.current_fen === missFen, "cache-miss session starts with the exact requested FEN");
+if (!initialMissEvaluation.analysis_available && initialMissEvaluation.analysis_pending) {
+  check(true, "uncached session position schedules real Stockfish analysis");
+} else if (initialMissEvaluation.analysis_available) {
+  check(initialMissEvaluation.depth >= 10 && initialMissEvaluation.nodes > 0 && Boolean(initialMissEvaluation.engine_version), "fresh position already has completed real Stockfish metadata");
+  skip("The initial pending response was too brief to observe; evaluation had completed before the first browser read.");
+} else {
+  check(false, "uncached session position reports pending Stockfish analysis");
+}
+await page.goto(new URL(`/session/${missSession.id}`, FE).href);
+const missPanel = page.getByLabel("Position evaluation");
+await missPanel.waitFor();
+check(await page.getByRole("img", { name: /board hidden/i }).count() === 1, "cache-miss evaluation session remains blindfolded");
+if (initialMissEvaluation.analysis_pending) {
+  try {
+    await missPanel.getByRole("status").filter({ hasText: "Stockfish analysis is in progress" }).waitFor({ timeout: 5000 });
+    check(true, "UI shows the pending Stockfish state instead of 'No saved analysis'");
+  } catch {
+    skip("The browser did not observe the brief pending UI state before Stockfish completed.");
+  }
+} else {
+  skip("Pending UI state was not observable because the initial evaluation was already complete.");
+}
+await page.evaluate(() => { window.__moveListeningSamples.length = 0; window.__ttsMicLeaks.length = 0; });
+const moveStart = Date.now();
+const { status: missMoveStatus, body: missMove } = await sayAndCapture("e4", /\/move$/);
+const moveElapsedMs = Date.now() - moveStart;
+note("move response while evaluation runs (ms)", moveElapsedMs);
+await settle();
+check(missMoveStatus === 200 && missMove.played_san === "e4" && !!missMove.opponent_move, "voice move and opponent reply complete while session evaluation is scheduled");
+const missListeningSamples = await page.evaluate(() => window.__moveListeningSamples);
+check(missListeningSamples.length > 0 && missListeningSamples.every(Boolean), "quiet voice recognition remains ready during the move request");
+check((await page.evaluate(() => window.__ttsMicLeaks)).length === 0, "voice response does not leak into active recognition");
+await verifyEvaluationForFen(missSession.id, missMove.current_fen, "cache-miss result after player move and opponent reply");
+await page.screenshot({ path: join(OUT, "evaluation-cache-miss-blindfold.png"), fullPage: true });
+
+const expectedApiErrors = apiErrorResponses.filter((entry) => entry.endsWith("/move 422"));
+const unexpectedApiErrors = apiErrorResponses.filter((entry) => !entry.endsWith("/move 422"));
+check(unexpectedApiErrors.length === 0, "no unexpected 4xx/5xx responses from the isolated API");
+const passed = log.filter((entry) => entry.k === "ok").length;
+const failed = log.filter((entry) => entry.k === "FAIL").length;
+const report = {
+  proof: "voice_openings_and_evaluation_consistency",
+  counts: { passed, failed, skipped: skipped.length },
+  expectedApiErrors,
+  unexpectedApiErrors,
+  failedRequests,
+  consoleErrors,
+  log,
+  skipped,
+};
+writeFileSync(join(OUT, "proof_voice_openings.json"), JSON.stringify(report, null, 2));
 await browser.close();
-console.log(process.exitCode ? "PROOF FAILED" : "PROOF PASSED", `(${log.filter((l) => l.k === "ok").length} checks)`);
+console.log(process.exitCode ? "PROOF FAILED" : "PROOF PASSED", `(${passed} passed, ${failed} failed, ${skipped.length} skipped)`);

@@ -60,6 +60,23 @@ class LegalMovesResponse(BaseModel):
     hints_used: int
 
 
+class SessionEvaluationResponse(BaseModel):
+    """Persisted Stockfish evidence for the session's current position, if cached."""
+
+    session_id: UUID
+    current_fen: str
+    analysis_available: bool
+    analysis_pending: bool = False
+    eval_cp_white: int | None = None
+    mate_white: int | None = None
+    depth: int | None = None
+    nodes: int | None = None
+    engine_version: str | None = None
+    perspective: str | None = None
+    analyzed_at: datetime | None = None
+    latest_move_classification: str | None = None
+
+
 class MoveRequest(BaseModel):
     """Player move. Either ``san`` or ``uci`` must be provided."""
 

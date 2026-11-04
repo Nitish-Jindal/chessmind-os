@@ -31,6 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chessmind.config import get_settings
 from chessmind.models import EngineAnalysis, Position
+from chessmind.services.canonical_fen import canonical_key
 from chessmind.services.opening_graph import upsert_position
 
 logger = logging.getLogger("chessmind.engine")
@@ -184,6 +185,22 @@ async def _lookup_cache(
             EngineAnalysis.multipv >= min_multipv,
         )
         .order_by(desc(EngineAnalysis.depth))
+        .limit(1)
+    )
+    return (await session.execute(stmt)).scalar_one_or_none()
+
+
+async def get_cached_analysis(session: AsyncSession, board: chess.Board) -> EngineAnalysis | None:
+    """Read the best persisted analysis for a position without writing or searching Stockfish."""
+    position_id = (
+        await session.execute(select(Position.id).where(Position.canonical_key == canonical_key(board)))
+    ).scalar_one_or_none()
+    if position_id is None:
+        return None
+    stmt = (
+        select(EngineAnalysis)
+        .where(EngineAnalysis.position_id == position_id, EngineAnalysis.engine == "stockfish")
+        .order_by(desc(EngineAnalysis.depth), desc(EngineAnalysis.cached_at))
         .limit(1)
     )
     return (await session.execute(stmt)).scalar_one_or_none()
