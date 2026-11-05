@@ -156,8 +156,6 @@ async def get_legal_moves(
     board = chess.Board(ts.state_json["current_fen"])
     sans = [board.san(m) for m in board.legal_moves]
     ucis = [m.uci() for m in board.legal_moves]
-    settings = ts.settings_json or {}
-    budget = int(settings.get("blindfold_free_reveals_per_session", ts.state_json.get("reveals_budget", 2)))
     return LegalMovesResponse(
         session_id=ts.id,
         current_fen=ts.state_json["current_fen"],
@@ -166,7 +164,7 @@ async def get_legal_moves(
         legal_moves_san=sans,
         legal_moves_uci=ucis,
         reveals_used=int(ts.state_json.get("reveals_used", 0)),
-        reveals_budget=budget,
+        reveals_budget=None,
         hints_used=int(ts.state_json.get("hints_used", 0)),
     )
 

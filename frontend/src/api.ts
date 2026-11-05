@@ -139,7 +139,7 @@ export interface SessionState {
     status: "active" | "finished";
     last_opponent_move: OpponentMove | null;
     reveals_used: number;
-    reveals_budget: number;
+    reveals_budget?: number | null;
     hints_used: number;
     opening?: OpeningName | null;
     opening_announcements?: OpeningAnnouncement[];
@@ -197,7 +197,7 @@ export interface LegalMoves {
   legal_moves_san: string[];
   legal_moves_uci: string[];
   reveals_used: number;
-  reveals_budget: number;
+  reveals_budget: number | null;
   hints_used: number;
 }
 
@@ -273,7 +273,7 @@ export interface QuizAnswer {
 
 export interface RevealResult {
   reveals_used: number;
-  reveals_budget: number;
+  reveals_budget: number | null;
   hints_used: number;
   current_fen: string;
   was_free: boolean;
