@@ -2,10 +2,11 @@
 
 ``settings_json`` is a free-form jsonb bag. Keys we rely on in Day 1:
 
-- ``blindfold_free_reveals_per_session`` (int, default 2) — §11.3 budget.
-- ``blindfold_reveal_penalty`` (float, default 0.15) — visualization score drop
-  for each reveal beyond the budget.
 - ``tts_voice`` ({"name": str, "lang": str}) — persisted voice choice (§11.5).
+
+Older profiles may still contain ``blindfold_free_reveals_per_session`` and
+``blindfold_reveal_penalty`` values. They are retained as historical settings,
+but board reveals are unlimited and neither setting affects scoring.
 
 Settings are advisory from the model's POV; business logic reads them with
 defaults so missing keys never crash a session.

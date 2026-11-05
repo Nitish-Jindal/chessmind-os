@@ -110,8 +110,6 @@ async def create_session(
         "novelty_prob": novelty_prob,
         "quiet": bool(quiet),
     }
-    reveals_budget = int(settings.get("blindfold_free_reveals_per_session", 2))
-
     state_json: dict[str, Any] = {
         "current_fen": board.fen(),
         "move_history_san": [],
@@ -119,7 +117,6 @@ async def create_session(
         "player_color": player_color,
         "next_to_move": "player" if _player_turn(board, player_color) else "opponent",
         "reveals_used": 0,
-        "reveals_budget": reveals_budget,
         "hints_used": 0,
         "status": "active",
         "ply": 0,
@@ -250,8 +247,11 @@ async def apply_player_move(
         engine_analysis_id_ref=str(before_analysis.position_id),
     )
 
-    hints_charge = _hint_penalty_for_attempt(ts)
-    visualization_score = max(0.0, 1.0 - hints_charge * float(settings.get("blindfold_reveal_penalty", 0.15)))
+    # Board reveals are unlimited and do not count as hints or affect recall scoring.
+    # Keep the historical attempt field populated with zero until a distinct hint
+    # interaction is implemented.
+    hints_charge = 0
+    visualization_score = 1.0
 
     attempt = TrainingAttempt(
         id=uuid4(),
@@ -288,14 +288,11 @@ async def apply_player_move(
         latency_ms=latency_ms,
     )
 
-    # Reset per-move hint ledger: reveals_used stays, but the per-move
-    # "charged against this attempt" counter clears to the current ledger.
     new_state = dict(ts.state_json)
     new_state["ply"] = int(new_state.get("ply", 0)) + 1
     new_state["move_history_san"] = [*new_state["move_history_san"], played_san]
     new_state["move_history_uci"] = [*new_state["move_history_uci"], move.uci()]
     new_state["current_fen"] = board.fen()
-    new_state["hints_charged_last_move"] = hints_charge
     new_state["player_moves"] = _player_moves(ts.state_json) + 1
     announcements: list[dict[str, Any]] = []
     player_ann = _note_opening(new_state, board, by="player", quiet=quiet)
@@ -374,18 +371,6 @@ def _game_status(board: chess.Board) -> str:
     if board.is_game_over():
         return "finished"
     return "active"
-
-
-def _hint_penalty_for_attempt(ts: TrainingSession) -> int:
-    """Number of reveals that exceed the blindfold budget on this attempt."""
-    state = ts.state_json or {}
-    settings = ts.settings_json or {}
-    budget = int(settings.get("blindfold_free_reveals_per_session", state.get("reveals_budget", 2)))
-    reveals_used = int(state.get("reveals_used", 0))
-    already_charged = int(state.get("hints_used", 0))
-    extra = max(0, reveals_used - budget)
-    uncharged = max(0, extra - already_charged)
-    return uncharged
 
 
 async def _apply_opponent_move(
@@ -658,19 +643,17 @@ async def explain_move(*, quiet: bool, **kwargs: Any):
 
 
 async def consume_reveal(session: AsyncSession, *, ts: TrainingSession) -> dict[str, Any]:
+    """Record an explicit board reveal without imposing a quota or penalty."""
     state = dict(ts.state_json)
-    settings = ts.settings_json or {}
-    budget = int(settings.get("blindfold_free_reveals_per_session", state.get("reveals_budget", 2)))
     reveals_used = int(state.get("reveals_used", 0)) + 1
     state["reveals_used"] = reveals_used
-    was_free = reveals_used <= budget
     ts.state_json = state
     return {
         "reveals_used": reveals_used,
-        "reveals_budget": budget,
+        "reveals_budget": None,
         "hints_used": int(state.get("hints_used", 0)),
         "current_fen": state["current_fen"],
-        "was_free": was_free,
+        "was_free": True,
     }
 
 

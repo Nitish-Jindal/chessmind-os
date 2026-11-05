@@ -56,7 +56,8 @@ class LegalMovesResponse(BaseModel):
     legal_moves_san: list[str]
     legal_moves_uci: list[str]
     reveals_used: int
-    reveals_budget: int
+    # ``None`` means unlimited; retained for clients that still read the legacy field.
+    reveals_budget: int | None
     hints_used: int
 
 
@@ -167,9 +168,11 @@ class RevealRequest(BaseModel):
 class RevealResponse(BaseModel):
     session_id: UUID
     reveals_used: int
-    reveals_budget: int
+    # ``None`` means unlimited; retained for clients that still read the legacy field.
+    reveals_budget: int | None
     hints_used: int
     current_fen: str
+    # Legacy compatibility field; always true because reveals have no cost or quota.
     was_free: bool
 
 

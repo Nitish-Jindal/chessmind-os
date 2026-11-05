@@ -19,6 +19,7 @@ import { Board } from "../components/Board";
 import { Captions } from "../components/Captions";
 import { MasteryDelta } from "../components/MasteryDelta";
 import { EvaluationBar } from "../components/EvaluationBar";
+import { ManualBoardReveal } from "../components/ManualBoardReveal";
 import { VoicePicker } from "../components/VoicePicker";
 import { evaluationForFen, watchSessionEvaluation } from "../analysis/sessionEvaluation";
 import {
@@ -513,13 +514,7 @@ function SessionView({ id }: { id: string }) {
       if (!isCurrentSession(generation)) return;
       setFen(r.current_fen);
       setRevealed(true);
-      setLegal((l) => (l ? { ...l, reveals_used: r.reveals_used, reveals_budget: r.reveals_budget, hints_used: r.hints_used } : l));
-      caption(
-        "system",
-        r.was_free
-          ? `Board revealed (${r.reveals_used} of ${r.reveals_budget} free reveals used).`
-          : `Board revealed — beyond the free budget, this counts against your visualization score (hints used: ${r.hints_used}).`,
-      );
+      caption("system", "Board revealed.");
     } catch (e) {
       if (!isCurrentSession(generation)) return;
       setErr((e as Error).message);
@@ -719,28 +714,15 @@ function SessionView({ id }: { id: string }) {
               <strong>Illegal move — try again.</strong> No legal move matches that; the position has not changed.
             </p>
           )}
-          {showBoard ? (
+          <ManualBoardReveal
+            blindfold={blindfold}
+            revealed={revealed}
+            finished={finished}
+            onReveal={() => void doReveal()}
+            onHide={() => setRevealed(false)}
+          >
             <Board fen={fen} orientation={color} interactive={!!myTurn && !busy && !commandBusy && !syncPending} onDrop={onDrop} />
-          ) : (
-            <div className="blind" role="img" aria-label="Board hidden for blindfold play">
-              <div>
-                <p><strong>Board hidden</strong></p>
-                <p className="muted">Speak or type your move. Visualize the position.</p>
-              </div>
-            </div>
-          )}
-          <div className="row" style={{ marginTop: ".75rem" }}>
-            {blindfold && (
-              <button onClick={() => (revealed ? setRevealed(false) : void doReveal())} disabled={finished}>
-                {revealed ? "Hide board" : "Reveal board"}
-              </button>
-            )}
-            {blindfold && (
-              <span className="muted" aria-live="polite">
-                Reveals {legal.reveals_used}/{legal.reveals_budget} free · hints {legal.hints_used}
-              </span>
-            )}
-          </div>
+          </ManualBoardReveal>
           {finished && <p><strong>Game over.</strong></p>}
           <p className="muted" aria-label="Opening">
             {!quiet && sess.state_json.opening && <>Opening: <strong>{sess.state_json.opening.eco} {sess.state_json.opening.name}</strong></>}
