@@ -1,0 +1,30 @@
+[
+  {
+    "session_id": "cf6630d8-621e-4282-923d-5319f4996576",
+    "current_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    "analysis_available": true,
+    "analysis_pending": false,
+    "eval_cp_white": 33,
+    "mate_white": null,
+    "depth": 12,
+    "nodes": 34187,
+    "engine_version": "17.1",
+    "perspective": "white",
+    "analyzed_at": "2026-11-05T20:25:26.885336Z",
+    "latest_move_classification": null
+  },
+  {
+    "session_id": "cf6630d8-621e-4282-923d-5319f4996576",
+    "current_fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+    "analysis_available": true,
+    "analysis_pending": false,
+    "eval_cp_white": 47,
+    "mate_white": null,
+    "depth": 12,
+    "nodes": 6700,
+    "engine_version": "17.1",
+    "perspective": "white",
+    "analyzed_at": "2026-11-05T20:25:34.018619Z",
+    "latest_move_classification": "best"
+  }
+]

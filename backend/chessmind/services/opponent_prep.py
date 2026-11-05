@@ -170,7 +170,7 @@ async def _suggestion(
         path.append(san)
     if board.is_game_over():
         return None
-    analysis = await analyze_board(session, board=board, depth=depth, multipv=3)
+    analysis = await analyze_board(session, board=board, depth=depth, multipv=3, lane="background")
     you: Color = "black" if opp_color == "white" else "white"
     sign = 1 if you == "white" else -1
     candidates = []

@@ -12,10 +12,10 @@ import logging
 
 import chess
 
+from chessmind.config import get_settings
 from chessmind.db import AsyncSessionLocal
 from chessmind.services.canonical_fen import canonical_key
 from chessmind.services.engine import analyze_board, get_cached_analysis
-from chessmind.services.session import DEFAULT_SESSION_DEPTH, DEFAULT_SESSION_MULTIPV
 
 logger = logging.getLogger("chessmind.session_evaluation")
 
@@ -28,6 +28,9 @@ def schedule_position_analysis(fen: str) -> None:
     key = canonical_key(board)
     task = _pending.get(key)
     if task is not None and not task.done():
+        return
+    if len(_pending) >= get_settings().stockfish_background_queue_max + 1:
+        logger.warning("background evaluation queue saturated; retry via /analysis/position or a session transition")
         return
     _pending[key] = asyncio.create_task(_analyze_position(key, board), name=f"analysis:{key[:24]}")
 
@@ -55,13 +58,15 @@ async def wait_for_pending_analyses() -> None:
 async def _analyze_position(key: str, board: chess.Board) -> None:
     current = asyncio.current_task()
     try:
-        async with AsyncSessionLocal() as session:
+        settings = get_settings()
+        deadline = (settings.stockfish_engine_startup_timeout_sec
+                    + 2 * settings.stockfish_background_timeout_sec + 5)
+        async with asyncio.timeout(deadline), AsyncSessionLocal() as session:
             if await get_cached_analysis(session, board) is None:
                 await analyze_board(
                     session,
                     board=board,
-                    depth=DEFAULT_SESSION_DEPTH,
-                    multipv=DEFAULT_SESSION_MULTIPV,
+                    lane="background",
                 )
             await session.commit()
     except Exception:  # noqa: BLE001
@@ -71,3 +76,10 @@ async def _analyze_position(key: str, board: chess.Board) -> None:
     finally:
         if _pending.get(key) is current:
             _pending.pop(key, None)
+
+
+async def cancel_pending_analyses() -> None:
+    tasks = list(_pending.values())
+    for task in tasks:
+        task.cancel()
+    await asyncio.gather(*tasks, return_exceptions=True)

@@ -28,7 +28,7 @@ async def analyze_position(
     if not board.is_valid():
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "FEN describes an illegal position")
 
-    result = await analyze_board(session, board=board, depth=payload.depth, multipv=payload.multipv)
+    result = await analyze_board(session, board=board, depth=payload.depth, multipv=payload.multipv, lane="background")
     return AnalysisResponse(
         position_id=result.position_id,
         engine_version=result.engine_version,

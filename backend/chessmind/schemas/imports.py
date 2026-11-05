@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ImportPgnRequest(BaseModel):
-    pgn: str = Field(min_length=1, description="Raw PGN text; may contain many games.")
+    pgn: str = Field(min_length=1, max_length=10_000_000, description="Raw PGN text; may contain many games.")
     source: str = Field(default="upload", max_length=64)
     intent: Literal["repertoire", "opponent", "corpus"] = Field(
         default="repertoire",

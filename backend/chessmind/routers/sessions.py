@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from uuid import UUID
 
 import chess
@@ -9,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chessmind.config import get_settings
 from chessmind.db import get_session
 from chessmind.deps import get_current_player
 from chessmind.models import Player, PositionQuestion, TrainingAttempt, TrainingSession
@@ -36,6 +39,7 @@ from chessmind.schemas.sessions import (
     UtteranceRequest,
 )
 from chessmind.services import position_questions as pq
+from chessmind.services.engine import get_cached_analysis
 from chessmind.services.opening_taxonomy import parse_opening_request
 from chessmind.services.session import (
     ILLEGAL_MOVE_MESSAGE,
@@ -47,8 +51,12 @@ from chessmind.services.session import (
     set_opening_request,
     set_quiet,
 )
-from chessmind.services.engine import get_cached_analysis
-from chessmind.services.session_evaluation import is_position_analysis_pending, schedule_position_analysis
+from chessmind.services.session_evaluation import (
+    is_position_analysis_pending,
+    schedule_position_analysis,
+)
+
+logger = logging.getLogger("chessmind.sessions")
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -215,15 +223,21 @@ async def post_move(
     player: Player = Depends(get_current_player),
     session: AsyncSession = Depends(get_session, scope="function"),
 ) -> MoveResponse:
-    ts = await _owned(session, session_id, player)
     try:
-        outcome = await apply_player_move(
-            session,
-            ts=ts,
-            san=payload.san,
-            uci=payload.uci,
-            latency_ms=payload.latency_ms,
-        )
+        # Bounds the complete move computation as well as UCI searches: database
+        # row contention and optional wording share this budget.
+        async with asyncio.timeout(get_settings().session_move_timeout_sec):
+            ts = await _owned(session, session_id, player)
+            outcome = await apply_player_move(
+                session,
+                ts=ts,
+                san=payload.san,
+                uci=payload.uci,
+                latency_ms=payload.latency_ms,
+            )
+    except TimeoutError as exc:
+        logger.warning("interactive move deadline exceeded")
+        raise HTTPException(503, {"code": "move_timeout", "message": "Move timed out; retry later."}) from exc
     except IllegalMoveError as exc:
         # The board is unchanged; the client speaks and captions ``message``.
         detail = IllegalMoveDetail(message=ILLEGAL_MOVE_MESSAGE, input=exc.move_input, current_fen=exc.fen)

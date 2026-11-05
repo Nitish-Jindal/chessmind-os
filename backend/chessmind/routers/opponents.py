@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
+from typing import Any
 from uuid import UUID, uuid4
 
 import chess
-from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chessmind.config import get_settings
 from chessmind.db import get_session
 from chessmind.deps import get_current_player
 from chessmind.models import (
@@ -30,7 +30,9 @@ from chessmind.schemas.opponents import (
     OpponentTreeEdge,
     OpponentTreeResponse,
 )
+from chessmind.services.background_jobs import submit_job
 from chessmind.services.canonical_fen import canonical_key
+from chessmind.services.engine import EngineUnavailable
 from chessmind.services.opponent_import import run_opponent_import_job
 from chessmind.services.opponent_prep import build_prep_report
 
@@ -98,7 +100,12 @@ async def import_opponent_pgn(
     await session.flush()
     job_id = job.id
     await session.commit()
-    asyncio.create_task(run_opponent_import_job(job_id, payload.pgn))
+    accepted = submit_job(job_id, lambda: run_opponent_import_job(job_id, payload.pgn))
+    if not accepted:
+        job.status = "failed"
+        job.error = "Background queue full; retry this upload later."
+        job.artifacts_json = {"retryable": True, "reason": "queue_full"}
+        await session.commit()
     return job
 
 
@@ -195,5 +202,13 @@ async def opponent_prep(
     """Prep report: per colour, the opponent's most frequent lines (first ``plies`` plies of their
     games), likely branches, and Stockfish's suggested response at the end of each line."""
     profile = await _owned(session, opponent_id, player)
-    return await build_prep_report(session, profile=profile, max_plies=plies, max_lines=lines,
-                                   engine_depth=depth)
+    settings = get_settings()
+    # A report may contain many searches. Bound the whole HTTP computation,
+    # rather than allowing each line's deadline to accumulate past proxy limits.
+    deadline = settings.stockfish_engine_startup_timeout_sec + 2 * settings.stockfish_background_timeout_sec
+    try:
+        async with asyncio.timeout(deadline):
+            return await build_prep_report(session, profile=profile, max_plies=plies,
+                                           max_lines=lines, engine_depth=depth)
+    except TimeoutError as exc:
+        raise EngineUnavailable("background prep report deadline exceeded; retry fewer lines") from exc

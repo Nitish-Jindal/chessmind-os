@@ -1,16 +1,4 @@
-"""Stockfish worker — long-lived singleton, lock-guarded, cache-first.
-
-The UCI subprocess is spawned lazily on the first analysis request in a
-given worker process and reused for the lifetime of that process. All
-callers go through a single ``EngineClient`` with a ``threading.Lock``:
-python-chess's ``SimpleEngine`` is a synchronous wrapper over
-subprocess pipes (no asyncio affinity), so a plain threading lock is
-the right level and ``asyncio.to_thread`` keeps the async surface clean.
-
-This is the behaviour ARCHITECTURE.md §6.2 prescribes: cache is the
-primary path, engine runs only on cache miss, every result is stamped
-with engine version + depth + nodes + time + ``perspective='white'``.
-"""
+"""Cache-first Stockfish analysis with isolated, deadline-bound execution lanes."""
 
 from __future__ import annotations
 
@@ -19,9 +7,9 @@ import logging
 import os
 import re
 import shutil
-import threading
+import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 import chess
@@ -58,73 +46,156 @@ class AnalysisResult:
 _VERSION_RE = re.compile(r"Stockfish\s+([^\s]+)")
 
 
+class EngineUnavailable(RuntimeError):
+    """Bounded engine failure; safe to retry without restarting the application."""
+
+
+class EngineBusy(EngineUnavailable):
+    """Admission capacity or queue deadline exceeded."""
+
+
 class EngineClient:
-    """Lazy, process-wide, lock-guarded Stockfish wrapper."""
+    """One native asyncio UCI subprocess per lane; no blocking worker threads.
 
-    def __init__(self) -> None:
-        self._engine: chess.engine.SimpleEngine | None = None
+    Only the lock owner can replace or kill its subprocess. Cancellation kills
+    that exact transport before releasing admission, so late cleanup cannot
+    affect a replacement. Queued callers never touch the active process.
+    """
+
+    def __init__(self, lane: Literal["interactive", "background"] = "interactive") -> None:
+        self.lane = lane
+        self._engine: chess.engine.UciProtocol | None = None
+        self._transport: asyncio.SubprocessTransport | None = None
+        self._retired: chess.engine.UciProtocol | None = None
         self._version: str | None = None
-        self._lock = threading.Lock()
-        self._start_lock = threading.Lock()
-
-    def _start(self) -> None:
-        with self._start_lock:
-            if self._engine is not None:
-                # Validate the cached subprocess is actually alive; a prior
-                # external kill (pkill, container restart) leaves the Python
-                # side holding stale pipes that block forever on the next
-                # analyse().
-                try:
-                    pid = self._engine.transport.get_pid()
-                    os.kill(pid, 0)  # raises if dead
-                except (OSError, ProcessLookupError, AttributeError):
-                    logger.warning("stale stockfish subprocess; respawning")
-                    try:
-                        self._engine.close()
-                    except Exception:
-                        pass
-                    self._engine = None
-                    self._version = None
-                else:
-                    return
-            configured = get_settings().stockfish_path
-            path = configured
-            if not os.path.isabs(path):
-                # resolve relative to this file so uvicorn-cwd doesn't matter
-                here = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                path = os.path.normpath(os.path.join(here, path))
-            if not os.path.exists(path) and os.sep not in configured:
-                # bare command name, e.g. STOCKFISH_PATH=stockfish from apt
-                path = shutil.which(configured) or path
-            if not os.path.exists(path):
-                raise RuntimeError(f"stockfish binary not found at {path}")
-            logger.info("stockfish start path=%s", path)
-            engine = chess.engine.SimpleEngine.popen_uci(path)
-            try:
-                raw_name = engine.id.get("name", "stockfish/unknown")
-                match = _VERSION_RE.search(raw_name)
-                self._version = match.group(1) if match else raw_name
-                self._engine = engine
-            except Exception:
-                engine.close()
-                raise
+        self._lock = asyncio.Lock()
+        self._waiting = 0
+        self.active = asyncio.Event()
 
     def shutdown(self) -> None:
-        with self._start_lock:
-            if self._engine is not None:
-                try:
-                    self._engine.close()
-                except Exception:
-                    logger.exception("error closing stockfish")
-                self._engine = None
-                self._version = None
+        # Nonblocking emergency close, also usable by synchronous test teardown.
+        transport, self._transport = self._transport, None
+        self._engine = None
+        if transport is not None:
+            transport.close()  # asyncio kills and reaps the child
 
-    def _analyze_sync(self, board: chess.Board, depth: int, multipv: int) -> tuple[str, list[dict[str, Any]], int, int]:
-        self._start()
-        with self._lock:
+    async def _discard(self) -> None:
+        engine = self._engine or self._retired
+        self._retired = engine
+        self.shutdown()
+        if engine is not None:
+            try:
+                await asyncio.wait_for(asyncio.shield(engine.returncode), 0.5)
+                self._retired = None
+            except TimeoutError:
+                logger.error("engine cleanup deadline lane=%s", self.lane)
+
+    async def _start(self) -> None:
+        if self._engine is not None and not self._engine.returncode.done():
+            return
+        await self._discard()
+        if self._retired is not None:
+            # Never accumulate replacement processes if the OS cannot reap a
+            # killed child promptly; a later request can recheck it.
+            raise EngineUnavailable(f"{self.lane} engine cleanup pending; retry later")
+        settings = get_settings()
+        configured = settings.stockfish_path
+        path = configured
+        if not os.path.isabs(path):
+            here = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            path = os.path.normpath(os.path.join(here, path))
+        if not os.path.exists(path) and os.sep not in configured:
+            path = shutil.which(configured) or path
+        logger.info("engine restart attempt lane=%s", self.lane)
+        # Capture the transport before UCI initialization: even a hung handshake
+        # can be killed, unlike cancelling the popen_uci convenience helper.
+        async with asyncio.timeout(settings.stockfish_engine_startup_timeout_sec):
+            self._transport, self._engine = await chess.engine.UciProtocol.popen(path)
+            if self.lane == "background" and hasattr(os, "setpriority"):
+                try:
+                    os.setpriority(os.PRIO_PROCESS, self._transport.get_pid(), 10)
+                except OSError:
+                    logger.info("background process priority unavailable")
+            await self._engine.initialize()
+            await self._engine.configure(
+                {
+                    "Threads": settings.stockfish_threads,
+                    "Hash": settings.stockfish_hash_mb,
+                }
+            )
+            await self._engine.ping()
+        raw_name = self._engine.id.get("name", "stockfish/unknown")
+        match = _VERSION_RE.search(raw_name)
+        self._version = match.group(1) if match else raw_name
+        logger.info("engine restart success lane=%s pid=%s", self.lane, self._transport.get_pid())
+
+    async def _search(
+        self, board: chess.Board, depth: int, multipv: int
+    ) -> list[chess.engine.InfoDict]:
+        assert self._engine is not None
+        started = time.monotonic()
+        try:
+            analysis = await self._engine.analysis(
+                board, chess.engine.Limit(depth=depth), multipv=multipv
+            )
+            self.active.set()  # UCI readyok received and go issued, not merely admitted
+            await analysis.wait()
+            return analysis.multipv
+        finally:
+            logger.info(
+                "engine search lane=%s operation=analyse duration_ms=%.1f",
+                self.lane,
+                (time.monotonic() - started) * 1000,
+            )
+
+    async def analyze(
+        self, board: chess.Board, depth: int, multipv: int
+    ) -> tuple[str, list[dict[str, Any]], int, int]:
+        settings = get_settings()
+        timeout = (
+            settings.stockfish_interactive_timeout_sec
+            if self.lane == "interactive"
+            else settings.stockfish_background_timeout_sec
+        )
+        queue_timeout = (
+            settings.stockfish_interactive_queue_timeout_sec
+            if self.lane == "interactive"
+            else settings.stockfish_background_timeout_sec
+        )
+        capacity = 1 if self.lane == "interactive" else settings.stockfish_background_queue_max
+        if self._lock.locked() and self._waiting >= capacity:
+            logger.warning("engine queue saturated lane=%s operation=analyse", self.lane)
+            raise EngineBusy(f"{self.lane} engine queue full; retry later")
+        queued = time.monotonic()
+        self._waiting += 1
+        try:
+            try:
+                async with asyncio.timeout(queue_timeout):
+                    await self._lock.acquire()
+            except TimeoutError as exc:
+                logger.warning(
+                    "engine admission timeout lane=%s wait_ms=%.1f",
+                    self.lane,
+                    (time.monotonic() - queued) * 1000,
+                )
+                raise EngineBusy(f"{self.lane} engine admission timeout") from exc
+        finally:
+            self._waiting -= 1
+        started = time.monotonic()
+        logger.info(
+            "engine admitted lane=%s operation=analyse wait_ms=%.1f",
+            self.lane,
+            (started - queued) * 1000,
+        )
+        search = None
+        try:
+            await self._start()
             assert self._engine is not None
-            limit = chess.engine.Limit(depth=depth)
-            infos = self._engine.analyse(board, limit, multipv=multipv)
+            async with asyncio.timeout(timeout):
+                # Preserve python-chess's futures until connection_lost reaps
+                # the child; cancellation of analyse itself can corrupt them.
+                search = asyncio.create_task(self._search(board, depth, multipv))
+                infos = await asyncio.shield(search)
             # Normalize to a list even when multipv=1 returns a single dict in some versions.
             if isinstance(infos, dict):
                 infos = [infos]
@@ -150,22 +221,48 @@ class EngineClient:
                 for mv in pv_moves:
                     pv_san.append(replay.san(mv))
                     replay.push(mv)
-                results.append({
-                    "line_rank": rank,
-                    "cp": cp,
-                    "mate": mate,
-                    "pv_uci": pv_uci,
-                    "pv_san": pv_san,
-                })
+                results.append(
+                    {
+                        "line_rank": rank,
+                        "cp": cp,
+                        "mate": mate,
+                        "pv_uci": pv_uci,
+                        "pv_san": pv_san,
+                    }
+                )
                 total_nodes = max(total_nodes, int(info.get("nodes", 0) or 0))
                 total_time_ms = max(total_time_ms, int((info.get("time", 0) or 0) * 1000))
             return self._version or "unknown", results, total_nodes, total_time_ms
 
-    async def analyze(self, board: chess.Board, depth: int, multipv: int) -> tuple[str, list[dict[str, Any]], int, int]:
-        return await asyncio.to_thread(self._analyze_sync, board, depth, multipv)
+        except (TimeoutError, chess.engine.EngineError, OSError, ValueError) as exc:
+            logger.warning(
+                "engine failure lane=%s operation=analyse type=%s", self.lane, type(exc).__name__
+            )
+            await self._discard()
+            raise EngineUnavailable(f"{self.lane} engine unavailable; retry later") from exc
+        except asyncio.CancelledError:
+            # No UCI operation survives the request that owned it.
+            await self._discard()
+            raise
+        finally:
+            try:
+                if search is not None:
+                    if not search.done():
+                        search.cancel()
+                    await asyncio.gather(search, return_exceptions=True)
+            finally:
+                # Also release if cleanup receives a second cancellation.
+                self.active.clear()
+                self._lock.release()
+                logger.info(
+                    "engine finished lane=%s operation=analyse duration_ms=%.1f",
+                    self.lane,
+                    (time.monotonic() - started) * 1000,
+                )
 
 
-engine_client = EngineClient()
+engine_client = EngineClient("interactive")
+background_engine_client = EngineClient("background")
 
 
 # --------------------------------------------------------------------------- #
@@ -174,7 +271,12 @@ engine_client = EngineClient()
 
 
 async def _lookup_cache(
-    session: AsyncSession, *, position_id: UUID, engine_version: str, min_depth: int, min_multipv: int
+    session: AsyncSession,
+    *,
+    position_id: UUID,
+    engine_version: str,
+    min_depth: int,
+    min_multipv: int,
 ) -> EngineAnalysis | None:
     stmt = (
         select(EngineAnalysis)
@@ -193,7 +295,9 @@ async def _lookup_cache(
 async def get_cached_analysis(session: AsyncSession, board: chess.Board) -> EngineAnalysis | None:
     """Read the best persisted analysis for a position without writing or searching Stockfish."""
     position_id = (
-        await session.execute(select(Position.id).where(Position.canonical_key == canonical_key(board)))
+        await session.execute(
+            select(Position.id).where(Position.canonical_key == canonical_key(board))
+        )
     ).scalar_one_or_none()
     if position_id is None:
         return None
@@ -212,20 +316,27 @@ async def analyze_board(
     board: chess.Board,
     depth: int | None = None,
     multipv: int | None = None,
+    lane: Literal["interactive", "background"] = "interactive",
 ) -> AnalysisResult:
     """Analyze ``board`` with cache-first; persist new runs; return a stable result."""
     settings = get_settings()
-    depth = depth or settings.stockfish_default_depth
-    multipv = multipv or settings.stockfish_default_multipv
+    client = engine_client if lane == "interactive" else background_engine_client
+    depth = depth if depth is not None else getattr(settings, f"stockfish_{lane}_depth")
+    multipv = multipv if multipv is not None else getattr(settings, f"stockfish_{lane}_multipv")
+    # Explicit analysis requests retain depth/MultiPV; the wall deadline still applies.
 
     # Resolve the position row (upsert so an analyse of a fresh FEN still caches).
-    position_id = await upsert_position(session, board)
+    position_id = (
+        await session.execute(
+            select(Position.id).where(Position.canonical_key == canonical_key(board))
+        )
+    ).scalar_one_or_none()
 
     # Peek at the engine version WITHOUT burning a search — just to key the cache.
     # The first call pays the warmup; subsequent cache lookups don't.
-    engine_version = engine_client._version or "stockfish/unknown"
+    engine_version = client._version or "stockfish/unknown"
     cached: EngineAnalysis | None = None
-    if engine_version != "stockfish/unknown":
+    if position_id is not None and engine_version != "stockfish/unknown":
         cached = await _lookup_cache(
             session,
             position_id=position_id,
@@ -247,7 +358,12 @@ async def analyze_board(
             cached=True,
         )
 
-    version, results, nodes, time_ms = await engine_client.analyze(board, depth, multipv)
+    version, results, nodes, time_ms = await client.analyze(board, depth, multipv)
+
+    # Do not hold a newly inserted Position's unique-key lock during search:
+    # another lane analyzing the same FEN must remain independent at the DB too.
+    if position_id is None:
+        position_id = await upsert_position(session, board)
 
     # Try the cache again now that we know the real version — avoids a duplicate row
     # if the first call started cold.

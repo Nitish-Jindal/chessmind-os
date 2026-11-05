@@ -37,7 +37,7 @@ from chessmind.services.opening_graph import (
     upsert_move_edge,
     upsert_position,
 )
-from chessmind.services.pgn_import import ImportStats, iter_games, walk_game, _parse_rating, _parse_date
+from chessmind.services.pgn_import import ImportStats, iter_games_async, walk_game, _parse_rating, _parse_date
 
 logger = logging.getLogger("chessmind.opponent_import")
 
@@ -121,7 +121,7 @@ async def import_opponent_pgn_text(
     stats: ImportStats | None = None,
 ) -> ImportStats:
     stats = stats or ImportStats()
-    for game in iter_games(pgn_text):
+    async for game in iter_games_async(pgn_text):
         try:
             await _import_single_opponent_game(
                 session,

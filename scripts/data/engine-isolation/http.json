@@ -1,0 +1,206 @@
+{
+  "api_pid": 10932,
+  "background_pid": 11039,
+  "interactive_pid": 11041,
+  "replacement_pid": 11046,
+  "move_during_background_seconds": 0.24715861799995764,
+  "move_after_process_kill_seconds": 0.2103280439999935,
+  "background_search_finished_before_first_move": false,
+  "first_move": {
+    "session_id": "60bb5406-ef90-478b-a127-f1563cfeee2c",
+    "attempt_id": "f70e7da1-c2f3-407c-9154-479021235da9",
+    "played_san": "e4",
+    "played_uci": "e2e4",
+    "classification": "best",
+    "eval_before_cp_white": 33,
+    "eval_after_cp_white": 39,
+    "eval_swing_cp": 0,
+    "player_relative_before_cp": 33,
+    "player_relative_after_cp": 39,
+    "mate_flip": null,
+    "engine_version": "17.1",
+    "engine_depth": 12,
+    "engine_multipv": 1,
+    "best_lines": [
+      {
+        "line_rank": 1,
+        "cp": 33,
+        "mate": null,
+        "pv_san": [
+          "e4",
+          "e5",
+          "Nf3",
+          "Nc6",
+          "d4",
+          "exd4",
+          "Nxd4",
+          "Nf6",
+          "Nxc6",
+          "dxc6",
+          "Qxd8+",
+          "Kxd8",
+          "Bd3",
+          "Bb4+",
+          "c3"
+        ],
+        "pv_uci": [
+          "e2e4",
+          "e7e5",
+          "g1f3",
+          "b8c6",
+          "d2d4",
+          "e5d4",
+          "f3d4",
+          "g8f6",
+          "d4c6",
+          "d7c6",
+          "d1d8",
+          "e8d8",
+          "f1d3",
+          "f8b4",
+          "c2c3"
+        ]
+      }
+    ],
+    "coaching": {
+      "spoken_summary": "e4 is the top choice.",
+      "correction_san": null,
+      "evidence_refs": [
+        "fen:e805fa7b-d5d7-4b2b-887f-aba5551ea71f",
+        "engine_analysis:e805fa7b-d5d7-4b2b-887f-aba5551ea71f",
+        "best_san:e4"
+      ],
+      "board_features": {
+        "material_delta_player_relative": 0,
+        "new_hanging_squares": [],
+        "captured_opp_hanging_squares": [],
+        "lost_castling_kingside": false,
+        "lost_castling_queenside": false,
+        "delivered_check": false,
+        "walked_into_check": false
+      },
+      "explanation_source": "template"
+    },
+    "opponent_move": {
+      "san": "e5",
+      "uci": "e7e5",
+      "source_tier": "requested_opening",
+      "confidence": 1.0,
+      "sample_size": 0,
+      "announcement": null,
+      "request_event": "in_book"
+    },
+    "current_fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+    "status": "active",
+    "quiet": false,
+    "announcements": [],
+    "opening": {
+      "eco": "C20",
+      "name": "King's Pawn Game",
+      "pgn": "1. e4 e5"
+    },
+    "opening_request": {
+      "eco": "C50",
+      "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4",
+      "kind": "opening",
+      "text": "Italian Game",
+      "label": "Italian Game",
+      "match": "prefix",
+      "status": "active"
+    }
+  },
+  "recovery_move": {
+    "session_id": "60bb5406-ef90-478b-a127-f1563cfeee2c",
+    "attempt_id": "428df990-93c0-4bda-b7e7-fd83b89ff76b",
+    "played_san": "Nf3",
+    "played_uci": "g1f3",
+    "classification": "best",
+    "eval_before_cp_white": 47,
+    "eval_after_cp_white": 43,
+    "eval_swing_cp": 4,
+    "player_relative_before_cp": 47,
+    "player_relative_after_cp": 43,
+    "mate_flip": null,
+    "engine_version": "17.1",
+    "engine_depth": 12,
+    "engine_multipv": 1,
+    "best_lines": [
+      {
+        "line_rank": 1,
+        "cp": 47,
+        "mate": null,
+        "pv_san": [
+          "Nf3",
+          "d5",
+          "exd5",
+          "e4",
+          "Ne5",
+          "Qxd5",
+          "d4",
+          "exd3",
+          "Nxd3",
+          "Nc6"
+        ],
+        "pv_uci": [
+          "g1f3",
+          "d7d5",
+          "e4d5",
+          "e5e4",
+          "f3e5",
+          "d8d5",
+          "d2d4",
+          "e4d3",
+          "e5d3",
+          "b8c6"
+        ]
+      }
+    ],
+    "coaching": {
+      "spoken_summary": "Nf3 is the top choice.",
+      "correction_san": null,
+      "evidence_refs": [
+        "fen:6112d682-023e-4ffa-8bc5-ee7ed1522d5d",
+        "engine_analysis:6112d682-023e-4ffa-8bc5-ee7ed1522d5d",
+        "best_san:Nf3"
+      ],
+      "board_features": {
+        "material_delta_player_relative": 0,
+        "new_hanging_squares": [],
+        "captured_opp_hanging_squares": [],
+        "lost_castling_kingside": false,
+        "lost_castling_queenside": false,
+        "delivered_check": false,
+        "walked_into_check": false
+      },
+      "explanation_source": "template"
+    },
+    "opponent_move": {
+      "san": "Nc6",
+      "uci": "b8c6",
+      "source_tier": "requested_opening",
+      "confidence": 1.0,
+      "sample_size": 0,
+      "announcement": null,
+      "request_event": "in_book"
+    },
+    "current_fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+    "status": "active",
+    "quiet": false,
+    "announcements": [],
+    "opening": {
+      "eco": "C44",
+      "name": "King's Knight Opening: Normal Variation",
+      "pgn": "1. e4 e5 2. Nf3 Nc6"
+    },
+    "opening_request": {
+      "eco": "C50",
+      "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4",
+      "kind": "opening",
+      "text": "Italian Game",
+      "label": "Italian Game",
+      "match": "prefix",
+      "status": "active"
+    }
+  },
+  "background_status": 503
+}

@@ -17,5 +17,5 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 python scripts/seed_games.py --skip-if-seeded
 
 cd backend
-exec uvicorn chessmind.app:app --host 0.0.0.0 --port "${PORT:-7860}" \
+exec uvicorn chessmind.app:app --workers 1 --host 0.0.0.0 --port "${PORT:-7860}" \
     --proxy-headers --forwarded-allow-ips='*'

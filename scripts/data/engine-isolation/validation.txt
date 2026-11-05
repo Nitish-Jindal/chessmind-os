@@ -1,0 +1,27 @@
+Backend command: pytest -c backend/pyproject.toml backend/tests -q -s
+timeout recovery: old_pid=20679, new_pid=20681
+interactive HTTP move during stopped background search: 0.212s
+219 passed in 63.52s (0:01:03)
+
+Frontend: npm run lint; npm run typecheck; npm test -- --reporter=dot; npm run build
+81 tests passed (9 files) in 2.26s; ESLint --max-warnings 0 and tsc --noEmit passed.
+
+
+> chessmind-frontend@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 58 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:   0.27 kB
+dist/assets/index-Duye-LbN.css    3.08 kB │ gzip:   1.17 kB
+dist/assets/index-Ci6cpt6T.js   371.32 kB │ gzip: 115.52 kB
+✓ built in 1.45s
+
+Focused engine command: pytest -c backend/pyproject.toml backend/tests/test_engine_lanes.py -q -s
+6 passed in 4.69s
+
+Final full-suite command: pytest -c backend/pyproject.toml backend/tests -q
+219 passed in 61.60s (0:01:01)

@@ -54,5 +54,18 @@ def test_sync_url_derived_from_database_url() -> None:
 
 def test_production_requires_real_jwt_secret() -> None:
     with pytest.raises(ValueError):
-        Settings(environment="production")
+        Settings(environment="production", jwt_secret="dev-only-not-for-prod")
     Settings(environment="production", jwt_secret="a-real-secret")
+
+
+@pytest.mark.parametrize("field,value", [
+    ("stockfish_threads", 0), ("stockfish_hash_mb", -1),
+    ("stockfish_interactive_depth", 0), ("stockfish_background_depth", 41),
+    ("stockfish_interactive_multipv", 0), ("stockfish_background_multipv", 11),
+    ("stockfish_interactive_timeout_sec", 0), ("stockfish_background_timeout_sec", -1),
+    ("stockfish_engine_startup_timeout_sec", float("inf")),
+    ("stockfish_background_queue_max", 0), ("stockfish_interactive_queue_timeout_sec", 0),
+])
+def test_invalid_engine_settings_rejected(field, value):
+    with pytest.raises(ValueError):
+        Settings(**{field: value})

@@ -130,10 +130,10 @@ async def test_session_evaluation_transitions_from_pending_to_real_stockfish_res
     release = asyncio.Event()
     real_analyze = session_evaluation.analyze_board
 
-    async def wait_then_analyze(session, *, board, depth=None, multipv=None):
+    async def wait_then_analyze(session, *, board, lane="background"):
         entered.set()
         await release.wait()
-        return await real_analyze(session, board=board, depth=depth, multipv=multipv)
+        return await real_analyze(session, board=board, lane=lane)
 
     monkeypatch.setattr(session_evaluation, "analyze_board", wait_then_analyze)
     created = await client.post(

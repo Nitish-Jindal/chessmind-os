@@ -64,12 +64,18 @@ def _schema() -> None:
     _reset_schema_sync()
 
 
-@pytest.fixture(scope="session", autouse=True)
-def _shutdown_stockfish_after_suite():
+@pytest_asyncio.fixture(autouse=True)
+async def _shutdown_stockfish_after_test():
     yield
-    from chessmind.services.engine import engine_client
+    from chessmind.services.engine import background_engine_client, engine_client
 
-    engine_client.shutdown()
+    await engine_client._discard()
+    await background_engine_client._discard()
+    # asyncio locks bind to their loop after contention.
+    engine_client._lock = asyncio.Lock()
+    background_engine_client._lock = asyncio.Lock()
+    engine_client.active = asyncio.Event()
+    background_engine_client.active = asyncio.Event()
 
 
 _TABLES_TO_TRUNCATE = [
