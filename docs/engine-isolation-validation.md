@@ -151,3 +151,50 @@ depth/MultiPV settings in favor of lane settings. Monitor engine lane admission,
 timeout, restart and queue-full logs after normal deployment. Live validation on
 blitz.cloud under actual CPU throttling/import volume remains necessary. No
 production deployment was performed, and no Cloudflare timeout was increased.
+
+
+## PR #13 cleanup safety follow-up
+
+The original final `search.cancel(); await gather(search)` had no enforced join
+budget. Python-chess's `AnalysisResult.wait()` normally awaits an ordinary Future,
+so cancellation generally completes promptly, but `Task.cancel()` is a request,
+not proof of termination. That behavior was insufficient to guarantee the stated
+wall-clock bound under delayed task unwinding or repeated request cancellation.
+
+Cleanup now registers both the exact process and original search task as retired,
+then kills the transport before its first await. One non-joining `asyncio.wait`
+uses a **0.5-second** budget for process exit and task termination together. After
+process exit, a remaining task receives cancellation without an unbounded join.
+Any pending process/task quarantines the lane; subsequent requests cannot create
+a replacement or new search until both are confirmed finished. Repeated request
+cancellation cannot erase retirement state. Search code captures its original
+protocol explicitly. There is no detached cleanup worker and at most one retired
+search per lane. Successful searches keep the engine warm as before.
+
+Two new regression cases use real Stockfish and genuine UCI analysis. An event
+barrier exists only in test-owned task finalization, after real search termination,
+to deterministically delay unwinding and exercise quarantine without replacing
+any UCI method, process, response, evaluation or chess data. The tests cover an
+actual depth-128 search timeout and repeated request cancellation, bounded request
+return, real process exit, replacement rejection while the task is pending,
+independence of the background lane, and successful real analysis with a new PID
+once the original task has exited. The existing non-barrier timeout/kill tests
+remain in the suite as well.
+
+Follow-up validation: complete backend **221 passed in 66.38s** against real
+PostgreSQL 16 and Stockfish 17.1; focused lane tests **8 passed in 7.21s**. Frontend **81 passed in 1.73s**, ESLint
+with zero warnings, TypeScript and Vite production build passed (58 modules,
+1.33s). Ruff correctness/import checks and `git diff --check` passed. No API,
+resource defaults, lane assignment, schema or deterministic chess sources changed.
+
+Headless-browser proof passed against the updated real API: move **247ms**, one
+cached-evaluation GET per FEN and no idle polling over the two 4.5s observation
+windows. A fresh proof-database live HTTP check measured **272ms** during background
+analysis and **217ms** after interactive Stockfish SIGKILL, API PID **43215**
+unchanged, interactive PID **43336 → 43340**. Background analysis returned controlled
+503 at its deadline. See the [follow-up transcripts and check summaries](../scripts/data/engine-isolation/cleanup-review.json).
+
+The existing live HTTP proof was run with a fresh isolated database: cached results
+from an earlier run can legitimately answer the next move without spawning an
+engine, so a reused database cannot prove its new-PID assertion. No production
+merge or deployment was performed.

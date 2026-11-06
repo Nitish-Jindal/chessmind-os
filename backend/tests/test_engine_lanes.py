@@ -223,3 +223,88 @@ async def test_same_new_fen_does_not_hold_database_key_during_background_search(
     finally:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("cancel_twice", [False, True], ids=["timeout", "repeated-cancellation"])
+async def test_cleanup_deadline_quarantines_real_search_until_task_exits(monkeypatch, cancel_twice):
+    """Real UCI search, with an event barrier only in test-owned task finalization.
+
+    No UCI method, response, process or evaluation is replaced. The barrier makes
+    delayed Python task unwinding reproducible independently of CPU speed.
+    """
+    from chessmind.services.engine import EngineClient
+
+    finalizing = asyncio.Event()
+    release = asyncio.Event()
+    release.set()
+
+    class ObservedClient(EngineClient):
+        async def _search(self, engine, board, depth, multipv):
+            try:
+                return await super()._search(engine, board, depth, multipv)
+            finally:
+                if not release.is_set():
+                    finalizing.set()
+                    while not release.is_set():
+                        try:
+                            await release.wait()
+                        except asyncio.CancelledError:
+                            # Deliberately delay only this real task's finalization.
+                            continue
+
+    lane = ObservedClient()
+    running = None
+    try:
+        await lane.analyze(chess.Board(), 4, 1)
+        old = lane._engine
+        pid = old.transport.get_pid()
+        release.clear()
+        monkeypatch.setattr(get_settings(), "stockfish_interactive_timeout_sec", 0.05)
+        started = time.monotonic()
+        running = asyncio.create_task(lane.analyze(chess.Board(), 128, 1))
+        await asyncio.wait_for(lane.active.wait(), 1)
+        if cancel_twice:
+            running.cancel()
+        await asyncio.wait_for(finalizing.wait(), 1)
+        if cancel_twice:
+            running.cancel()  # interrupts cleanup, not the isolated child task
+        done, _ = await asyncio.wait({running}, timeout=1)
+        assert running in done, "request must not join an indefinitely unwinding search"
+        with pytest.raises(asyncio.CancelledError if cancel_twice else EngineUnavailable):
+            running.result()
+        assert time.monotonic() - started < 1.2  # 50ms search + 500ms cleanup + allowance
+        assert old.returncode.done()
+        with pytest.raises(ProcessLookupError):
+            os.kill(pid, 0)
+        retired_search = lane._retired_search
+        assert retired_search is not None and not retired_search.done()
+        assert not lane._lock.locked()
+        assert lane._engine is None
+
+        # Admission may be released, but the old owner still quarantines this
+        # lane: no replacement or second task is allowed to start.
+        with pytest.raises(EngineUnavailable, match="cleanup pending"):
+            await asyncio.wait_for(lane.analyze(chess.Board(), 4, 1), 1.5)
+        assert lane._retired_search is retired_search
+        assert lane._engine is None
+        assert (await background_engine_client.analyze(chess.Board(), 4, 1))[2] > 0
+
+        release.set()
+        done, _ = await asyncio.wait({retired_search}, timeout=1)
+        assert retired_search in done
+        monkeypatch.setattr(get_settings(), "stockfish_interactive_timeout_sec", 3)
+        version, lines, nodes, _ = await lane.analyze(chess.Board(), 4, 1)
+        assert version and nodes > 0
+        assert chess.Move.from_uci(lines[0]["pv_uci"][0]) in chess.Board().legal_moves
+        assert lane._engine.transport.get_pid() != pid
+        assert lane._retired_search is None
+        print(
+            f"bounded cleanup ({cancel_twice=}) recovery pid={pid}->{lane._engine.transport.get_pid()}"
+        )
+    finally:
+        release.set()
+        if running is not None and not running.done():
+            running.cancel()
+            await asyncio.wait({running}, timeout=1)
+        await lane._discard()

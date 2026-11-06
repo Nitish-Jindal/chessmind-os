@@ -43,6 +43,8 @@ class AnalysisResult:
 # --------------------------------------------------------------------------- #
 
 
+_CLEANUP_TIMEOUT_SEC = 0.5
+
 _VERSION_RE = re.compile(r"Stockfish\s+([^\s]+)")
 
 
@@ -67,6 +69,7 @@ class EngineClient:
         self._engine: chess.engine.UciProtocol | None = None
         self._transport: asyncio.SubprocessTransport | None = None
         self._retired: chess.engine.UciProtocol | None = None
+        self._retired_search: asyncio.Task[list[chess.engine.InfoDict]] | None = None
         self._version: str | None = None
         self._lock = asyncio.Lock()
         self._waiting = 0
@@ -79,22 +82,54 @@ class EngineClient:
         if transport is not None:
             transport.close()  # asyncio kills and reaps the child
 
-    async def _discard(self) -> None:
+    async def _discard(
+        self, search: asyncio.Task[list[chess.engine.InfoDict]] | None = None
+    ) -> None:
+        # Register quarantine and kill synchronously BEFORE any cancellation point.
+        # Keep at most one retired owner; no detached cleanup worker is created.
         engine = self._engine or self._retired
         self._retired = engine
+        if search is not None:
+            self._retired_search = search
         self.shutdown()
-        if engine is not None:
-            try:
-                await asyncio.wait_for(asyncio.shield(engine.returncode), 0.5)
+        pending = {
+            future
+            for future in (
+                engine.returncode if engine is not None else None,
+                self._retired_search,
+            )
+            if future is not None and not future.done()
+        }
+        try:
+            if pending:
+                # Unlike wait_for/gather, wait never waits for cancellation to
+                # finish and never propagates caller cancellation into children.
+                await asyncio.wait(pending, timeout=_CLEANUP_TIMEOUT_SEC)
+        finally:
+            if engine is not None and engine.returncode.done():
                 self._retired = None
-            except TimeoutError:
-                logger.error("engine cleanup deadline lane=%s", self.lane)
+            task = self._retired_search
+            if task is not None:
+                if task.done():
+                    if not task.cancelled():
+                        task.exception()  # consume a failed search's exception
+                    self._retired_search = None
+                elif self._retired is None and not task.cancelling():
+                    # Only cancel python-chess futures after process exit, to
+                    # preserve its connection_lost bookkeeping. No unbounded join.
+                    task.cancel()
+            if self._retired is not None or self._retired_search is not None:
+                logger.warning("engine cleanup pending; lane quarantined lane=%s", self.lane)
 
     async def _start(self) -> None:
+        if (self._retired is not None and not self._retired.returncode.done()) or (
+            self._retired_search is not None and not self._retired_search.done()
+        ):
+            raise EngineUnavailable(f"{self.lane} engine cleanup pending; retry later")
         if self._engine is not None and not self._engine.returncode.done():
             return
         await self._discard()
-        if self._retired is not None:
+        if self._retired is not None or self._retired_search is not None:
             # Never accumulate replacement processes if the OS cannot reap a
             # killed child promptly; a later request can recheck it.
             raise EngineUnavailable(f"{self.lane} engine cleanup pending; retry later")
@@ -130,12 +165,11 @@ class EngineClient:
         logger.info("engine restart success lane=%s pid=%s", self.lane, self._transport.get_pid())
 
     async def _search(
-        self, board: chess.Board, depth: int, multipv: int
+        self, engine: chess.engine.UciProtocol, board: chess.Board, depth: int, multipv: int
     ) -> list[chess.engine.InfoDict]:
-        assert self._engine is not None
         started = time.monotonic()
         try:
-            analysis = await self._engine.analysis(
+            analysis = await engine.analysis(
                 board, chess.engine.Limit(depth=depth), multipv=multipv
             )
             self.active.set()  # UCI readyok received and go issued, not merely admitted
@@ -188,13 +222,14 @@ class EngineClient:
             (started - queued) * 1000,
         )
         search = None
+        healthy = False
         try:
             await self._start()
             assert self._engine is not None
             async with asyncio.timeout(timeout):
                 # Preserve python-chess's futures until connection_lost reaps
                 # the child; cancellation of analyse itself can corrupt them.
-                search = asyncio.create_task(self._search(board, depth, multipv))
+                search = asyncio.create_task(self._search(self._engine, board, depth, multipv))
                 infos = await asyncio.shield(search)
             # Normalize to a list even when multipv=1 returns a single dict in some versions.
             if isinstance(infos, dict):
@@ -232,24 +267,20 @@ class EngineClient:
                 )
                 total_nodes = max(total_nodes, int(info.get("nodes", 0) or 0))
                 total_time_ms = max(total_time_ms, int((info.get("time", 0) or 0) * 1000))
+            healthy = True
             return self._version or "unknown", results, total_nodes, total_time_ms
 
         except (TimeoutError, chess.engine.EngineError, OSError, ValueError) as exc:
             logger.warning(
                 "engine failure lane=%s operation=analyse type=%s", self.lane, type(exc).__name__
             )
-            await self._discard()
             raise EngineUnavailable(f"{self.lane} engine unavailable; retry later") from exc
-        except asyncio.CancelledError:
-            # No UCI operation survives the request that owned it.
-            await self._discard()
-            raise
         finally:
             try:
-                if search is not None:
-                    if not search.done():
-                        search.cancel()
-                    await asyncio.gather(search, return_exceptions=True)
+                if not healthy:
+                    # One shared budget for child termination AND task cleanup.
+                    # Interrupted/expired cleanup leaves both owners quarantined.
+                    await self._discard(search)
             finally:
                 # Also release if cleanup receives a second cancellation.
                 self.active.clear()

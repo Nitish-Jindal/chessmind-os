@@ -263,11 +263,17 @@ shallower or fabricated evaluation.
 Admission is bounded: one interactive waiter (up to 1 second), eight background
 engine waiters (up to 10 seconds each). Startup has a separate 5-second budget;
 search/other UCI responses have a 3/10-second lane budget. Thus a cold operation
-can take admission + startup + search + at most 0.5 seconds reaping. Complete move
+can take admission + startup + search + at most 0.5 seconds cleanup. Complete move
 computation also has a 15-second budget covering database contention and optional explanations. On timeout, process death, protocol error or cancellation,
-the lock owner closes/kills its exact subprocess and awaits reaping before releasing
-admission. A subsequent request starts a fresh process. If OS reaping exceeds its
-budget, replacement is withheld until the child exits, preventing process buildup.
+the lock owner closes/kills its exact subprocess and waits up to 0.5 seconds for
+both process exit and the original search task. Cleanup uses a non-joining wait;
+cancellation cannot turn this into an unbounded task join. If either process
+reaping or task termination exceeds that budget (or cleanup is interrupted by
+repeated cancellation), the lane stays quarantined until both
+are confirmed done. Admission can be released during quarantine, but requests
+cannot start a replacement engine or another search. At most one retired search
+is retained, and each search captures its original protocol rather than accessing
+a replacement through mutable client state.
 Engine failures return retryable **503** with `code=engine_unavailable` and
 `Retry-After: 2`; whole-move deadline failures have `code=move_timeout` in detail.
 Failed move transactions roll back. Multi-line prep reports have a combined budget
