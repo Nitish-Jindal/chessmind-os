@@ -40,7 +40,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from chessmind.models import MasterMoveStat, MoveEdge, OpponentPositionMove, Position
 from chessmind.services.canonical_fen import canonical_key
-from chessmind.services.engine import engine_client
 
 
 class SamplerMode(str, Enum):
@@ -56,8 +55,8 @@ class SamplerConfig:
     seed: int = 0
     novelty_prob: float = 0.1
     min_games: int = 1
-    engine_depth: int = 8
-    engine_multipv: int = 3
+    engine_depth: int | None = None
+    engine_multipv: int | None = None
 
 
 @dataclass(frozen=True)
@@ -150,8 +149,8 @@ async def _engine_candidates(
     session: AsyncSession,
     *,
     board: chess.Board,
-    depth: int,
-    multipv: int,
+    depth: int | None,
+    multipv: int | None,
 ) -> list[Candidate]:
     """Top-N engine moves. Weight them 3/2/1/... so #1 is favoured but not forced."""
     from chessmind.services.engine import analyze_board

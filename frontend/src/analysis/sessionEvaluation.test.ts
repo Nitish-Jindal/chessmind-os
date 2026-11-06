@@ -1,27 +1,28 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SessionEvaluation } from "../api";
-import { evaluationForFen, watchSessionEvaluation } from "./sessionEvaluation";
+import { evaluationForFen, watchSessionEvaluation, SessionEvaluationCache } from "./sessionEvaluation";
+
+import recorded from "./fixtures/session-evaluations.json";
+
+const INITIAL_FEN = recorded[0].current_fen;
+const NEXT_FEN = recorded[1].current_fen;
 
 function result(currentFen: string, analysisPending = false): SessionEvaluation {
+  const real = recorded.find((value) => value.current_fen === currentFen)!;
   return {
-    session_id: "session",
-    current_fen: currentFen,
+    ...real,
+    perspective: real.perspective as "white",
     analysis_available: !analysisPending,
     analysis_pending: analysisPending,
-    eval_cp_white: analysisPending ? null : 125,
-    mate_white: null,
-    depth: analysisPending ? null : 10,
-    nodes: analysisPending ? null : 1200,
-    engine_version: analysisPending ? null : "Stockfish 17.1",
-    perspective: analysisPending ? null : "white",
-    analyzed_at: null,
-    latest_move_classification: null,
+    eval_cp_white: analysisPending ? null : real.eval_cp_white,
+    depth: analysisPending ? null : real.depth,
+    nodes: analysisPending ? null : real.nodes,
+    engine_version: analysisPending ? null : real.engine_version,
   };
 }
 
 async function flushMicrotasks() {
-  await Promise.resolve();
-  await Promise.resolve();
+  for (let turn = 0; turn < 12; turn += 1) await Promise.resolve();
 }
 
 describe("session evaluation fetching", () => {
@@ -29,46 +30,46 @@ describe("session evaluation fetching", () => {
     let resolveOld!: (value: SessionEvaluation) => void;
     const oldRequest = new Promise<SessionEvaluation>((resolve) => { resolveOld = resolve; });
     const visible: SessionEvaluation[] = [];
-    let currentFen = "old-fen";
+    let currentFen = INITIAL_FEN;
     const stopOld = watchSessionEvaluation({
       sessionId: "session",
       currentFen,
       fetchEvaluation: () => oldRequest,
-      isCurrent: () => currentFen === "old-fen",
+      isCurrent: () => currentFen === INITIAL_FEN,
       onResult: (value) => visible.push(value),
       onError: () => { throw new Error("unexpected error"); },
       onStopped: () => { throw new Error("unexpected stop"); },
     });
 
-    currentFen = "new-fen";
+    currentFen = NEXT_FEN;
     stopOld();
-    expect(evaluationForFen(result("old-fen"), currentFen)).toBeNull();
+    expect(evaluationForFen(result(INITIAL_FEN), currentFen)).toBeNull();
 
     const stopNew = watchSessionEvaluation({
       sessionId: "session",
       currentFen,
-      fetchEvaluation: async () => result("new-fen"),
-      isCurrent: () => currentFen === "new-fen",
+      fetchEvaluation: async () => result(NEXT_FEN),
+      isCurrent: () => currentFen === NEXT_FEN,
       onResult: (value) => visible.push(value),
       onError: () => { throw new Error("unexpected error"); },
       onStopped: () => { throw new Error("unexpected stop"); },
     });
-    resolveOld(result("old-fen"));
+    resolveOld(result(INITIAL_FEN));
     await flushMicrotasks();
 
-    expect(visible.map((value) => value.current_fen)).toEqual(["new-fen"]);
-    expect(evaluationForFen(visible[0], currentFen)?.eval_cp_white).toBe(125);
+    expect(visible.map((value) => value.current_fen)).toEqual([NEXT_FEN]);
+    expect(evaluationForFen(visible[0], currentFen)?.eval_cp_white).toBe(recorded[1].eval_cp_white);
     stopNew();
   });
 
   it("polls a pending analysis and publishes the completed evaluation", async () => {
     const scheduled: Array<() => void> = [];
-    const values = [result("fen", true), result("fen", false)];
+    const values = [result(INITIAL_FEN, true), result(INITIAL_FEN, false)];
     const updates: SessionEvaluation[] = [];
     const stopped = vi.fn();
     const cleanup = watchSessionEvaluation({
       sessionId: "session",
-      currentFen: "fen",
+      currentFen: INITIAL_FEN,
       fetchEvaluation: async () => values.shift()!,
       isCurrent: () => true,
       onResult: (value) => updates.push(value),
@@ -88,7 +89,7 @@ describe("session evaluation fetching", () => {
     await flushMicrotasks();
 
     expect(updates[1].analysis_available).toBe(true);
-    expect(updates[1].eval_cp_white).toBe(125);
+    expect(updates[1].eval_cp_white).toBe(recorded[0].eval_cp_white);
     expect(stopped).not.toHaveBeenCalled();
     cleanup();
   });
@@ -98,8 +99,8 @@ describe("session evaluation fetching", () => {
     const scheduled: Array<() => void> = [];
     const cleanup = watchSessionEvaluation({
       sessionId: "session",
-      currentFen: "new-fen",
-      fetchEvaluation: async () => result("old-fen"),
+      currentFen: NEXT_FEN,
+      fetchEvaluation: async () => result(INITIAL_FEN),
       isCurrent: () => true,
       onResult: (value) => updates.push(value),
       onError: () => { throw new Error("unexpected error"); },
@@ -114,5 +115,37 @@ describe("session evaluation fetching", () => {
     expect(updates).toEqual([]);
     expect(scheduled).toHaveLength(1);
     cleanup();
+  });
+});
+
+
+describe("position evaluation cache", () => {
+  it("deduplicates pending reads, reuses results and fetches changed positions", async () => {
+    const cache = new SessionEvaluationCache();
+    let release!: (value: SessionEvaluation) => void;
+    const fetcher = vi.fn(() => new Promise<SessionEvaluation>((resolve) => { release = resolve; }));
+    const first = cache.fetch("session", INITIAL_FEN, fetcher);
+    const duplicate = cache.fetch("session", INITIAL_FEN, fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    release(result(INITIAL_FEN));
+    expect(await duplicate).toEqual(await first);
+    await cache.fetch("session", INITIAL_FEN, fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    const changed = cache.fetch("session", NEXT_FEN, fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    release(result(NEXT_FEN));
+    expect((await changed).current_fen).toBe(NEXT_FEN);
+  });
+
+  it("does not cache pending or mismatched responses", async () => {
+    const cache = new SessionEvaluationCache();
+    const fetcher = vi.fn(async () => result(INITIAL_FEN, true));
+    await cache.fetch("session", INITIAL_FEN, fetcher);
+    await cache.fetch("session", INITIAL_FEN, fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    const mismatch = vi.fn(async () => result(NEXT_FEN));
+    await cache.fetch("session", INITIAL_FEN, mismatch);
+    await cache.fetch("session", INITIAL_FEN, mismatch);
+    expect(mismatch).toHaveBeenCalledTimes(2);
   });
 });

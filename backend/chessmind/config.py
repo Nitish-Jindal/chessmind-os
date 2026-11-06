@@ -69,8 +69,19 @@ class Settings(BaseSettings):
             "for the Stockfish UCI binary."
         ),
     )
-    stockfish_default_depth: int = 18
-    stockfish_default_multipv: int = 3
+    stockfish_threads: int = Field(default=1, ge=1, le=4)
+    stockfish_hash_mb: int = Field(default=16, ge=1, le=256)
+    stockfish_interactive_depth: int = Field(default=10, ge=1, le=40)
+    stockfish_background_depth: int = Field(default=12, ge=1, le=40)
+    stockfish_interactive_multipv: int = Field(default=1, ge=1, le=10)
+    stockfish_background_multipv: int = Field(default=1, ge=1, le=10)
+    stockfish_interactive_timeout_sec: float = Field(default=3, gt=0, le=30, allow_inf_nan=False)
+    stockfish_background_timeout_sec: float = Field(default=10, gt=0, le=60, allow_inf_nan=False)
+    stockfish_engine_startup_timeout_sec: float = Field(default=5, gt=0, le=30, allow_inf_nan=False)
+    stockfish_background_queue_max: int = Field(default=8, ge=1, le=128)
+    stockfish_interactive_queue_timeout_sec: float = Field(default=1, gt=0, le=5, allow_inf_nan=False)
+    background_job_timeout_sec: float = Field(default=120, gt=0, le=600, allow_inf_nan=False)
+    session_move_timeout_sec: float = Field(default=15, gt=0, le=60, allow_inf_nan=False)
     environment: str = Field(default="dev")
     cors_origins: str = Field(
         default="http://localhost:5173,http://127.0.0.1:5173",

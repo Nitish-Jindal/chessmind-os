@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from uuid import UUID
 
@@ -13,6 +12,7 @@ from chessmind.db import get_session
 from chessmind.deps import get_current_player
 from chessmind.models import ImportJob, OpponentProfile, Player
 from chessmind.schemas.imports import ImportJobRead, ImportPgnRequest
+from chessmind.services.background_jobs import submit_job
 from chessmind.services.opponent_import import run_opponent_import_job
 from chessmind.services.pgn_import import run_import_job
 
@@ -56,7 +56,12 @@ async def create_pgn_import(
 
     # Fire-and-forget: ARQ worker takes over post-MVP; same ImportJob flow.
     runner = run_opponent_import_job if payload.intent == "opponent" else run_import_job
-    asyncio.create_task(runner(job_id, payload.pgn))
+    accepted = submit_job(job_id, lambda: runner(job_id, payload.pgn))
+    if not accepted:
+        job.status = "failed"
+        job.error = "Background queue full; retry this upload later."
+        job.artifacts_json = {"retryable": True, "reason": "queue_full"}
+        await session.commit()
     return job
 
 

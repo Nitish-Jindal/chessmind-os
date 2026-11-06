@@ -20,7 +20,7 @@ import { Captions } from "../components/Captions";
 import { MasteryDelta } from "../components/MasteryDelta";
 import { EvaluationBar } from "../components/EvaluationBar";
 import { VoicePicker } from "../components/VoicePicker";
-import { evaluationForFen, watchSessionEvaluation } from "../analysis/sessionEvaluation";
+import { evaluationForFen, watchSessionEvaluation, SessionEvaluationCache } from "../analysis/sessionEvaluation";
 import {
   buildLegalMoves,
   isBoardQuestion,
@@ -65,6 +65,7 @@ function SessionView({ id }: { id: string }) {
   const [legal, setLegal] = useState<LegalMoves | null>(null);
   const [fen, setFen] = useState<string>("");
   const [last, setLast] = useState<MoveResult | null>(null);
+  const evaluationCache = useRef(new SessionEvaluationCache());
   const [evaluation, setEvaluation] = useState<SessionEvaluation | null>(null);
   const [evaluationLoading, setEvaluationLoading] = useState(false);
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
@@ -179,6 +180,7 @@ function SessionView({ id }: { id: string }) {
     setEvaluationError(null);
     setEvaluationLoading(true);
     return watchSessionEvaluation({
+      cache: evaluationCache.current,
       sessionId: id,
       currentFen: fen,
       fetchEvaluation: api.sessionEvaluation,
@@ -221,7 +223,6 @@ function SessionView({ id }: { id: string }) {
         }
       })
       .catch((e: Error) => { if (isCurrentSession(generation)) setErr(e.message); });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {

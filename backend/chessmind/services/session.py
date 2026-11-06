@@ -19,6 +19,7 @@ import chess
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from chessmind.config import get_settings
 from chessmind.models import (
     EngineAnalysis,
     MasteryState,
@@ -31,7 +32,7 @@ from chessmind.models import (
 from chessmind.services import llm_coach, opening_taxonomy
 from chessmind.services.coaching import coach_move
 from chessmind.services.canonical_fen import canonical_key
-from chessmind.services.engine import analyze_board
+from chessmind.services.engine import analyze_board, EngineUnavailable
 from chessmind.services.labeler import (
     Classification,
     EvalPoint,
@@ -208,8 +209,8 @@ async def apply_player_move(
     before_pos_id = await upsert_position(session, board)
     before_analysis = await analyze_board(
         session, board=board,
-        depth=DEFAULT_SESSION_DEPTH,
-        multipv=DEFAULT_SESSION_MULTIPV,
+        depth=get_settings().stockfish_interactive_depth,
+        multipv=get_settings().stockfish_interactive_multipv,
     )
     await session.flush()
     before_point = _eval_point_from_results(before_analysis.results)
@@ -224,7 +225,7 @@ async def apply_player_move(
     board.push(move)
     after_analysis = await analyze_board(
         session, board=board,
-        depth=DEFAULT_SESSION_DEPTH,
+        depth=get_settings().stockfish_interactive_depth,
         multipv=1,
     )
     await session.flush()
@@ -415,6 +416,8 @@ async def _apply_opponent_move(
                 opponent_profile_id=ts.opponent_profile_id,
                 turn_index=int(ts.state_json.get("ply", 0)),
             )
+    except EngineUnavailable:
+        raise
     except Exception as exc:  # noqa: BLE001
         logger.exception("sampler failed: %s", exc)
         return None

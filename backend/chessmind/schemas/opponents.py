@@ -27,7 +27,7 @@ class OpponentRead(BaseModel):
 
 
 class OpponentPgnImport(BaseModel):
-    pgn: str = Field(min_length=1)
+    pgn: str = Field(min_length=1, max_length=10_000_000)
     source: str = Field(default="upload", max_length=64)
 
 

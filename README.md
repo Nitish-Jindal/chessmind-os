@@ -224,9 +224,87 @@ native Python runtime has no root/apt, so this runs in the build; files
 written under the repo during the build are part of the deployed service,
 and `STOCKFISH_PATH` points at `/opt/render/project/src/engines/stockfish-bin`.
 
-The app runs one Stockfish process per uvicorn worker with Stockfish's
-defaults (`Threads=1`, `Hash=16` MB), behind a lock. Every result is cached
-in `engine_analysis`, so repeated positions do not hit the engine.
+The app lazily runs at most **two** Stockfish processes per ASGI worker: one reserved
+for interactive moves/questions/opponent fallback, and one for explicit analysis,
+prep reports and scheduled position evaluations. Each uses native asyncio UCI I/O,
+an independent lock, `Threads=1` and `Hash=16` MB by default. Background processes
+use Linux niceness 10 where supported. All supplied production entrypoints pin
+`--workers 1`; use the same on blitz.cloud and do not override it with multiple
+workers or replicas on a single shared CPU. Each additional worker duplicates lanes.
+Set `STOCKFISH_PATH=/usr/games/stockfish` for Debian production installs; absolute,
+backend-relative paths and bare PATH commands remain supported locally.
+
+| Setting | Default |
+| --- | --- |
+| `STOCKFISH_THREADS` | `1` |
+| `STOCKFISH_HASH_MB` | `16` |
+| `STOCKFISH_INTERACTIVE_DEPTH` | `10` |
+| `STOCKFISH_BACKGROUND_DEPTH` | `12` |
+| `STOCKFISH_INTERACTIVE_MULTIPV` | `1` |
+| `STOCKFISH_BACKGROUND_MULTIPV` | `1` |
+| `STOCKFISH_INTERACTIVE_TIMEOUT_SEC` | `3` |
+| `STOCKFISH_BACKGROUND_TIMEOUT_SEC` | `10` |
+| `STOCKFISH_ENGINE_STARTUP_TIMEOUT_SEC` | `5` |
+| `STOCKFISH_BACKGROUND_QUEUE_MAX` | `8` |
+| `STOCKFISH_INTERACTIVE_QUEUE_TIMEOUT_SEC` | `1` |
+| `SESSION_MOVE_TIMEOUT_SEC` | `15` |
+| `BACKGROUND_JOB_TIMEOUT_SEC` | `120` |
+
+Settings reject nonpositive, nonfinite and out-of-range values at startup. These
+are conservative resource limits, not latency guarantees. The old
+`STOCKFISH_DEFAULT_DEPTH/MULTIPV` settings are replaced by lane-specific settings.
+Interactive grading/fallback now defaults to one principal variation (less variety
+in engine fallback, fewer alternative coaching lines); before/after evaluations
+still come from real Stockfish. Explicit API depth/MultiPV requests and the existing
+three-line prep/question modes are preserved, subject to the lane wall deadline.
+A request for deeper analysis can return 503; it never silently substitutes a
+shallower or fabricated evaluation.
+
+Admission is bounded: one interactive waiter (up to 1 second), eight background
+engine waiters (up to 10 seconds each). Startup has a separate 5-second budget;
+search/other UCI responses have a 3/10-second lane budget. Thus a cold operation
+can take admission + startup + search + at most 0.5 seconds cleanup. Complete move
+computation also has a 15-second budget covering database contention and optional explanations. On timeout, process death, protocol error or cancellation,
+the lock owner closes/kills its exact subprocess and waits up to 0.5 seconds for
+both process exit and the original search task. Cleanup uses a non-joining wait;
+cancellation cannot turn this into an unbounded task join. If either process
+reaping or task termination exceeds that budget (or cleanup is interrupted by
+repeated cancellation), the lane stays quarantined until both
+are confirmed done. Admission can be released during quarantine, but requests
+cannot start a replacement engine or another search. At most one retired search
+is retained, and each search captures its original protocol rather than accessing
+a replacement through mutable client state.
+Engine failures return retryable **503** with `code=engine_unavailable` and
+`Retry-After: 2`; whole-move deadline failures have `code=move_timeout` in detail.
+Failed move transactions roll back. Multi-line prep reports have a combined budget
+of startup + twice the background timeout (25 seconds by default), so many line
+searches cannot accumulate beyond the proxy timeout. Request fewer lines if a
+report exceeds that budget. Database/application errors remain separate.
+
+Results remain persisted in `engine_analysis` with white perspective and engine
+version/depth/nodes/time. Analysis does not insert a new position until its search
+finishes, avoiding unique-key contention between searches of the same new FEN.
+PGN imports do not use Stockfish: they parse one game at a time off the event loop,
+then perform async SQL writes. Uploads are limited to 10 million characters; import
+admission allows one running job and eight queued jobs, with a 120-second total
+admission/execution budget. Rejected/interrupted imports retain their existing job
+row with `status=failed` and `artifacts_json.retryable=true`; retry by resubmitting
+the upload. Scheduled evaluations are deduplicated and bounded to nine outstanding
+positions; rejection/failure is logged and never rolls back the player's move.
+Retry analysis using the existing `/analysis/position` endpoint or a subsequent
+session transition. In-process jobs are not durable across a hard process kill;
+no external queue or schema migration is introduced.
+
+Evaluation GETs read only saved analysis. The browser caches up to 64 valid
+session/FEN results, shares in-flight reads, ignores stale responses and polls
+pending results sequentially at 2 seconds, at most ten retries. It stops as soon
+as a result is available. Move responses contain evaluations before/after the
+**player's** move, which generally differ from the final FEN after the opponent's
+reply; those values are intentionally not displayed as the final-position score.
+The evaluation bar's appearance and white/black perspective are unchanged.
+
+Reproducible real-engine validation and measured evidence are in
+[`docs/engine-isolation-validation.md`](docs/engine-isolation-validation.md).
 
 ## Voice configuration
 

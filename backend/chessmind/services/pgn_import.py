@@ -8,6 +8,7 @@ whose descendants are also sidelines, so ``is_mainline`` is the AND of
 
 from __future__ import annotations
 
+import asyncio
 import io
 import logging
 from dataclasses import dataclass, field
@@ -97,6 +98,17 @@ def iter_games(pgn_text: str) -> Iterator[chess.pgn.Game]:
         yield game
 
 
+async def iter_games_async(pgn_text: str):
+    """Parse one real game at a time off the event loop, without buffering games.
+
+    Import job admission bounds the number of parsing workers. A sentinel avoids
+    propagating StopIteration through an asyncio Future.
+    """
+    games = iter_games(pgn_text)
+    while (game := await asyncio.to_thread(next, games, None)) is not None:
+        yield game
+
+
 def _parse_rating(headers: chess.pgn.Headers, key: str) -> int | None:
     raw = headers.get(key)
     if not raw or not raw.strip() or raw == "?":
@@ -141,7 +153,7 @@ async def import_pgn_text(
     graph (positions, edges, counts) but create no repertoire lines.
     """
     stats = stats or ImportStats()
-    for game in iter_games(pgn_text):
+    async for game in iter_games_async(pgn_text):
         try:
             await _import_single_game(
                 session,

@@ -65,4 +65,4 @@ app = gr.mount_gradio_app(fastapi_app, status_page, path="/status")
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=PORT, proxy_headers=True, forwarded_allow_ips="*")
+    uvicorn.run(app, workers=1, host="0.0.0.0", port=PORT, proxy_headers=True, forwarded_allow_ips="*")
